@@ -24,10 +24,10 @@ include_directories(/usr/local/include)
 link_directories(/usr/local/lib /usr/local/lib64)
 
 # Add executable files.
-add_executable(frontend_grpc_server frontend_grpc_server.cc)
+add_executable(test_frontend_grpc_server test_frontend_grpc_server.cc)
 
 # Link to libs.
-target_link_libraries(frontend_grpc_server dbos-scheduler-protos
+target_link_libraries(test_frontend_grpc_server dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
                       ${_PROTOBUF_LIBPROTOBUF}
@@ -35,7 +35,7 @@ target_link_libraries(frontend_grpc_server dbos-scheduler-protos
 )
 
 # Generate output to lib/ or bin/
-set_target_properties(frontend_grpc_server
+set_target_properties(test_frontend_grpc_server
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
