@@ -1,0 +1,35 @@
+// API for DBOS components
+// Interface between scheduler and worker
+
+syntax = "proto3";
+
+package dbos_scheduler;
+
+import "dbos_status.proto";
+
+// TODO: need to discuss the interface design; subject to changes.
+service Schedule {
+  // Scheduler notifies worker a task.
+  rpc NotifyTask(NotifyTaskRequest) returns (NotifyTaskResponse) {}
+
+  // Heartbeat to a worker.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+}
+
+// Message types for Schedule
+message NotifyTaskRequest {
+  string taskId = 1;  // The variable length task id.
+}
+
+message NotifyTaskResponse {
+  DbosStatusEnum status = 1;
+}
+
+message HeartbeatRequest {
+  string msg = 1;
+}
+
+message HeartbeatResponse {
+	DbosStatusEnum status = 1;
+}
+

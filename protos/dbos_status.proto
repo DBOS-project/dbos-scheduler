@@ -1,0 +1,13 @@
+// Define enum message type here
+
+syntax = "proto3";
+
+package dbos_scheduler;
+
+// Request status enums
+enum DbosStatusEnum {
+  INVALID = 0;
+  SUCCESS = 1;
+  UNAVAILABLE = 2;
+}
+
