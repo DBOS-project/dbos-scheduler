@@ -24,7 +24,6 @@
 #define __STDC_CONSTANT_MACROS
 #define __STDC_LIMIT_MACROS
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include "Client.h"
 #include "ClientConfig.h"
