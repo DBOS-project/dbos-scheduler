@@ -27,6 +27,7 @@
 *.lai
 *.la
 *.a
+!third_party/**
 *.lib
 
 # Executables
