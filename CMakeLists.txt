@@ -20,10 +20,6 @@ message(STATUS "Using Boost ${Boost_VERSION}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-# Targets
-add_subdirectory(src)
-add_subdirectory(test)
-
 # If build with gRPC, find protobuf and gRPC installation.
 if(BUILD_WITH_GRPC)
   # Find Protobuf installation
@@ -37,4 +33,8 @@ if(BUILD_WITH_GRPC)
 
   add_subdirectory(protos)
 endif(BUILD_WITH_GRPC)
+
+# Targets
+add_subdirectory(src)
+add_subdirectory(test)
 

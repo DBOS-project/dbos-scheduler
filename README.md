@@ -18,7 +18,7 @@ Install VoltDB:
 ./scripts/install_voltdb.sh INSTALLATION_PATH
 ```
 
-(Optional for now) Install CMake-3.13 and gRPC-v1.32
+(Optional for now) Install CMake-3.17 and gRPC-v1.32
 ```
 ./scripts/install_cmake.sh
 ./scripts/install_grpc.sh
