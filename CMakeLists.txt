@@ -19,8 +19,6 @@ find_package(Protobuf CONFIG REQUIRED)
 # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
 find_package(gRPC CONFIG REQUIRED)
 
-set(_GRPC_GRPCPP_UNSECURE grpc++_unsecure)
-set(_GRPC_CPP_PLUGIN_EXECUTABLE /usr/local/bin/grpc_cpp_plugin)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # Targets
