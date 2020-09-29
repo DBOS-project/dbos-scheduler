@@ -1,8 +1,4 @@
-// This synthetic multi-thread scheduler will create "fake" task ids, and
-// queries the DB to find a worker.  There won't be actual worker or load
-// generator.
-// The goal is to benchmark the basic latency, throughput, and scalability of
-// parallel scheudlers.
+// Test functionality of VoltdbClientUtil.
 
 #include <string>
 #include <vector>
