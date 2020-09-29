@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 #include "BenchmarkUtil.h"
 

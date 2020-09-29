@@ -38,6 +38,9 @@ public:
   // scheduled.
   DbosStatus assignTaskToWorker(DbosId taskId, DbosId workerId);
 
+  // Complete a task, updating the capacity of its worker.
+  DbosStatus finishTask(DbosId taskId, DbosId workerId);
+
   // Create a VoltDB client and return.
   static voltdb::Client createVoltdbClient(std::string username,
                                            std::string password);

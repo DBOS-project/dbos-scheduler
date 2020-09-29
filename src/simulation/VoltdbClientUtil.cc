@@ -88,3 +88,18 @@ DbosStatus VoltdbClientUtil::assignTaskToWorker(DbosId taskId,
 
   return retStatus;
 }
+
+DbosStatus VoltdbClientUtil::finishTask(DbosId taskId, DbosId workerId) {
+  std::vector<voltdb::Parameter> parameterTypes(1);
+  parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+
+  voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
+  voltdb::ParameterSet* params = procedure.params();
+  params->addInt32(workerId);
+  voltdb::InvocationResponse r = client_->invoke(procedure);
+  if (r.failure()) {
+    std::cout << "InsertWorker procedure failed. " << r.toString();
+    return false;
+  }
+  return true;
+}

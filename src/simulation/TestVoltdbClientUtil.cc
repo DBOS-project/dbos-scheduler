@@ -21,5 +21,7 @@ int main(int argc, char** argv) {
   DbosId taskId(1);
   ret = client.assignTaskToWorker(taskId, workerId);
 
+  ret = client.finishTask(taskId, workerId);
+
   return 0;
 }
