@@ -11,32 +11,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(_VOLTDB_LIBS_PATH "${CMAKE_SOURCE_DIR}/third_party/voltdb-client-cpp/lib")
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
-include_directories("${CMAKE_SOURCE_DIR}/third_party/voltdb-client-cpp/include")
+include_directories("${CMAKE_SOURCE_DIR}/third_party")
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib /usr/local/lib64)
-
-# Add executable files.
-add_executable(voltdb_client_example voltdb_client_example.cc)
-
-# Link to libs.
-target_link_libraries(voltdb_client_example
-                      ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
-                      ${_VOLTDB_LIBS_PATH}/libevent.a
-                      ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
-                      ${_VOLTDB_LIBS_PATH}/libevent_pthreads.a
-                      ${_VOLTDB_LIBS_PATH}/libssl.a
-                      ${_VOLTDB_LIBS_PATH}/libcrypto.a
-                      pthread boost_system boost_thread dl
-)
-
-# Generate output to lib/ or bin/
-set_target_properties(voltdb_client_example
-  PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
 
 # If needs to build gRPC related components.
 if(BUILD_WITH_GRPC)
@@ -67,3 +45,6 @@ if(BUILD_WITH_GRPC)
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
   )
 endif(BUILD_WITH_GRPC)
+
+# Subdirectories
+add_subdirectory(simulation)
