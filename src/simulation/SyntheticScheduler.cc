@@ -44,14 +44,42 @@ static std::vector<uint32_t> schedIndices;
 // Timestamp of each interval starts, in userc.
 static std::vector<uint64_t> timeStampsUsec;
 
+// Synthetic username, passwd.
+static const std::string kTestUser = "testuser";
+static const std::string kTestPwd = "testpassword";
+
 /*
  * Scheduler thread.
+ * For now, it will simply select a worker and decrease it's capacity.
+ * We will need to add worker (consumer) to mark tasks finished.
  */
 static void SchedulerThread(const int schedulerId,
                             const std::string& serverAddr) {
+  // Create a local VoltDB client.
+  voltdb::Client voltdbClient =
+      VoltdbClientUtil::createVoltdbClient(kTestUser, kTestPwd);
+  VoltdbClientUtil client(&voltdbClient, serverAddr);
+
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    auto aryIndex = schedLatsArrayIndex.fetch_add(1);
+    if (aryIndex >= kMaxEntries) {
+      std::cerr << "Array schedLatencies out of bounds: " << aryIndex
+                << std::endl;
+      exit(1);
+    }
+    uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
+
+    // Make scheduling decisions here.
+    auto workerId = client.selectWorker();
+    // std::cout << "Selected: " << workerId << std::endl;
+
+    uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
+    // Record latency.
+    double latency = (double)(endTime - startTime);
+    schedLatencies[aryIndex] = latency;
+    // TODO: maybe sleep random time for different arrival patterns.
+    // std::this_thread::sleep_for(std::chrono::milliseconds(5));
   } while (!mainFinished);
 
   return;
@@ -99,6 +127,10 @@ static bool runBenchmark(const std::string& serverAddr,
 
   // Processing the results.
   std::cerr << "Post processing resutls...\n";
+  std::cerr << "Total finished queries: " << schedLatsArrayIndex.load() << "\n";
+  std::cerr << "Latency: " << schedLatencies[0] << "usec\n";
+
+  // TODO: add post processing here.
 
   // Clean up.
   delete[] schedLatencies;
@@ -110,10 +142,10 @@ static bool runBenchmark(const std::string& serverAddr,
 /*
  * Populate worker table, start from a clean state.
  */
-static bool initWorkerTable() {
+static bool initWorkerTable(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
-      VoltdbClientUtil::createVoltdbClient("fakeuser", "fakepwd");
-  VoltdbClientUtil client(&voltdbClient, "localhost");
+      VoltdbClientUtil::createVoltdbClient(kTestUser, kTestPwd);
+  VoltdbClientUtil client(&voltdbClient, serverAddr);
 
   // Clean up data from previous run.
   client.truncateWorkerTable();
@@ -186,7 +218,7 @@ int main(int argc, char** argv) {
   std::cerr << "Total execution time: " << totalExecTimeMsec << " msec\n";
 
   // 1) Initialize worker table in the database, add workers.
-  bool res = initWorkerTable();
+  bool res = initWorkerTable(serverAddr);
   if (!res) {
     std::cerr << "Failed to initialize worker table." << std::endl;
     exit(1);
