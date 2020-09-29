@@ -37,11 +37,11 @@ VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr)
 }
 
 void VoltdbClientUtil::truncateWorkerTable() {
-    std::vector<voltdb::Parameter> parameterTypes(0);
+  std::vector<voltdb::Parameter> parameterTypes(0);
   voltdb::Procedure procedure("TruncateWorkerTable", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   voltdb::InvocationResponse r = client_->invoke(procedure);
-    if (r.failure()) {
+  if (r.failure()) {
     std::cout << "TruncateWorkerTable procedure failed. " << r.toString();
   }
 }
@@ -70,7 +70,7 @@ DbosId VoltdbClientUtil::selectWorker() {
   voltdb::Procedure procedure("SelectWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   voltdb::InvocationResponse r = client_->invoke(procedure);
-    if (r.failure()) {
+  if (r.failure()) {
     std::cout << "SelectWorker procedure failed. " << r.toString();
     return -1;
   }

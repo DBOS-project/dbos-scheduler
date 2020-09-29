@@ -38,7 +38,6 @@ private:
   inline uint64_t timespecToUsec(const struct timespec& a) {
     return (uint64_t)a.tv_sec * 1000000 + (uint64_t)a.tv_nsec / 1000;
   }
-
 };
 
 #endif  // #ifndef DBOS_BENCHMARK_UTIL_H
