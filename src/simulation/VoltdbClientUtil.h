@@ -24,6 +24,9 @@ class VoltdbClientUtil {
 public:
   VoltdbClientUtil(voltdb::Client* client, std::string dbAddr);
 
+  // Truncate the worker talbe;
+  void truncateWorkerTable();
+
   // Insert a worker into the worker table.
   DbosStatus insertWorker(DbosId workerID, DbosId capacity);
 

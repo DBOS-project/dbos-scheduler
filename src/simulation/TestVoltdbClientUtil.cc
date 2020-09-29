@@ -12,6 +12,7 @@ int main(int argc, char** argv) {
   VoltdbClientUtil client(&voltdbClient, "localhost");
 
   // Insert then Select a worker.
+  client.truncateWorkerTable();
   DbosStatus ret = client.insertWorker(2, 2);
   auto workerId = client.selectWorker();
   std::cout << "Selected: " << workerId << std::endl;

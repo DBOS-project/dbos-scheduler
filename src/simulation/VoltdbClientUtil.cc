@@ -36,6 +36,16 @@ VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr)
   std::cout << "=== Connected to VoltDB at " << dbAddr << " ===\n";
 }
 
+void VoltdbClientUtil::truncateWorkerTable() {
+    std::vector<voltdb::Parameter> parameterTypes(0);
+  voltdb::Procedure procedure("TruncateWorkerTable", parameterTypes);
+  voltdb::ParameterSet* params = procedure.params();
+  voltdb::InvocationResponse r = client_->invoke(procedure);
+    if (r.failure()) {
+    std::cout << "TruncateWorkerTable procedure failed. " << r.toString();
+  }
+}
+
 DbosStatus VoltdbClientUtil::insertWorker(DbosId workerID, int32_t capacity) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
