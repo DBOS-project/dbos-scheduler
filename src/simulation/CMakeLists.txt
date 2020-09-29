@@ -27,14 +27,19 @@ target_link_libraries(simulation-util
 
 # Add executable files.
 add_executable(SyntheticScheduler SyntheticScheduler.cc)
+add_executable(TestVoltdbClientUtil TestVoltdbClientUtil.cc)
 
 # Link to libs.
 target_link_libraries(SyntheticScheduler
                       simulation-util
 )
 
+target_link_libraries(TestVoltdbClientUtil
+                      simulation-util
+)
+
 # Generate output to lib/ or bin/
-set_target_properties(simulation-util SyntheticScheduler
+set_target_properties(simulation-util SyntheticScheduler TestVoltdbClientUtil
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

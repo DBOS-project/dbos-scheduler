@@ -33,9 +33,10 @@ VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr)
     // TODO: more robust error handling.
     throw;
   }
+  std::cout << "=== Connected to VoltDB at " << dbAddr << " ===\n";
 }
 
-void VoltdbClientUtil::insertWorker(DbosId workerID, DbosId capacity) {
+DbosStatus VoltdbClientUtil::insertWorker(DbosId workerID, DbosId capacity) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -46,10 +47,11 @@ void VoltdbClientUtil::insertWorker(DbosId workerID, DbosId capacity) {
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
+    return false;
   } else {
     std::cout << "Insert Worker: " << workerID << std::endl;
   }
-  return;
+  return true;
 }
 
 DbosId VoltdbClientUtil::selectWorker() {
