@@ -27,7 +27,7 @@ public:
   static void printStats(const Statistics& stats, const std::string& header);
 
   // Get current timestamp in usec.
-  inline uint64_t getCurrTimeUsec() {
+  static inline uint64_t getCurrTimeUsec() {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     return timespecToUsec(ts);
@@ -35,7 +35,7 @@ public:
 
 private:
   // Convert timespec to uint64_t timestamp in usec.
-  inline uint64_t timespecToUsec(const struct timespec& a) {
+  static inline uint64_t timespecToUsec(const struct timespec& a) {
     return (uint64_t)a.tv_sec * 1000000 + (uint64_t)a.tv_nsec / 1000;
   }
 };

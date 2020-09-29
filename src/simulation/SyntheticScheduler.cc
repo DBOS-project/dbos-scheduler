@@ -7,6 +7,7 @@
 #include <getopt.h>
 #include <atomic>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "BenchmarkUtil.h"
@@ -23,8 +24,8 @@ static int workerCapacity = (1L << 27);
 
 // Power multiplier for the latency array.
 // We can record at most 2^26 = 67108864 latencies
-static const int ARRAY_EXP = 26;
-static const size_t MAX_ENTRIES = (1L << ARRAY_EXP);
+static const int kArrayExp = 26;
+static const size_t kMaxEntries = (1L << kArrayExp);
 
 // Report latency/throughput stats every interval.
 static int measureIntervalMsec = 2000;  // 2sec in ms.
@@ -43,14 +44,72 @@ static std::vector<uint32_t> schedIndices;
 // Timestamp of each interval starts, in userc.
 static std::vector<uint64_t> timeStampsUsec;
 
+/*
+ * Scheduler thread.
+ */
+static void SchedulerThread(const int schedulerId,
+                            const std::string& serverAddr) {
+  std::cout << "Scheduler: " << schedulerId << " started\n";
+  do {
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  } while (!mainFinished);
+
+  return;
+}
+
+/*
+ * Actually run the benchmark.
+ */
 static bool runBenchmark(const std::string& serverAddr,
                          const std::string& outputFile) {
   mainFinished = false;
 
+  std::vector<std::thread*> schedulerThreads;  // Parallel schedulers.
+
+  // Initialize measurement arrays.
+  uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
+  timeStampsUsec.push_back(currTime);
+  schedLatencies = new double[kMaxEntries];
+  memset(schedLatencies, 0, kMaxEntries * sizeof(double));
+  schedLatsArrayIndex.store(0);
+  schedIndices.push_back(0);
+
+  // Start scheduler threads.
+  for (int i = 0; i < numSchedulers; ++i) {
+    schedulerThreads.push_back(
+        new std::thread(&SchedulerThread, i, serverAddr));
+  }
+
+  currTime = BenchmarkUtil::getCurrTimeUsec();
+  uint64_t endTime = currTime + (totalExecTimeMsec * 1000);
+  while (currTime < endTime) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(measureIntervalMsec));
+    // Do actual measurement here.
+    std::cerr << "runBenchmark recording performance...\n";
+    currTime = BenchmarkUtil::getCurrTimeUsec();
+    schedIndices.push_back(schedLatsArrayIndex.load());
+    timeStampsUsec.push_back(currTime);
+  }
+
   mainFinished = true;
+  for (int i = 0; i < numSchedulers; ++i) {
+    schedulerThreads[i]->join();
+    delete schedulerThreads[i];
+  }
+
+  // Processing the results.
+  std::cerr << "Post processing resutls...\n";
+
+  // Clean up.
+  delete[] schedLatencies;
+  schedLatencies = nullptr;
+  timeStampsUsec.clear();
   return true;
 }
 
+/*
+ * Populate worker table, start from a clean state.
+ */
 static bool initWorkerTable() {
   voltdb::Client voltdbClient =
       VoltdbClientUtil::createVoltdbClient("fakeuser", "fakepwd");
