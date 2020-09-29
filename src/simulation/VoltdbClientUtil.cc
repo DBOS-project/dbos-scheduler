@@ -31,11 +31,11 @@ VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr)
     std::cerr << "An exception occured while connecting to VoltDB "
               << std::endl;
     // TODO: more robust error handling.
-    // throw;
+    throw;
   }
 }
 
-void VoltdbClientUtil::insertWorker(int workerID, int capacity) {
+void VoltdbClientUtil::insertWorker(DbosId workerID, DbosId capacity) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -55,7 +55,7 @@ void VoltdbClientUtil::insertWorker(int workerID, int capacity) {
 DbosId VoltdbClientUtil::selectWorker() {
   // TODO: implement the actual transaction here.
   std::cout << "selectWorker, to be implemented." << std::endl;
-  DbosId workerId("testworkerid");
+  DbosId workerId(1);
 
   return workerId;
 }

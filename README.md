@@ -17,6 +17,7 @@ Install VoltDB:
 ```
 ./scripts/install_voltdb.sh INSTALLATION_PATH
 ```
+For example: `./install_voltdb.sh /home/`. Then VoltDB will be installed under `/home/voltdb`
 
 (Optional for now) Install CMake-3.17 and gRPC-v1.32
 ```
@@ -36,4 +37,13 @@ make -j8
 ```
 cmake .. -DBUILD_WITH_GRPC=ON
 make -j8
+```
+
+## Initialize VoltDB and load Stored Procedures
+Note that you will need to export "$VOLT_HOME" variable to the VoltDB installation path.
+For example `export VOLT_HOME=/home/voltdb`.
+
+Then you could initialize the tables and procedures:
+```
+./scripts/initialize_voltdb.sh
 ```

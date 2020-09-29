@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
   std::cout << workerId << std::endl;
 
   // Assign the task to worker.
-  DbosId taskId("testtaskid");
+  DbosId taskId(1);
   auto ret = client.assignTaskToWorker(taskId, workerId);
 
   return 0;

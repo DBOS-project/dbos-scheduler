@@ -8,7 +8,8 @@
 #include "voltdb-client-cpp/include/Client.h"
 
 // Used for task_id, worker_id in DBOS.
-typedef std::string DbosId;
+// TODO: decide whether to use INT or STRING.
+typedef int32_t DbosId;
 
 // Used for status: true = succeeded, false = failed.
 typedef bool DbosStatus;
@@ -24,7 +25,7 @@ public:
   VoltdbClientUtil(voltdb::Client* client, std::string dbAddr);
 
   // Insert a worker into the worker table.
-  void insertWorker(int workerID, int capacity);
+  void insertWorker(DbosId workerID, DbosId capacity);
 
   // Select a worker for a task and update worker capacity.
   // Return the selected worker id.
