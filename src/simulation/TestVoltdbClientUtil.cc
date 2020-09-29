@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   // Insert then Select a worker.
   DbosStatus ret = client.insertWorker(2, 2);
   auto workerId = client.selectWorker();
-  std::cout << workerId << std::endl;
+  std::cout << "Selected: " << workerId << std::endl;
 
   // Assign the task to worker.
   DbosId taskId(1);
