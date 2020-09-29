@@ -4,6 +4,8 @@
 # Prerequisites
 *.d
 .vscode
+**/obj*/
+**/log*/
 
 # Compiled Object files
 *.slo

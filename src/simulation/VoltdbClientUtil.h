@@ -23,6 +23,9 @@ class VoltdbClientUtil {
 public:
   VoltdbClientUtil(voltdb::Client* client, std::string dbAddr);
 
+  // Insert a worker into the worker table.
+  void insertWorker(int workerID, int capacity);
+
   // Select a worker for a task and update worker capacity.
   // Return the selected worker id.
   DbosId selectWorker();

@@ -35,6 +35,23 @@ VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr)
   }
 }
 
+void VoltdbClientUtil::insertWorker(int workerID, int capacity) {
+  std::vector<voltdb::Parameter> parameterTypes(2);
+  parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+
+  voltdb::Procedure procedure("InsertWorker", parameterTypes);
+  voltdb::ParameterSet* params = procedure.params();
+  params->addInt32(workerID).addInt32(capacity);
+  voltdb::InvocationResponse r = client_->invoke(procedure);
+  if (r.failure()) {
+    std::cout << "InsertWorker procedure failed. " << r.toString();
+  } else {
+    std::cout << "Insert Worker: " << workerID << std::endl;
+  }
+  return;
+}
+
 DbosId VoltdbClientUtil::selectWorker() {
   // TODO: implement the actual transaction here.
   std::cout << "selectWorker, to be implemented." << std::endl;

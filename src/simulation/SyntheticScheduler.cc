@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
   VoltdbClientUtil client(&voltdbClient, "localhost");
 
   // Select a worker.
+  client.insertWorker(1, 1);
   auto workerId = client.selectWorker();
   std::cout << workerId << std::endl;
 

@@ -1,0 +1,4 @@
+CREATE TABLE Worker (
+    WorkerID INTEGER UNIQUE NOT NULL,
+    Capacity INTEGER NOT NULL
+);
