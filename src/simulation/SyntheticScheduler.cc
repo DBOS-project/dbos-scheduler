@@ -4,9 +4,11 @@
 // The goal is to benchmark the basic latency, throughput, and scalability of
 // parallel scheudlers.
 
+#include <getopt.h>
 #include <string>
 #include <vector>
 
+#include "BenchmarkUtil.h"
 #include "VoltdbClientUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 

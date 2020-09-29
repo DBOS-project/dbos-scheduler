@@ -12,7 +12,7 @@ find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
 # Library for internal util.
-set(simulation-util_SOURCES VoltdbClientUtil.cc)
+set(simulation-util_SOURCES VoltdbClientUtil.cc BenchmarkUtil.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
 target_link_libraries(simulation-util
