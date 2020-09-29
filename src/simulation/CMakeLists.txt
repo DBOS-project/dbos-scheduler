@@ -3,9 +3,18 @@ message(STATUS "Building DBOS scheduler src/simulation")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Dependencies
+# Find boost static libs, statically linked to C++ runtime.
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+find_package(Boost 1.53 COMPONENTS system thread)
+message(STATUS "Using Boost ${Boost_VERSION}")
+
 # Library for internal util.
 set(simulation-util_SOURCES VoltdbClientUtil.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
+
 target_link_libraries(simulation-util
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
                       ${_VOLTDB_LIBS_PATH}/libevent.a
@@ -13,7 +22,7 @@ target_link_libraries(simulation-util
                       ${_VOLTDB_LIBS_PATH}/libevent_pthreads.a
                       ${_VOLTDB_LIBS_PATH}/libssl.a
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
-                      pthread boost_system boost_thread dl
+                      pthread Boost::system Boost::thread dl
 )
 
 # Add executable files.
