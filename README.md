@@ -47,3 +47,9 @@ Then you could initialize the tables and procedures:
 ```
 ./scripts/initialize_voltdb.sh
 ```
+
+## Shutdown VoltDB
+On a single node cluster, run:
+```
+voltdb stop
+```
