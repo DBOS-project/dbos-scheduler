@@ -48,6 +48,15 @@ static const std::string kTestUser = "testuser";
 static const std::string kTestPwd = "testpassword";
 
 /*
+ * The main scheduling decision logics here.
+ */
+static DbosId scheduling(VoltdbClientUtil* client) {
+  DbosId workerId = client->selectWorker();
+
+  return workerId;
+}
+
+/*
  * Scheduler thread.
  * For now, it will simply select a worker and decrease it's capacity.
  * We will need to add worker (consumer) to mark tasks finished.
@@ -70,8 +79,7 @@ static void SchedulerThread(const int schedulerId,
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Make scheduling decisions here.
-    auto workerId = client.selectWorker();
-    // std::cout << "Selected: " << workerId << std::endl;
+    auto workerId = scheduling(&client);
 
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
     // Record latency.

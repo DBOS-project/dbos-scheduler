@@ -19,5 +19,10 @@ sudo update-alternatives --config java
 cd $1
 git clone https://github.com/voltdb/voltdb
 cd voltdb
-ant
+
+# Avoid "WARN: Strict java memory checking is enabled, don't do release builds
+# or performance runs with this enabled. Invoke "ant clean" and "ant
+# -Djmemcheck=NO_MEMCHECK" to disable."
+ant -Djmemcheck=NO_MEMCHECK
+
 PATH="$PATH:$(pwd)/bin/"

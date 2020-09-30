@@ -58,9 +58,10 @@ DbosStatus VoltdbClientUtil::insertWorker(DbosId workerID, int32_t capacity) {
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
     return false;
-  } else {
-    std::cout << "Insert Worker: " << workerID << std::endl;
   }
+  // else {
+  //   std::cout << "Insert Worker: " << workerID << std::endl;
+  // }
   return true;
 }
 
