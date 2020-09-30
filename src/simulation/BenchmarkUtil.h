@@ -23,15 +23,23 @@ public:
   // Calculate stats from rawData array of latencies, consider `count` elements.
   static Statistics computeStats(double* rawData, size_t count);
 
-  // Print the stats with a header.
-  static void printStats(const Statistics& stats, const std::string& header);
-
   // Get current timestamp in usec.
   static inline uint64_t getCurrTimeUsec() {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     return timespecToUsec(ts);
   }
+
+  // Post process results and write to the output file.
+  static bool processResults(double* latencies,
+                             const std::vector<uint32_t>& indices,
+                             const std::vector<uint64_t>& timeStampsUsec,
+                             const std::string& outputFile,
+                             const std::string& expName);
+
+  // Print the stats with a header.
+  static void printStats(const Statistics& stats, const std::string& header,
+                         const double throughput);
 
 private:
   // Convert timespec to uint64_t timestamp in usec.

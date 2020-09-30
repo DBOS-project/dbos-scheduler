@@ -19,7 +19,6 @@ static int numSchedulers = 1;
 static int numWorkers = 1;
 
 // Assume each worker has infinite capacity.
-// TODO: make it tunable.
 static int workerCapacity = (1L << 27);
 
 // Power multiplier for the latency array.
@@ -110,14 +109,13 @@ static bool runBenchmark(const std::string& serverAddr,
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
   uint64_t endTime = currTime + (totalExecTimeMsec * 1000);
-  while (currTime < endTime) {
+  do {
     std::this_thread::sleep_for(std::chrono::milliseconds(measureIntervalMsec));
-    // Do actual measurement here.
     std::cerr << "runBenchmark recording performance...\n";
     currTime = BenchmarkUtil::getCurrTimeUsec();
     schedIndices.push_back(schedLatsArrayIndex.load());
     timeStampsUsec.push_back(currTime);
-  }
+  } while (currTime < endTime);
 
   mainFinished = true;
   for (int i = 0; i < numSchedulers; ++i) {
@@ -127,10 +125,11 @@ static bool runBenchmark(const std::string& serverAddr,
 
   // Processing the results.
   std::cerr << "Post processing resutls...\n";
-  std::cerr << "Total finished queries: " << schedLatsArrayIndex.load() << "\n";
-  std::cerr << "Latency: " << schedLatencies[0] << "usec\n";
-
-  // TODO: add post processing here.
+  bool res = BenchmarkUtil::processResults(
+      schedLatencies, schedIndices, timeStampsUsec, outputFile, "synthetic");
+  if (!res) {
+    std::cerr << "[Warning]: failed to write results to " << outputFile << "\n";
+  }
 
   // Clean up.
   delete[] schedLatencies;
@@ -172,6 +171,7 @@ static void Usage(char** argv, const std::string& msg = "") {
             << numSchedulers << "\n";
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
+  std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
 
   std::cerr << std::endl;
   exit(1);
@@ -183,7 +183,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -203,6 +203,9 @@ int main(int argc, char** argv) {
       case 'W':
         numWorkers = atoi(optarg);
         break;
+      case 'C':
+        workerCapacity = atoi(optarg);
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -212,6 +215,7 @@ int main(int argc, char** argv) {
 
   std::cerr << "Parallel scheduler threads: " << numSchedulers
             << "; workers: " << numWorkers << std::endl;
+  std::cerr << "Worker capacity: " << workerCapacity << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";
