@@ -132,7 +132,7 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   // Processing the results.
-  std::cerr << "Post processing resutls...\n";
+  std::cerr << "Post processing results...\n";
   bool res = BenchmarkUtil::processResults(
       schedLatencies, schedIndices, timeStampsUsec, outputFile, "synthetic");
   if (!res) {
