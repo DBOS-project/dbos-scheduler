@@ -9,7 +9,7 @@
 int main(int argc, char** argv) {
   voltdb::Client voltdbClient =
       VoltdbClientUtil::createVoltdbClient("fakeuser", "fakepwd");
-  VoltdbClientUtil client(&voltdbClient, "localhost");
+  VoltdbClientUtil client(&voltdbClient, "localhost", 8);
 
   // Insert then Select a worker.
   client.truncateWorkerTable();

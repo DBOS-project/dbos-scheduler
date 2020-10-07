@@ -18,6 +18,9 @@
 static int numSchedulers = 1;
 static int numWorkers = 1;
 
+// Number of worker partitions, not VoltDB partitions.
+static int workerPartitions = 8;
+
 // Assume each worker has infinite capacity.
 static int workerCapacity = (1L << 27);
 
@@ -52,7 +55,7 @@ static const std::string kTestPwd = "testpassword";
  */
 static DbosId scheduling(VoltdbClientUtil* client) {
   DbosId workerId = client->selectWorker();
-
+  assert(workerId >= 0);
   return workerId;
 }
 
@@ -66,7 +69,7 @@ static void SchedulerThread(const int schedulerId,
   // Create a local VoltDB client.
   voltdb::Client voltdbClient =
       VoltdbClientUtil::createVoltdbClient(kTestUser, kTestPwd);
-  VoltdbClientUtil client(&voltdbClient, serverAddr);
+  VoltdbClientUtil client(&voltdbClient, serverAddr, workerPartitions);
 
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {
@@ -152,7 +155,7 @@ static bool runBenchmark(const std::string& serverAddr,
 static bool initWorkerTable(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
       VoltdbClientUtil::createVoltdbClient(kTestUser, kTestPwd);
-  VoltdbClientUtil client(&voltdbClient, serverAddr);
+  VoltdbClientUtil client(&voltdbClient, serverAddr, workerPartitions);
 
   // Clean up data from previous run.
   client.truncateWorkerTable();
@@ -180,6 +183,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
+  std::cerr << "\t-P <worker partitions>: default " << workerPartitions << "\n";
 
   std::cerr << std::endl;
   exit(1);
@@ -191,7 +195,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -214,6 +218,9 @@ int main(int argc, char** argv) {
       case 'C':
         workerCapacity = atoi(optarg);
         break;
+      case 'P':
+        workerPartitions = atoi(optarg);
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -224,6 +231,7 @@ int main(int argc, char** argv) {
   std::cerr << "Parallel scheduler threads: " << numSchedulers
             << "; workers: " << numWorkers << std::endl;
   std::cerr << "Worker capacity: " << workerCapacity << std::endl;
+  std::cerr << "Worker partitions: " << workerPartitions << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";

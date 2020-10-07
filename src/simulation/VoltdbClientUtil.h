@@ -2,6 +2,7 @@
 #ifndef DBOS_VOLTDB_CLIENT_UTIL_H
 #define DBOS_VOLTDB_CLIENT_UTIL_H
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -22,7 +23,7 @@ typedef bool DbosStatus;
 // (2) pass the pointer to construct VoltdbClientUtil.
 class VoltdbClientUtil {
 public:
-  VoltdbClientUtil(voltdb::Client* client, std::string dbAddr);
+  VoltdbClientUtil(voltdb::Client* client, std::string dbAddr, int workerPartitions);
 
   // Truncate the worker talbe;
   void truncateWorkerTable();
@@ -47,6 +48,8 @@ public:
 
 private:
   voltdb::Client* client_;
+  int workerPartitions_;
+  static std::atomic<int> numWorkers_;
 };
 
 #endif  // #ifndef DBOS_VOLTDB_CLIENT_UTIL_H

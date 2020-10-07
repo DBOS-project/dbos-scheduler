@@ -14,7 +14,7 @@
 
 #include "simulation/VoltdbClientUtil.h"
 
-int numPartitions = 8;
+std::atomic<int> VoltdbClientUtil::numWorkers_;
 
 voltdb::Client VoltdbClientUtil::createVoltdbClient(std::string username,
                                                     std::string password) {
@@ -26,8 +26,9 @@ voltdb::Client VoltdbClientUtil::createVoltdbClient(std::string username,
   return client;
 }
 
-VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr)
-    : client_(client) {
+VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr,
+                                   int workerPartitions)
+    : client_(client), workerPartitions_(workerPartitions) {
   try {
     client_->createConnection(dbAddr);
   } catch (std::exception& e) {
@@ -57,12 +58,13 @@ DbosStatus VoltdbClientUtil::insertWorker(DbosId workerID, int32_t capacity) {
 
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerID).addInt32(capacity).addInt32(workerID % numPartitions);
+  params->addInt32(workerID).addInt32(capacity).addInt32(workerID % workerPartitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
     return false;
   }
+  numWorkers_.fetch_add(1);
   return true;
 }
 
@@ -70,9 +72,9 @@ DbosId VoltdbClientUtil::selectWorker() {
   // TODO: implement the actual transaction here.
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  int offset = rand() % numPartitions;
-  for (int count = 0; count < numPartitions; count++) {
-    int partitionNum = (count + offset) % numPartitions;
+  int offset = rand() % std::min(workerPartitions_, numWorkers_.load());
+  for (int count = 0; count < workerPartitions_; count++) {
+    int partitionNum = (count + offset) % workerPartitions_;
     voltdb::Procedure procedure("SelectWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(partitionNum);
@@ -108,10 +110,10 @@ DbosStatus VoltdbClientUtil::finishTask(DbosId taskId, DbosId workerId) {
 
   voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerId).addInt32(workerId % numPartitions);
+  params->addInt32(workerId).addInt32(workerId % workerPartitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
-    std::cout << "InsertWorker procedure failed. " << r.toString();
+    std::cout << "assignTaskToWorker procedure failed. " << r.toString();
     return false;
   }
   return true;

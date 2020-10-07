@@ -53,6 +53,7 @@ bool BenchmarkUtil::processResults(double* latencies,
   uint32_t totalEntries = indices[totalIntervals - 1];
   double totalTimeSec =
       (timeStampsUsec[totalIntervals - 1] - timeStampsUsec[0]) / 1000000.0;
+  std::cout << "Total transactions: " << totalEntries << "\n";
   std::cout << "Average throughput: " << (double)totalEntries / totalTimeSec
             << "\n";
 
