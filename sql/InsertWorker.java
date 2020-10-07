@@ -5,11 +5,11 @@ import org.voltdb.*;
 public class InsertWorker extends VoltProcedure {
     
     public final SQLStmt insert = new SQLStmt (
-        "INSERT INTO Worker VALUES (?, ?);"
+        "INSERT INTO Worker VALUES (?, ?, ?);"
     );
 
-    public long run(int workerID, int capacity) throws VoltAbortException {
-        voltQueueSQL(insert, workerID, capacity);
+    public long run(int workerID, int capacity, int pkey) throws VoltAbortException {
+        voltQueueSQL(insert, workerID, capacity, pkey);
         voltExecuteSQL();
         return 0;
     }
