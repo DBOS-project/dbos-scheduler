@@ -22,6 +22,7 @@ voltdb::Client VoltdbClientUtil::createVoltdbClient(std::string username,
   // SHA-256 can be used as of VoltDB5.2 by specifying voltdb::HASH_SHA256
   voltdb::ClientConfig config(username, password, voltdb::HASH_SHA1);
   voltdb::Client client = voltdb::Client::create(config);
+  srand(time(NULL));
   return client;
 }
 
@@ -69,7 +70,9 @@ DbosId VoltdbClientUtil::selectWorker() {
   // TODO: implement the actual transaction here.
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  for (int partitionNum = 0; partitionNum < numPartitions; partitionNum++) {
+  int offset = rand() % numPartitions;
+  for (int count = 0; count < numPartitions; count++) {
+    int partitionNum = (count + offset) % numPartitions;
     voltdb::Procedure procedure("SelectWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(partitionNum);
