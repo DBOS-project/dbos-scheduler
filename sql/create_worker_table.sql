@@ -5,3 +5,4 @@ CREATE TABLE Worker (
 );
 PARTITION TABLE Worker ON COLUMN PKey;
 CREATE ASSUMEUNIQUE INDEX workerIDIndex ON Worker (workerID);
+CREATE INDEX capacityIndex ON Worker (Capacity);
