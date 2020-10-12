@@ -1,31 +1,26 @@
 // This file contains common utils for connecting with VoltDB
-#ifndef DBOS_VOLTDB_CLIENT_UTIL_H
-#define DBOS_VOLTDB_CLIENT_UTIL_H
+#ifndef PARTITIONED_FIFO_SCHEDULER_H
+#define PARTITIONED_FIFO_SCHEDULER_H
 
 #include <atomic>
 #include <string>
 #include <vector>
 
 #include "voltdb-client-cpp/include/Client.h"
+#include "simulation/VoltdbSchedulerUtil.h"
 
-// Used for task_id, worker_id in DBOS.
-// TODO: decide whether to use INT or STRING.
-typedef int32_t DbosId;
-
-// Used for status: true = succeeded, false = failed.
-typedef bool DbosStatus;
-
-// Note: this class is not thread safe, because voltDB client is not thread
-// safe. Use one instance per thread.
 // Since voltdb::Client only has private constructor, we cannot create a private
 // member variable of it. Each thread needs to:
 // (1) call static function createVoltdbClient() to get a local VoltDB client.
-// (2) pass the pointer to construct VoltdbClientUtil.
-class VoltdbClientUtil {
+// (2) pass the pointer to construct PartitionedFIFOScheduler.
+class PartitionedFIFOScheduler : public VoltdbSchedulerUtil {
 public:
-  VoltdbClientUtil(voltdb::Client* client, std::string dbAddr, int workerPartitions);
+  PartitionedFIFOScheduler(voltdb::Client* client, std::string dbAddr, int workerPartitions,
+		           int workerCapacity, int numWorkers):
+	  VoltdbSchedulerUtil(client, dbAddr), workerPartitions_(workerPartitions),
+	  workerCapacity_(workerCapacity), numWorkers_(numWorkers) {};
 
-  // Truncate the worker talbe;
+  // Truncate the worker table;
   void truncateWorkerTable();
 
   // Insert a worker into the worker table.
@@ -42,14 +37,19 @@ public:
   // Complete a task, updating the capacity of its worker.
   DbosStatus finishTask(DbosId taskId, DbosId workerId);
 
-  // Create a VoltDB client and return.
-  static voltdb::Client createVoltdbClient(std::string username,
-                                           std::string password);
+  // Setup the database.
+  DbosStatus setup();
 
-private:
-  voltdb::Client* client_;
+  // Tear down the database after benchmarking.
+  DbosStatus teardown();
+
+  // Perform a scheduling act.
+  DbosStatus schedule();
+
+protected:
+  int workerCapacity_;
   int workerPartitions_;
-  static std::atomic<int> numWorkers_;
+  int numWorkers_;
 };
 
-#endif  // #ifndef DBOS_VOLTDB_CLIENT_UTIL_H
+#endif  // #ifndef PARTITIONED_FIFO_SCHEDULER_H

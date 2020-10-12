@@ -12,35 +12,9 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/VoltdbClientUtil.h"
+#include "simulation/PartitionedFIFOScheduler.h"
 
-std::atomic<int> VoltdbClientUtil::numWorkers_;
-
-voltdb::Client VoltdbClientUtil::createVoltdbClient(std::string username,
-                                                    std::string password) {
-  // Create a VoltDB client, connect to the DB.
-  // SHA-256 can be used as of VoltDB5.2 by specifying voltdb::HASH_SHA256
-  voltdb::ClientConfig config(username, password, voltdb::HASH_SHA1);
-  voltdb::Client client = voltdb::Client::create(config);
-  srand(time(NULL));
-  return client;
-}
-
-VoltdbClientUtil::VoltdbClientUtil(voltdb::Client* client, std::string dbAddr,
-                                   int workerPartitions)
-    : client_(client), workerPartitions_(workerPartitions) {
-  try {
-    client_->createConnection(dbAddr);
-  } catch (std::exception& e) {
-    std::cerr << "An exception occured while connecting to VoltDB "
-              << std::endl;
-    // TODO: more robust error handling.
-    throw;
-  }
-  std::cout << "=== Connected to VoltDB at " << dbAddr << " ===\n";
-}
-
-void VoltdbClientUtil::truncateWorkerTable() {
+void PartitionedFIFOScheduler::truncateWorkerTable() {
   std::vector<voltdb::Parameter> parameterTypes(0);
   voltdb::Procedure procedure("TruncateWorkerTable", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
@@ -50,7 +24,7 @@ void VoltdbClientUtil::truncateWorkerTable() {
   }
 }
 
-DbosStatus VoltdbClientUtil::insertWorker(DbosId workerID, int32_t capacity) {
+DbosStatus PartitionedFIFOScheduler::insertWorker(DbosId workerID, int32_t capacity) {
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -64,15 +38,14 @@ DbosStatus VoltdbClientUtil::insertWorker(DbosId workerID, int32_t capacity) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
     return false;
   }
-  numWorkers_.fetch_add(1);
   return true;
 }
 
-DbosId VoltdbClientUtil::selectWorker() {
+DbosId PartitionedFIFOScheduler::selectWorker() {
   // TODO: implement the actual transaction here.
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  int offset = rand() % std::min(workerPartitions_, numWorkers_.load());
+  int offset = rand() % std::min(workerPartitions_, numWorkers_);
   for (int count = 0; count < workerPartitions_; count++) {
     int partitionNum = (count + offset) % workerPartitions_;
     voltdb::Procedure procedure("SelectWorker", parameterTypes);
@@ -93,8 +66,8 @@ DbosId VoltdbClientUtil::selectWorker() {
   return -1;
 }
 
-DbosStatus VoltdbClientUtil::assignTaskToWorker(DbosId taskId,
-                                                DbosId workerId) {
+DbosStatus PartitionedFIFOScheduler::assignTaskToWorker(DbosId taskId,
+                                                        DbosId workerId) {
   // TODO: implement the actual transaction here.
   std::cout << "assignTaskToWorker, to be implemented." << std::endl;
   std::cout << taskId << " -> " << workerId << std::endl;
@@ -103,7 +76,7 @@ DbosStatus VoltdbClientUtil::assignTaskToWorker(DbosId taskId,
   return retStatus;
 }
 
-DbosStatus VoltdbClientUtil::finishTask(DbosId taskId, DbosId workerId) {
+DbosStatus PartitionedFIFOScheduler::finishTask(DbosId taskId, DbosId workerId) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -116,5 +89,28 @@ DbosStatus VoltdbClientUtil::finishTask(DbosId taskId, DbosId workerId) {
     std::cout << "assignTaskToWorker procedure failed. " << r.toString();
     return false;
   }
+  return true;
+}
+
+DbosStatus PartitionedFIFOScheduler::setup() {
+  // Clean up data from previous run.
+  truncateWorkerTable();
+  DbosStatus ret;
+  for (int i = 0; i < numWorkers_; ++i) {
+    ret = insertWorker(i, workerCapacity_);
+    if (!ret) { return false; }
+  }
+  return true;
+}
+
+DbosStatus PartitionedFIFOScheduler::teardown() {
+  // Clean up data from previous run.
+  truncateWorkerTable();
+  return true;
+}
+
+DbosStatus PartitionedFIFOScheduler::schedule() {
+  DbosId workerId = selectWorker();
+  assert(workerId >= 0);
   return true;
 }

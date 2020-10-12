@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "BenchmarkUtil.h"
-#include "VoltdbClientUtil.h"
+#include "PartitionedFIFOScheduler.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Number of schedulers and workers
@@ -51,15 +51,6 @@ static const std::string kTestUser = "testuser";
 static const std::string kTestPwd = "testpassword";
 
 /*
- * The main scheduling decision logics here.
- */
-static DbosId scheduling(VoltdbClientUtil* client) {
-  DbosId workerId = client->selectWorker();
-  assert(workerId >= 0);
-  return workerId;
-}
-
-/*
  * Scheduler thread.
  * For now, it will simply select a worker and decrease it's capacity.
  * We will need to add worker (consumer) to mark tasks finished.
@@ -68,8 +59,9 @@ static void SchedulerThread(const int schedulerId,
                             const std::string& serverAddr) {
   // Create a local VoltDB client.
   voltdb::Client voltdbClient =
-      VoltdbClientUtil::createVoltdbClient(kTestUser, kTestPwd);
-  VoltdbClientUtil client(&voltdbClient, serverAddr, workerPartitions);
+      PartitionedFIFOScheduler::createVoltdbClient(kTestUser, kTestPwd);
+  PartitionedFIFOScheduler scheduler(&voltdbClient, serverAddr, workerPartitions, workerCapacity,
+		                     numWorkers);
 
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {
@@ -82,7 +74,8 @@ static void SchedulerThread(const int schedulerId,
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Make scheduling decisions here.
-    auto workerId = scheduling(&client);
+    auto status = scheduler.schedule();
+    assert(status);
 
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
     // Record latency.
@@ -150,22 +143,27 @@ static bool runBenchmark(const std::string& serverAddr,
 }
 
 /*
- * Populate worker table, start from a clean state.
+ * Setup database.
  */
-static bool initWorkerTable(const std::string& serverAddr) {
+static bool setup(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
-      VoltdbClientUtil::createVoltdbClient(kTestUser, kTestPwd);
-  VoltdbClientUtil client(&voltdbClient, serverAddr, workerPartitions);
-
-  // Clean up data from previous run.
-  client.truncateWorkerTable();
-  DbosStatus ret;
-  for (int i = 0; i < numWorkers; ++i) {
-    ret = client.insertWorker(i, workerCapacity);
-    if (!ret) { return false; }
-  }
-  return true;
+      PartitionedFIFOScheduler::createVoltdbClient(kTestUser, kTestPwd);
+  PartitionedFIFOScheduler scheduler(&voltdbClient, serverAddr, workerPartitions, workerCapacity,
+		                     numWorkers);
+  return scheduler.setup();
 }
+
+/*
+ * Cleanup database.
+ */
+static bool teardown(const std::string& serverAddr) {
+  voltdb::Client voltdbClient =
+      PartitionedFIFOScheduler::createVoltdbClient(kTestUser, kTestPwd);
+  PartitionedFIFOScheduler scheduler(&voltdbClient, serverAddr, workerPartitions, workerCapacity,
+		                     numWorkers);
+  return scheduler.teardown();
+}
+
 
 static void Usage(char** argv, const std::string& msg = "") {
   if (!msg.empty()) { std::cerr << "ERROR: " << msg << std::endl; }
@@ -237,17 +235,24 @@ int main(int argc, char** argv) {
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";
   std::cerr << "Total execution time: " << totalExecTimeMsec << " msec\n";
 
-  // 1) Initialize worker table in the database, add workers.
-  bool res = initWorkerTable(serverAddr);
+  // 1) Initialize database state.
+  bool res = setup(serverAddr);
   if (!res) {
-    std::cerr << "Failed to initialize worker table." << std::endl;
+    std::cerr << "Failed to initialize database state." << std::endl;
     exit(1);
   }
 
-  // 2) Run experiments and parse resutls.
+  // 2) Run experiments and parse results.
   res = runBenchmark(serverAddr, outputFile);
   if (!res) {
     std::cerr << "Failed to run benchmark." << std::endl;
+    exit(1);
+  }
+
+  // 3) Clean database state.
+  res = teardown(serverAddr);
+  if (!res) {
+    std::cerr << "Failed to tear down database state." << std::endl;
     exit(1);
   }
 
