@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-#include "BenchmarkUtil.h"
+#include "simulation/BenchmarkUtil.h"
 
 bool BenchmarkUtil::processResults(double* latencies,
                                    const std::vector<uint32_t>& indices,
