@@ -88,7 +88,7 @@ static void SchedulerThread(const int schedulerId,
 
   VoltdbSchedulerUtil* scheduler =
       constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
-
+  assert(scheduler != nullptr);
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {
     auto aryIndex = schedLatsArrayIndex.fetch_add(1);
@@ -180,6 +180,7 @@ static bool setup(const std::string& serverAddr) {
 
   VoltdbSchedulerUtil* scheduler =
       constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  assert(scheduler != nullptr);
   bool res = scheduler->setup();
   delete scheduler;
   return res;
@@ -195,6 +196,7 @@ static bool teardown(const std::string& serverAddr) {
 
   VoltdbSchedulerUtil* scheduler =
       constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  assert(scheduler != nullptr);
   bool res = scheduler->teardown();
   delete scheduler;
   return res;
