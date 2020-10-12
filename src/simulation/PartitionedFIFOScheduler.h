@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "voltdb-client-cpp/include/Client.h"
 #include "simulation/VoltdbSchedulerUtil.h"
+#include "voltdb-client-cpp/include/Client.h"
 
 // Since voltdb::Client only has private constructor, we cannot create a private
 // member variable of it. Each thread needs to:
@@ -15,10 +15,13 @@
 // (2) pass the pointer to construct PartitionedFIFOScheduler.
 class PartitionedFIFOScheduler : public VoltdbSchedulerUtil {
 public:
-  PartitionedFIFOScheduler(voltdb::Client* client, std::string dbAddr, int workerPartitions,
-		           int workerCapacity, int numWorkers):
-	  VoltdbSchedulerUtil(client, dbAddr), workerPartitions_(workerPartitions),
-	  workerCapacity_(workerCapacity), numWorkers_(numWorkers) {};
+  PartitionedFIFOScheduler(voltdb::Client* client, std::string dbAddr,
+                           int workerPartitions, int workerCapacity,
+                           int numWorkers)
+      : VoltdbSchedulerUtil(client, dbAddr),
+        workerPartitions_(workerPartitions),
+        workerCapacity_(workerCapacity),
+        numWorkers_(numWorkers){};
 
   // Truncate the worker table;
   void truncateWorkerTable();
@@ -47,7 +50,8 @@ public:
   DbosStatus schedule();
 
   // Destructor
-  ~PartitionedFIFOScheduler() { /* placeholder for now. */ }
+  ~PartitionedFIFOScheduler() { /* placeholder for now. */
+  }
 
 private:
   int workerCapacity_;

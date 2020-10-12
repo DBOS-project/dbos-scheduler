@@ -24,7 +24,8 @@ void PartitionedFIFOScheduler::truncateWorkerTable() {
   }
 }
 
-DbosStatus PartitionedFIFOScheduler::insertWorker(DbosId workerID, int32_t capacity) {
+DbosStatus PartitionedFIFOScheduler::insertWorker(DbosId workerID,
+                                                  int32_t capacity) {
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -32,7 +33,8 @@ DbosStatus PartitionedFIFOScheduler::insertWorker(DbosId workerID, int32_t capac
 
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerID).addInt32(capacity).addInt32(workerID % workerPartitions_);
+  params->addInt32(workerID).addInt32(capacity).addInt32(workerID %
+                                                         workerPartitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
@@ -53,15 +55,14 @@ DbosId PartitionedFIFOScheduler::selectWorker() {
     params->addInt32(partitionNum);
     voltdb::InvocationResponse r = client_->invoke(procedure);
     if (r.failure()) {
-      std::cout << "SelectWorker procedure failed. " << r.toString() << std::endl;
+      std::cout << "SelectWorker procedure failed. " << r.toString()
+                << std::endl;
       return -1;
     }
     std::vector<voltdb::Table> results = r.results();
     voltdb::Row row = results[0].iterator().next();
     DbosId selectedWorker = row.getInt64(0);
-    if (selectedWorker != -1) {
-      return selectedWorker;
-    }
+    if (selectedWorker != -1) { return selectedWorker; }
   }
   return -1;
 }
@@ -76,7 +77,8 @@ DbosStatus PartitionedFIFOScheduler::assignTaskToWorker(DbosId taskId,
   return retStatus;
 }
 
-DbosStatus PartitionedFIFOScheduler::finishTask(DbosId taskId, DbosId workerId) {
+DbosStatus PartitionedFIFOScheduler::finishTask(DbosId taskId,
+                                                DbosId workerId) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);

@@ -29,7 +29,7 @@ voltdb::Client VoltdbSchedulerUtil::createVoltdbClient(std::string username,
 }
 
 VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
-             	                         std::string dbAddr)
+                                         std::string dbAddr)
     : client_(client) {
   try {
     client_->createConnection(dbAddr);

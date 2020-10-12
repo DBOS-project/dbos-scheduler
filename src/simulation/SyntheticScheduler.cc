@@ -8,8 +8,8 @@
 #include <atomic>
 #include <string>
 #include <thread>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 #include "simulation/BenchmarkUtil.h"
 #include "simulation/PartitionedFIFOScheduler.h"
@@ -61,12 +61,13 @@ static std::string scheduleAlgo = kFifoAlgo;
 /*
  * Return a constructed scheduler instance based on algorithm.
  */
-static VoltdbSchedulerUtil* constructScheduler(
- voltdb::Client* voltdbClient, const std::string& serverAddr, const std::string& algo) {
+static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
+                                               const std::string& serverAddr,
+                                               const std::string& algo) {
   VoltdbSchedulerUtil* scheduler = nullptr;
   if (algo == kFifoAlgo) {
-    scheduler = new PartitionedFIFOScheduler(voltdbClient, serverAddr, workerPartitions, workerCapacity,
-		                     numWorkers);
+    scheduler = new PartitionedFIFOScheduler(
+        voltdbClient, serverAddr, workerPartitions, workerCapacity, numWorkers);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
@@ -85,7 +86,8 @@ static void SchedulerThread(const int schedulerId,
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  VoltdbSchedulerUtil* scheduler = constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  VoltdbSchedulerUtil* scheduler =
+      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
 
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {
@@ -156,7 +158,7 @@ static bool runBenchmark(const std::string& serverAddr,
   // Processing the results.
   std::cerr << "Post processing results...\n";
   bool res = BenchmarkUtil::processResults(
-      schedLatencies, schedIndices, timeStampsUsec, outputFile, "synthetic");
+      schedLatencies, schedIndices, timeStampsUsec, outputFile, scheduleAlgo);
   if (!res) {
     std::cerr << "[Warning]: failed to write results to " << outputFile << "\n";
   }
@@ -176,7 +178,8 @@ static bool setup(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  VoltdbSchedulerUtil* scheduler = constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  VoltdbSchedulerUtil* scheduler =
+      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   bool res = scheduler->setup();
   delete scheduler;
   return res;
@@ -190,12 +193,12 @@ static bool teardown(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  VoltdbSchedulerUtil* scheduler = constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  VoltdbSchedulerUtil* scheduler =
+      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   bool res = scheduler->teardown();
   delete scheduler;
   return res;
 }
-
 
 static void Usage(char** argv, const std::string& msg = "") {
   if (!msg.empty()) { std::cerr << "ERROR: " << msg << std::endl; }
@@ -216,9 +219,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-P <worker partitions>: default " << workerPartitions << "\n";
   // Print all options here.
   std::cerr << "\t-A <scheduler algorithm (options: ";
-  for (auto &&it : kAlgorithms) {
-    std::cerr << it << " ";
-  }
+  for (auto&& it : kAlgorithms) { std::cerr << it << " "; }
   std::cerr << ")> default " << scheduleAlgo << "\n";
 
   std::cerr << std::endl;
