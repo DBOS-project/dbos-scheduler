@@ -9,9 +9,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <unordered_set>
 
-#include "BenchmarkUtil.h"
-#include "PartitionedFIFOScheduler.h"
+#include "simulation/BenchmarkUtil.h"
+#include "simulation/PartitionedFIFOScheduler.h"
+#include "simulation/VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Number of schedulers and workers
@@ -50,6 +52,28 @@ static std::vector<uint64_t> timeStampsUsec;
 static const std::string kTestUser = "testuser";
 static const std::string kTestPwd = "testpassword";
 
+// Type of scheduler algorithm
+// TODO: add more types here.
+static const std::string kFifoAlgo = "fifo";
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo};
+static std::string scheduleAlgo = kFifoAlgo;
+
+/*
+ * Return a constructed scheduler instance based on algorithm.
+ */
+static VoltdbSchedulerUtil* constructScheduler(
+ voltdb::Client* voltdbClient, const std::string& serverAddr, const std::string& algo) {
+  VoltdbSchedulerUtil* scheduler = nullptr;
+  if (algo == kFifoAlgo) {
+    scheduler = new PartitionedFIFOScheduler(voltdbClient, serverAddr, workerPartitions, workerCapacity,
+		                     numWorkers);
+  } else {
+    std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
+  }
+
+  return scheduler;
+}
+
 /*
  * Scheduler thread.
  * For now, it will simply select a worker and decrease it's capacity.
@@ -59,9 +83,9 @@ static void SchedulerThread(const int schedulerId,
                             const std::string& serverAddr) {
   // Create a local VoltDB client.
   voltdb::Client voltdbClient =
-      PartitionedFIFOScheduler::createVoltdbClient(kTestUser, kTestPwd);
-  PartitionedFIFOScheduler scheduler(&voltdbClient, serverAddr, workerPartitions, workerCapacity,
-		                     numWorkers);
+      VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
+
+  VoltdbSchedulerUtil* scheduler = constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
 
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {
@@ -74,7 +98,7 @@ static void SchedulerThread(const int schedulerId,
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Make scheduling decisions here.
-    auto status = scheduler.schedule();
+    auto status = scheduler->schedule();
     assert(status);
 
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
@@ -85,6 +109,8 @@ static void SchedulerThread(const int schedulerId,
     // std::this_thread::sleep_for(std::chrono::milliseconds(5));
   } while (!mainFinished);
 
+  // Clean up
+  delete scheduler;
   return;
 }
 
@@ -146,22 +172,28 @@ static bool runBenchmark(const std::string& serverAddr,
  * Setup database.
  */
 static bool setup(const std::string& serverAddr) {
+  // Create a local VoltDB client.
   voltdb::Client voltdbClient =
-      PartitionedFIFOScheduler::createVoltdbClient(kTestUser, kTestPwd);
-  PartitionedFIFOScheduler scheduler(&voltdbClient, serverAddr, workerPartitions, workerCapacity,
-		                     numWorkers);
-  return scheduler.setup();
+      VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
+
+  VoltdbSchedulerUtil* scheduler = constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  bool res = scheduler->setup();
+  delete scheduler;
+  return res;
 }
 
 /*
  * Cleanup database.
  */
 static bool teardown(const std::string& serverAddr) {
+  // Create a local VoltDB client.
   voltdb::Client voltdbClient =
-      PartitionedFIFOScheduler::createVoltdbClient(kTestUser, kTestPwd);
-  PartitionedFIFOScheduler scheduler(&voltdbClient, serverAddr, workerPartitions, workerCapacity,
-		                     numWorkers);
-  return scheduler.teardown();
+      VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
+
+  VoltdbSchedulerUtil* scheduler = constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+  bool res = scheduler->teardown();
+  delete scheduler;
+  return res;
 }
 
 
@@ -182,6 +214,12 @@ static void Usage(char** argv, const std::string& msg = "") {
             << numWorkers << "\n";
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-P <worker partitions>: default " << workerPartitions << "\n";
+  // Print all options here.
+  std::cerr << "\t-A <scheduler algorithm (options: ";
+  for (auto &&it : kAlgorithms) {
+    std::cerr << it << " ";
+  }
+  std::cerr << ")> default " << scheduleAlgo << "\n";
 
   std::cerr << std::endl;
   exit(1);
@@ -193,7 +231,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:A:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -219,6 +257,9 @@ int main(int argc, char** argv) {
       case 'P':
         workerPartitions = atoi(optarg);
         break;
+      case 'A':
+        scheduleAlgo = optarg;
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -226,6 +267,13 @@ int main(int argc, char** argv) {
     }
   }
 
+  // Check scheduler algorithm type valid here.
+  auto algoIt = kAlgorithms.find(scheduleAlgo);
+  if (algoIt == kAlgorithms.end()) {
+    std::cerr << "Unsupported algorithm: " << scheduleAlgo << std::endl;
+    Usage(argv);
+  }
+  std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
   std::cerr << "Parallel scheduler threads: " << numSchedulers
             << "; workers: " << numWorkers << std::endl;
   std::cerr << "Worker capacity: " << workerCapacity << std::endl;

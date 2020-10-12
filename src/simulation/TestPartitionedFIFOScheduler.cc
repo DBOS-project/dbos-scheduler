@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "PartitionedFIFOScheduler.h"
+#include "simulation/PartitionedFIFOScheduler.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 int main(int argc, char** argv) {

@@ -34,6 +34,9 @@ public:
   // Tear down the database after benchmarking.
   virtual DbosStatus teardown() = 0;
 
+  // Virutal destructor so that derived classes can be freed.
+  virtual ~VoltdbSchedulerUtil() = 0;
+
   // Create a VoltDB client and return.
   static voltdb::Client createVoltdbClient(std::string username,
                                            std::string password);

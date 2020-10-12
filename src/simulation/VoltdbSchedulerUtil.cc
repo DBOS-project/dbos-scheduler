@@ -14,6 +14,10 @@
 
 #include "simulation/VoltdbSchedulerUtil.h"
 
+VoltdbSchedulerUtil::~VoltdbSchedulerUtil() {
+  // placeholder.
+}
+
 voltdb::Client VoltdbSchedulerUtil::createVoltdbClient(std::string username,
                                                        std::string password) {
   // Create a VoltDB client, connect to the DB.

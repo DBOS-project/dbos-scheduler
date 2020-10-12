@@ -46,7 +46,10 @@ public:
   // Perform a scheduling act.
   DbosStatus schedule();
 
-protected:
+  // Destructor
+  ~PartitionedFIFOScheduler() { /* placeholder for now. */ }
+
+private:
   int workerCapacity_;
   int workerPartitions_;
   int numWorkers_;
