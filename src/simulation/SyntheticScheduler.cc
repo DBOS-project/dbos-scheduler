@@ -13,15 +13,17 @@
 
 #include "simulation/BenchmarkUtil.h"
 #include "simulation/PartitionedFIFOScheduler.h"
+#include "simulation/PartitionedFIFOTaskScheduler.h"
 #include "simulation/VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Number of schedulers and workers
 static int numSchedulers = 1;
 static int numWorkers = 1;
+static int numTasks = 8;
 
-// Number of worker partitions, not VoltDB partitions.
-static int workerPartitions = 8;
+// Number of worker/task partitions, not VoltDB partitions.
+static int partitions = 8;
 
 // Assume each worker has infinite capacity.
 static int workerCapacity = (1L << 27);
@@ -55,7 +57,8 @@ static const std::string kTestPwd = "testpassword";
 // Type of scheduler algorithm
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
-static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo};
+static const std::string kFifoTaskAlgo = "fifo-task";
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo, kFifoTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 /*
@@ -67,7 +70,11 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   VoltdbSchedulerUtil* scheduler = nullptr;
   if (algo == kFifoAlgo) {
     scheduler = new PartitionedFIFOScheduler(
-        voltdbClient, serverAddr, workerPartitions, workerCapacity, numWorkers);
+        voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
+  } else if (algo == kFifoTaskAlgo) {
+    scheduler = new PartitionedFIFOTaskScheduler(
+        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
+        numWorkers);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
@@ -218,7 +225,8 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
-  std::cerr << "\t-P <worker partitions>: default " << workerPartitions << "\n";
+  std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
+  std::cerr << "\t-P <partitions>: default " << partitions << "\n";
   // Print all options here.
   std::cerr << "\t-A <scheduler algorithm (options: ";
   for (auto&& it : kAlgorithms) { std::cerr << it << " "; }
@@ -234,7 +242,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:A:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:A:T:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -258,10 +266,13 @@ int main(int argc, char** argv) {
         workerCapacity = atoi(optarg);
         break;
       case 'P':
-        workerPartitions = atoi(optarg);
+        partitions = atoi(optarg);
         break;
       case 'A':
         scheduleAlgo = optarg;
+        break;
+      case 'T':
+        numTasks = atoi(optarg);
         break;
       case 'h':
       default:
@@ -278,9 +289,10 @@ int main(int argc, char** argv) {
   }
   std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
   std::cerr << "Parallel scheduler threads: " << numSchedulers
-            << "; workers: " << numWorkers << std::endl;
+            << "; workers: " << numWorkers
+	    << "; tasks: " << numTasks << std::endl;
   std::cerr << "Worker capacity: " << workerCapacity << std::endl;
-  std::cerr << "Worker partitions: " << workerPartitions << std::endl;
+  std::cerr << "Partitions: " << partitions << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";

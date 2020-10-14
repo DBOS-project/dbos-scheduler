@@ -12,7 +12,7 @@ find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
 # Library for internal util.
-set(simulation-util_SOURCES PartitionedFIFOScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc)
+set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
 target_link_libraries(simulation-util
