@@ -8,6 +8,7 @@ cd ${SCRIPT_DIR}/../
 voltdb init -f --dir=/var/tmp
 voltdb start -B --ignore=thp --dir=/var/tmp
 sleep 5
+sqlcmd < sql/create_task_table.sql
 sqlcmd < sql/create_worker_table.sql
 
 # Create obj directory
