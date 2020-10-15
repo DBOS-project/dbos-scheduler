@@ -28,6 +28,9 @@ static int partitions = 8;
 // Assume each worker has infinite capacity.
 static int workerCapacity = (1L << 27);
 
+// Probability to do multi-partition transaction
+static float probMultiTx = 0.0;
+
 // Power multiplier for the latency array.
 // We can record at most 2^26 = 67108864 latencies
 static const int kArrayExp = 26;
@@ -74,7 +77,7 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   } else if (algo == kFifoTaskAlgo) {
     scheduler = new PartitionedFIFOTaskScheduler(
         voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
-        numWorkers);
+        numWorkers, probMultiTx);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
@@ -227,6 +230,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
+  std::cerr << "\t-p <probability of multi-partition transaction> (0-1.0): default " << probMultiTx << "\n";
   // Print all options here.
   std::cerr << "\t-A <scheduler algorithm (options: ";
   for (auto&& it : kAlgorithms) { std::cerr << it << " "; }
@@ -242,7 +246,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:A:T:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:A:T:p:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -274,6 +278,9 @@ int main(int argc, char** argv) {
       case 'T':
         numTasks = atoi(optarg);
         break;
+      case 'p':
+        probMultiTx = atof(optarg);
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -288,6 +295,7 @@ int main(int argc, char** argv) {
     Usage(argv);
   }
   std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
+  std::cerr << "Probability of multi-partition transaction: " << probMultiTx << std::endl;
   std::cerr << "Parallel scheduler threads: " << numSchedulers
             << "; workers: " << numWorkers
 	    << "; tasks: " << numTasks << std::endl;

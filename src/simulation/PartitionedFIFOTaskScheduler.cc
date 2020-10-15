@@ -79,34 +79,41 @@ DbosStatus PartitionedFIFOTaskScheduler::insertTask(DbosId taskID) {
 DbosStatus PartitionedFIFOTaskScheduler::selectTaskWorker() {
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  int pkey = rand() % std::min(partitions_, numTasks_);
+  // Actual num partitions.
+  int activePartitions = std::min(partitions_, std::max(numWorkers_, numTasks_));
+  int pkey = rand() % activePartitions;
 
-  // Try to find a task and a worker in a single partition.
-  while (true) {
-    voltdb::Procedure procedure("SelectPartitionedTaskWorker", parameterTypes);
-    voltdb::ParameterSet* params = procedure.params();
-    params->addInt32(pkey);
-    voltdb::InvocationResponse r = client_->invoke(procedure);
-    if (r.failure()) {
-      std::cout << "SelectPartitionedTaskWorker procedure failed. " << r.toString()
-                << std::endl;
-      return false;
-    }
-    std::vector<voltdb::Table> results = r.results();
-    voltdb::Row row = results[0].iterator().next();
-    int status = row.getInt64(0);
-    if (status == SUCCESS) { return true; }
-    else if (status == NOWORKER) {
-      // If there is no worker, we need to check all partitions.
-      break;
-    } else {
-      // If there is no task in this partition, we need to change partition.
-      // FIXME Can loop infinitely if there are not enough tasks.
-      pkey = (pkey + 1) % std::min(partitions_, numTasks_);
+  // Throw a coin and decide whether to use single partition transaction.
+  float coin = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+  if (coin > probMultiTx_) {
+    // Try to find a task and a worker in a single partition.
+    for (int count = 1; count <= activePartitions; ++count) {
+      voltdb::Procedure procedure("SelectPartitionedTaskWorker", parameterTypes);
+      voltdb::ParameterSet* params = procedure.params();
+      params->addInt32(pkey);
+      voltdb::InvocationResponse r = client_->invoke(procedure);
+      if (r.failure()) {
+        std::cout << "SelectPartitionedTaskWorker procedure failed. " << r.toString()
+                  << std::endl;
+        return false;
+      }
+      std::vector<voltdb::Table> results = r.results();
+      voltdb::Row row = results[0].iterator().next();
+      int status = row.getInt64(0);
+      if (status == SUCCESS) { return true; }
+      else if (status == NOWORKER) {
+        // If there is no worker, we need to check all partitions.
+        break;
+      } else {
+        // If there is no task in this partition, we need to change partition.
+        pkey = (count + pkey) % activePartitions;
+      }
     }
   }
 
   // Check all partitions.
+  parameterTypes.clear();
   voltdb::Procedure naive_procedure("SelectTaskWorker", parameterTypes);
   voltdb::InvocationResponse r = client_->invoke(naive_procedure);
   if (r.failure()) {

@@ -16,12 +16,13 @@ class PartitionedFIFOTaskScheduler : public VoltdbSchedulerUtil {
 public:
   PartitionedFIFOTaskScheduler(voltdb::Client* client, std::string dbAddr,
                                int partitions, int numTasks, int workerCapacity,
-                               int numWorkers)
+                               int numWorkers, float probMultiTx)
       : VoltdbSchedulerUtil(client, dbAddr),
         partitions_(partitions),
-	numTasks_(numTasks),
+	      numTasks_(numTasks),
         workerCapacity_(workerCapacity),
-        numWorkers_(numWorkers){};
+        numWorkers_(numWorkers),
+        probMultiTx_(probMultiTx) {};
 
   // Truncate the worker table;
   void truncateWorkerTable();
@@ -56,6 +57,7 @@ private:
   int numTasks_;
   int workerCapacity_;
   int numWorkers_;
+  float probMultiTx_;
 };
 
 #endif  // #ifndef PARTITIONED_FIFO_TASK_SCHEDULER_H
