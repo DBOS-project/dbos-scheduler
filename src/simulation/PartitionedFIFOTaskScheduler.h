@@ -19,10 +19,10 @@ public:
                                int numWorkers, float probMultiTx)
       : VoltdbSchedulerUtil(client, dbAddr),
         partitions_(partitions),
-	      numTasks_(numTasks),
+        numTasks_(numTasks),
         workerCapacity_(workerCapacity),
         numWorkers_(numWorkers),
-        probMultiTx_(probMultiTx) {};
+        probMultiTx_(probMultiTx){};
 
   // Truncate the worker table;
   void truncateWorkerTable();

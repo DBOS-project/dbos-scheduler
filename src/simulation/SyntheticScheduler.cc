@@ -61,7 +61,8 @@ static const std::string kTestPwd = "testpassword";
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoTaskAlgo = "fifo-task";
-static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo, kFifoTaskAlgo};
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo,
+                                                            kFifoTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 /*
@@ -230,7 +231,9 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
-  std::cerr << "\t-p <probability of multi-partition transaction> (0-1.0): default " << probMultiTx << "\n";
+  std::cerr
+      << "\t-p <probability of multi-partition transaction> (0-1.0): default "
+      << probMultiTx << "\n";
   // Print all options here.
   std::cerr << "\t-A <scheduler algorithm (options: ";
   for (auto&& it : kAlgorithms) { std::cerr << it << " "; }
@@ -295,10 +298,11 @@ int main(int argc, char** argv) {
     Usage(argv);
   }
   std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
-  std::cerr << "Probability of multi-partition transaction: " << probMultiTx << std::endl;
+  std::cerr << "Probability of multi-partition transaction: " << probMultiTx
+            << std::endl;
   std::cerr << "Parallel scheduler threads: " << numSchedulers
-            << "; workers: " << numWorkers
-	    << "; tasks: " << numTasks << std::endl;
+            << "; workers: " << numWorkers << "; tasks: " << numTasks
+            << std::endl;
   std::cerr << "Worker capacity: " << workerCapacity << std::endl;
   std::cerr << "Partitions: " << partitions << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
