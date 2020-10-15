@@ -47,9 +47,10 @@ DbosId PartitionedFIFOScheduler::selectWorker() {
   // TODO: implement the actual transaction here.
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  int offset = rand() % std::min(workerPartitions_, numWorkers_);
-  for (int count = 0; count < workerPartitions_; count++) {
-    int partitionNum = (count + offset) % workerPartitions_;
+  int activePartitions = std::min(workerPartitions_, numWorkers_);
+  int offset = rand() % activePartitions;
+  for (int count = 0; count < activePartitions; count++) {
+    int partitionNum = (count + offset) % activePartitions;
     voltdb::Procedure procedure("SelectWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(partitionNum);
