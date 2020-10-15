@@ -18,6 +18,8 @@
 #define NOTASK -1
 #define NOWORKER -2
 
+// static std::atomic<uint32_t> taskindex;
+
 void PartitionedFIFOTaskScheduler::truncateWorkerTable() {
   std::vector<voltdb::Parameter> parameterTypes(0);
   voltdb::Procedure procedure("TruncateWorkerTable", parameterTypes);
@@ -128,6 +130,11 @@ DbosStatus PartitionedFIFOTaskScheduler::selectTaskWorker() {
   int status = row.getInt64(0);
   if (status == SUCCESS) { return true; }
   return false;
+
+  // Insert a task
+  // bool ret = insertTask(numTasks_ + taskindex.fetch_add(1));
+  // if (!ret) { return false; }
+  // return true;
 }
 
 DbosStatus PartitionedFIFOTaskScheduler::setup() {
@@ -157,6 +164,6 @@ DbosStatus PartitionedFIFOTaskScheduler::teardown() {
 
 DbosStatus PartitionedFIFOTaskScheduler::schedule() {
   DbosStatus status = selectTaskWorker();
-  assert(status >= 0);
+  assert(status == true);
   return true;
 }
