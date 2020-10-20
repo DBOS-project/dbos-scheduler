@@ -12,7 +12,7 @@ find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
 # Library for internal util.
-set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc)
+set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
 target_link_libraries(simulation-util
@@ -28,6 +28,7 @@ target_link_libraries(simulation-util
 # Add executable files.
 add_executable(SyntheticScheduler SyntheticScheduler.cc)
 add_executable(TestPartitionedFIFOScheduler TestPartitionedFIFOScheduler.cc)
+add_executable(TestSparkScheduler TestSparkScheduler.cc)
 
 # Link to libs.
 target_link_libraries(SyntheticScheduler
@@ -38,8 +39,12 @@ target_link_libraries(TestPartitionedFIFOScheduler
                       simulation-util
 )
 
+target_link_libraries(TestSparkScheduler
+                      simulation-util
+)
+
 # Generate output to lib/ or bin/
-set_target_properties(simulation-util SyntheticScheduler TestPartitionedFIFOScheduler
+set_target_properties(simulation-util SyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
