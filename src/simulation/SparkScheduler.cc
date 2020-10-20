@@ -104,8 +104,10 @@ DbosStatus SparkScheduler::setup() {
   truncateWorkerTable();
   DbosStatus ret;
   for (int i = 0; i < numWorkers_; ++i) {
-    ret = insertWorker(i, workerCapacity_, 0);
-    if (!ret) { return false; }
+    for (int j = 0; j < dataPerWorker_; ++j) {
+      ret = insertWorker(i, workerCapacity_, i * dataPerWorker_ + j);
+      if (!ret) { return false; }
+    }
   }
   return true;
 }
@@ -117,7 +119,8 @@ DbosStatus SparkScheduler::teardown() {
 }
 
 DbosStatus SparkScheduler::schedule() {
-  DbosId workerId = selectWorker(0);
+  DbosId targetData = rand() % (workerCapacity_ * dataPerWorker_);
+  DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
   return true;
 }

@@ -57,6 +57,7 @@ private:
   int workerCapacity_;
   int workerPartitions_;
   int numWorkers_;
+  int dataPerWorker_ = 10;
 };
 
 #endif
