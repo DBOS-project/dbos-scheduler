@@ -104,7 +104,7 @@ DbosStatus SparkScheduler::setup() {
   truncateWorkerTable();
   DbosStatus ret;
   for (int i = 0; i < numWorkers_; ++i) {
-    ret = insertWorker(i, workerCapacity_, i);
+    ret = insertWorker(i, workerCapacity_, 0);
     if (!ret) { return false; }
   }
   return true;
