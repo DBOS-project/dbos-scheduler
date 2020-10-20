@@ -14,14 +14,13 @@ int main(int argc, char** argv) {
   // Insert then Select a worker.
   scheduler.truncateWorkerTable();
   DbosStatus ret = scheduler.setup();
-  auto workerId = scheduler.selectWorker();
+  DbosId workerId;
+  workerId = scheduler.selectWorker(0);
   std::cout << "Selected: " << workerId << std::endl;
-
-  // Assign the task to worker.
-  DbosId taskId(1);
-  ret = scheduler.assignTaskToWorker(taskId, workerId);
-
-  ret = scheduler.finishTask(taskId, workerId);
+  ret = scheduler.finishTask(0, workerId);
+  workerId = scheduler.selectWorker(1);
+  std::cout << "Selected: " << workerId << std::endl;
+  ret = scheduler.finishTask(0, workerId);
 
   return 0;
 }

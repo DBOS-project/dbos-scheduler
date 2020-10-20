@@ -27,11 +27,11 @@ public:
   void truncateWorkerTable();
 
   // Insert a worker into the worker table.
-  DbosStatus insertWorker(DbosId workerID, DbosId capacity);
+  DbosStatus insertWorker(DbosId workerID, DbosId capacity, DbosId workerData);
 
   // Select a worker for a task and update worker capacity.
   // Return the selected worker id.
-  DbosId selectWorker();
+  DbosId selectWorker(DbosId targetData);
 
   // Update which worker the task is assigned to, and update worker status to
   // scheduled.
