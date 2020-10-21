@@ -119,7 +119,7 @@ DbosStatus SparkScheduler::teardown() {
 }
 
 DbosStatus SparkScheduler::schedule() {
-  DbosId targetData = rand() % (workerCapacity_ * dataPerWorker_);
+  DbosId targetData = rand() % (numWorkers_ * dataPerWorker_);
   DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
   return true;
