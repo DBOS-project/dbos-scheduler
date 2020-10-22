@@ -15,6 +15,7 @@
 #include "simulation/PartitionedFIFOScheduler.h"
 #include "simulation/PartitionedFIFOTaskScheduler.h"
 #include "simulation/SparkScheduler.h"
+#include "simulation/PartitionedScanTask.h"
 #include "simulation/VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
@@ -63,9 +64,11 @@ static const std::string kTestPwd = "testpassword";
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoTaskAlgo = "fifo-task";
 static const std::string kSparkAlgo = "spark";
+static const std::string kScanTaskAlgo = "scan-task";
 static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo,
                                                             kFifoTaskAlgo,
-                                                            kSparkAlgo};
+                                                            kSparkAlgo,
+                                                            kScanTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 /*
@@ -85,7 +88,11 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   } else if (algo == kSparkAlgo) {
     scheduler = new SparkScheduler(
         voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
-  }  else {
+  } else if (algo == kScanTaskAlgo) {
+    scheduler = new PartitionedScanTask(
+        voltdbClient, serverAddr, partitions, numTasks,
+        numWorkers, probMultiTx);
+  } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
 
