@@ -36,7 +36,7 @@ DbosStatus PartitionedScanTask::insertTask(DbosId taskID) {
   voltdb::Procedure procedure("InsertTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   DbosId workerID = taskID % numWorkers_;  // assign a worker to the task.
-  params->addInt32(taskID).addInt32(workerID).addInt32(1).addInt32(taskID %
+  params->addInt32(taskID).addInt32(workerID).addInt32(1).addInt32(workerID %
                                                              partitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
@@ -51,7 +51,7 @@ DbosId PartitionedScanTask::selectMostTaskWorker() {
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   // Actual num partitions.
   int activePartitions =
-      std::min(partitions_, numTasks_);
+      std::min(partitions_, std::min(numTasks_, numWorkers_));
   int pkey = rand() % activePartitions;
 
   // Throw a coin and decide whether to use single partition transaction.
@@ -114,7 +114,7 @@ DbosStatus PartitionedScanTask::setup() {
 
 DbosStatus PartitionedScanTask::teardown() {
   // Clean up data from previous run.
-  truncateTaskTable();
+  // truncateTaskTable();
   return true;
 }
 
