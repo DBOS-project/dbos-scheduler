@@ -10,7 +10,7 @@
 int main(int argc, char** argv) {
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient("testuser", "testpwd");
-  PartitionedScanTask scheduler(&voltdbClient, "localhost", 8, 2, 2, 0.0);
+  PartitionedScanTask scheduler(&voltdbClient, "localhost", 8, 2, 2, 1.0);
 
   // Insert then Select a worker.
   DbosStatus ret = scheduler.setup();

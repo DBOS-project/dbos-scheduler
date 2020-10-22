@@ -82,20 +82,19 @@ DbosId PartitionedScanTask::selectMostTaskWorker() {
     }
   }
 
-  // Check all partitions. TODO: implement multi-partition transaction.
-  /*
+  // Check all partitions.
   parameterTypes.clear();
-  voltdb::Procedure naive_procedure("SelectTaskWorker", parameterTypes);
+  voltdb::Procedure naive_procedure("ScanTaskWorker", parameterTypes);
   voltdb::InvocationResponse r = client_->invoke(naive_procedure);
   if (r.failure()) {
-    std::cout << "SelectWorker procedure failed. " << r.toString() << std::endl;
+    std::cout << "ScanTaskWorker procedure failed. " << r.toString() << std::endl;
     return false;
   }
   std::vector<voltdb::Table> results = r.results();
   voltdb::Row row = results[0].iterator().next();
-  int status = row.getInt64(0);
-  if (status == SUCCESS) { return true; }
-  */
+  int workerId = row.getInt64(0);
+  if (workerId >= 0) { return workerId; }
+
   return NOWORKER;
 
 }
