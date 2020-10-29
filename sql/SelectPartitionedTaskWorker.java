@@ -47,7 +47,8 @@ public class SelectPartitionedTaskWorker extends VoltProcedure {
         long workerID = r.fetchRow(0).getLong(0);
         long capacity = r.fetchRow(0).getLong(1);
         voltQueueSQL(updateCapacity, capacity - 1, pkey, workerID);
-        voltExecuteSQL();
+        // voltExecuteSQL();
+        // No need to execute SQL here. can push multiple sql queries then execute in a batch.
 
         voltQueueSQL(updateTask, workerID, pkey, taskID);
         voltExecuteSQL();
