@@ -87,6 +87,7 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
         // TODO: If there is no worker, need to check other partitions for available workers.
 				// TODO: If there are no available workers, put task in a buffer
     }
+    pkey = (pkey + count) % activePartitions;
   }
   std::cout << "went through " << activePartitions << " partitions" << std::endl;
   return false;
