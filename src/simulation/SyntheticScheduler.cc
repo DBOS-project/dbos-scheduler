@@ -64,12 +64,12 @@ static const std::string kTestPwd = "testpassword";
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoTaskAlgo = "fifo-task";
-static const std::string kSingleParititionedFifoTaskAlgo = "single-paritioned-fifo-task";
+static const std::string kSinglePartitionedFifoTaskAlgo = "single-partitioned-fifo-task";
 static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
 static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo,
                                                             kFifoTaskAlgo,
-                                                            kSingleParititionedFifoTaskAlgo,
+                                                            kSinglePartitionedFifoTaskAlgo,
                                                             kSparkAlgo,
                                                             kScanTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
@@ -88,7 +88,7 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
     scheduler = new PartitionedFIFOTaskScheduler(
         voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
         numWorkers, probMultiTx);
-  } else if (algo == kSingleParititionedFifoTaskAlgo) {
+  } else if (algo == kSinglePartitionedFifoTaskAlgo) {
     scheduler = new SinglePartitionedFIFOTaskScheduler(
         voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
         numWorkers, probMultiTx);
