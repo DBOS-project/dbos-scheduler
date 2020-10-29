@@ -17,6 +17,8 @@
 #define SUCCESS 0
 #define NOWORKER -2
 
+static std::atomic<uint32_t> taskindex;
+
 void SinglePartitionedFIFOTaskScheduler::truncateWorkerTable() {
   std::vector<voltdb::Parameter> parameterTypes(0);
   voltdb::Procedure procedure("TruncateWorkerTable", parameterTypes);
@@ -83,7 +85,7 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
 	  if (status == SUCCESS) {
 	    return true;
 	  } else if (status == NOWORKER) { // implementing basic functionality first
-	  	std::cout << "no worker in partition " << count << std::endl;
+	  	// std::cout << "no worker in partition " << count << std::endl;
         // TODO: If there is no worker, need to check other partitions for available workers.
 				// TODO: If there are no available workers, put task in a buffer
     }
@@ -114,9 +116,10 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::teardown() {
 }
 
 DbosStatus SinglePartitionedFIFOTaskScheduler::schedule() {
-	std::cout << "Foo" << std::endl;
+	//std::cout << "Foo" << std::endl;
   for (int i = 0; i < numTasks_; ++i) {
-    DbosStatus status = selectTaskWorker(i);
+    int taskId = taskindex.fetch_add(1);
+    DbosStatus status = selectTaskWorker(taskId);
   	assert(status == true);
   }
   return true;
