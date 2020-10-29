@@ -14,6 +14,7 @@
 #include "simulation/BenchmarkUtil.h"
 #include "simulation/PartitionedFIFOScheduler.h"
 #include "simulation/PartitionedFIFOTaskScheduler.h"
+#include "simulation/SinglePartitionedFIFOTaskScheduler.h"
 #include "simulation/SparkScheduler.h"
 #include "simulation/PartitionedScanTask.h"
 #include "simulation/VoltdbSchedulerUtil.h"
@@ -63,10 +64,12 @@ static const std::string kTestPwd = "testpassword";
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoTaskAlgo = "fifo-task";
+static const std::string kSingleParititionedFifoTaskAlgo = "single-paritioned-fifo-task";
 static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
 static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo,
                                                             kFifoTaskAlgo,
+                                                            kSingleParititionedFifoTaskAlgo,
                                                             kSparkAlgo,
                                                             kScanTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
@@ -83,6 +86,10 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
         voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
   } else if (algo == kFifoTaskAlgo) {
     scheduler = new PartitionedFIFOTaskScheduler(
+        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
+        numWorkers, probMultiTx);
+  } else if (algo == kSingleParititionedFifoTaskAlgo) {
+    scheduler = new SinglePartitionedFIFOTaskScheduler(
         voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
         numWorkers, probMultiTx);
   } else if (algo == kSparkAlgo) {
