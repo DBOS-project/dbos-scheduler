@@ -64,7 +64,7 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   // Actual num partitions.
   int activePartitions =
-      std::min(partitions_, std::max(numWorkers_, numTasks_));
+      std::min(partitions_, numWorkers_);
   int pkey = rand() % activePartitions;
 
   // Try to find an available worker in the partition.

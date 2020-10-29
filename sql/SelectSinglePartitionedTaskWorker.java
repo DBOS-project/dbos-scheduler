@@ -35,7 +35,7 @@ public class SelectSinglePartitionedTaskWorker extends VoltProcedure {
         
     // If a worker is available, insert task into table and update the worker capacity.	
         voltQueueSQL(insertTask, taskID, workerID, state, pkey);
-        voltExecuteSQL();
+        // voltExecuteSQL();
 
         voltQueueSQL(updateCapacity, capacity - 1, pkey, workerID);
         voltExecuteSQL();
