@@ -13,3 +13,4 @@ CREATE PROCEDURE FROM CLASS dbos.procedures.FinishWorkerTask;
 CREATE PROCEDURE PARTITION ON TABLE Task COLUMN PKey FROM CLASS dbos.procedures.ScanPartitionedTaskWorker;
 CREATE PROCEDURE FROM CLASS dbos.procedures.ScanTaskWorker;
 CREATE PROCEDURE PARTITION ON TABLE Task COLUMN PKey FROM CLASS dbos.procedures.WorkerSelectTask;
+CREATE PROCEDURE PARTITION ON TABLE Task COLUMN PKey FROM CLASS dbos.procedures.WorkerUpdateTask;
