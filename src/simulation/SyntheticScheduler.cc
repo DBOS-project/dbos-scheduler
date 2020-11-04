@@ -74,6 +74,9 @@ static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo,
                                                             kScanTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
+// If true, truncate tables after execution.
+static bool cleanDB = false;
+
 /*
  * Return a constructed scheduler instance based on algorithm.
  */
@@ -237,6 +240,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   if (!msg.empty()) { std::cerr << "ERROR: " << msg << std::endl; }
   std::cerr << "Usage: " << argv[0] << "[options]\n";
   std::cerr << "\t-h: show this message\n";
+  std::cerr << "\t-x: truncate DB tables after execution.\n";
   std::cerr << "\t-o <output log file path>: default "
             << "synthetic_scheduler_results.csv\n";
   std::cerr << "\t-s <VoltDB master IP address>: default 'localhost'\n";
@@ -269,7 +273,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:N:W:C:P:A:T:p:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -303,6 +307,9 @@ int main(int argc, char** argv) {
         break;
       case 'p':
         probMultiTx = atof(optarg);
+        break;
+      case 'x':
+        cleanDB = true;
         break;
       case 'h':
       default:
@@ -345,10 +352,12 @@ int main(int argc, char** argv) {
   }
 
   // 3) Clean database state.
-  res = teardown(serverAddr);
-  if (!res) {
-    std::cerr << "Failed to tear down database state." << std::endl;
-    exit(1);
+  if (cleanDB) {
+    res = teardown(serverAddr);
+    if (!res) {
+      std::cerr << "Failed to tear down database state." << std::endl;
+      exit(1);
+    }
   }
 
   return 0;
