@@ -15,7 +15,22 @@ message(STATUS "Using Boost ${Boost_VERSION}")
 set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc PartitionedScanTask.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
+set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.cc)
+add_library(simworker-util STATIC ${simworker-util_SOURCES})
+
+# For scheduler simulation
 target_link_libraries(simulation-util
+                      ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
+                      ${_VOLTDB_LIBS_PATH}/libevent.a
+                      ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
+                      ${_VOLTDB_LIBS_PATH}/libevent_pthreads.a
+                      ${_VOLTDB_LIBS_PATH}/libssl.a
+                      ${_VOLTDB_LIBS_PATH}/libcrypto.a
+                      pthread Boost::system Boost::thread dl
+)
+
+# For worker simulation
+target_link_libraries(simworker-util
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
                       ${_VOLTDB_LIBS_PATH}/libevent.a
                       ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
@@ -31,10 +46,15 @@ add_executable(TestPartitionedFIFOScheduler TestPartitionedFIFOScheduler.cc)
 add_executable(TestSparkScheduler TestSparkScheduler.cc)
 add_executable(TestPartitionedScanTask TestPartitionedScanTask.cc)
 
+add_executable(SyntheticWorker SyntheticWorker.cc)
+
 # Link to libs.
 target_link_libraries(SyntheticScheduler
                       simulation-util
 )
+
+target_link_libraries(SyntheticWorker
+                      simworker-util)
 
 target_link_libraries(TestPartitionedFIFOScheduler
                       simulation-util
@@ -48,7 +68,7 @@ target_link_libraries(TestPartitionedScanTask
                       simulation-util)
 
 # Generate output to lib/ or bin/
-set_target_properties(simulation-util SyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask
+set_target_properties(simulation-util simworker-util SyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
