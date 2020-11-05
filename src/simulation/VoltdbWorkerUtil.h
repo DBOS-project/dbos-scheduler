@@ -41,8 +41,8 @@ public:
 
 protected:
   std::string dbAddr_;  // Address to VoltDB server.
-  DbosId workerId_;  // DBOS worker id.
-  bool stop_;  // If true, stop all threads.
+  DbosId workerId_;     // DBOS worker id.
+  bool stop_;           // If true, stop all threads.
 };
 
 #endif  // #ifndef DBOS_VOLTDB_WORKER_UTIL_H

@@ -40,7 +40,7 @@ void SinglePartitionedFIFOTaskScheduler::truncateTaskTable() {
 }
 
 DbosStatus SinglePartitionedFIFOTaskScheduler::insertWorker(DbosId workerID,
-                                                      int32_t capacity) {
+                                                            int32_t capacity) {
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -63,35 +63,36 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   // Actual num partitions.
-  int activePartitions =
-      std::min(partitions_, numWorkers_);
+  int activePartitions = std::min(partitions_, numWorkers_);
   int pkey = rand() % activePartitions;
 
   // Try to find an available worker in the partition.
-	for (int count = 1; count <= activePartitions; ++count) {
-	  voltdb::Procedure procedure("SelectSinglePartitionedTaskWorker",
-	                              parameterTypes);
-	  voltdb::ParameterSet* params = procedure.params();
-	  params->addInt32(pkey).addInt32(taskID);
-	  voltdb::InvocationResponse r = client_->invoke(procedure);
-	  if (r.failure()) {
-	    std::cout << "SelectSinglePartitionedTaskWorker procedure failed. "
-	              << r.toString() << std::endl;
-	    return false;
-	  }
-	  std::vector<voltdb::Table> results = r.results();
-	  voltdb::Row row = results[0].iterator().next();
-	  int status = row.getInt64(0);
-	  if (status == SUCCESS) {
-	    return true;
-	  } else if (status == NOWORKER) { // implementing basic functionality first
-	  	// std::cout << "no worker in partition " << count << std::endl;
-        // TODO: If there is no worker, need to check other partitions for available workers.
-				// TODO: If there are no available workers, put task in a buffer
+  for (int count = 1; count <= activePartitions; ++count) {
+    voltdb::Procedure procedure("SelectSinglePartitionedTaskWorker",
+                                parameterTypes);
+    voltdb::ParameterSet* params = procedure.params();
+    params->addInt32(pkey).addInt32(taskID);
+    voltdb::InvocationResponse r = client_->invoke(procedure);
+    if (r.failure()) {
+      std::cout << "SelectSinglePartitionedTaskWorker procedure failed. "
+                << r.toString() << std::endl;
+      return false;
+    }
+    std::vector<voltdb::Table> results = r.results();
+    voltdb::Row row = results[0].iterator().next();
+    int status = row.getInt64(0);
+    if (status == SUCCESS) {
+      return true;
+    } else if (status == NOWORKER) {  // implementing basic functionality first
+      // std::cout << "no worker in partition " << count << std::endl;
+      // TODO: If there is no worker, need to check other partitions for
+      // available workers.
+      // TODO: If there are no available workers, put task in a buffer
     }
     pkey = (pkey + count) % activePartitions;
   }
-  std::cout << "went through " << activePartitions << " partitions" << std::endl;
+  std::cout << "went through " << activePartitions << " partitions"
+            << std::endl;
   return false;
 }
 
@@ -103,7 +104,10 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::setup() {
   std::cout << "Foo" << std::endl;
   for (int i = 0; i < numWorkers_; ++i) {
     ret = insertWorker(i, workerCapacity_);
-    if (!ret) { std::cout << "unable to add worker " << i << std::endl; return false; }
+    if (!ret) {
+      std::cout << "unable to add worker " << i << std::endl;
+      return false;
+    }
   }
   return true;
 }
@@ -116,11 +120,11 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::teardown() {
 }
 
 DbosStatus SinglePartitionedFIFOTaskScheduler::schedule() {
-	//std::cout << "Foo" << std::endl;
+  // std::cout << "Foo" << std::endl;
   for (int i = 0; i < numTasks_; ++i) {
     int taskId = taskindex.fetch_add(1);
     DbosStatus status = selectTaskWorker(taskId);
-  	assert(status == true);
+    assert(status == true);
   }
   return true;
 }

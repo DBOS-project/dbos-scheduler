@@ -24,9 +24,8 @@ void SparkScheduler::truncateWorkerTable() {
   }
 }
 
-DbosStatus SparkScheduler::insertWorker(DbosId workerID,
-                                                  int32_t capacity,
-                                                  int32_t workerData) {
+DbosStatus SparkScheduler::insertWorker(DbosId workerID, int32_t capacity,
+                                        int32_t workerData) {
   std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -35,8 +34,10 @@ DbosStatus SparkScheduler::insertWorker(DbosId workerID,
 
   voltdb::Procedure procedure("InsertSparkWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerID).addInt32(capacity).addInt32(workerData).addInt32(workerID %
-                                                         workerPartitions_);
+  params->addInt32(workerID)
+      .addInt32(capacity)
+      .addInt32(workerData)
+      .addInt32(workerID % workerPartitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertSparkWorker procedure failed. " << r.toString();
@@ -72,8 +73,7 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
   return -1;
 }
 
-DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId,
-                                                        DbosId workerId) {
+DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   // TODO: implement the actual transaction here.
   std::cout << "assignTaskToWorker, to be implemented." << std::endl;
   std::cout << taskId << " -> " << workerId << std::endl;
@@ -82,8 +82,7 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId,
   return retStatus;
 }
 
-DbosStatus SparkScheduler::finishTask(DbosId taskId,
-                                                DbosId workerId) {
+DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);

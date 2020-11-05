@@ -15,8 +15,8 @@
 class PartitionedScanTask : public VoltdbSchedulerUtil {
 public:
   PartitionedScanTask(voltdb::Client* client, std::string dbAddr,
-                               int partitions, int numTasks,
-                               int numWorkers, float probMultiTx)
+                      int partitions, int numTasks, int numWorkers,
+                      float probMultiTx)
       : VoltdbSchedulerUtil(client, dbAddr),
         partitions_(partitions),
         numTasks_(numTasks),

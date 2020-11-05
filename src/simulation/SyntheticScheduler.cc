@@ -14,9 +14,9 @@
 #include "simulation/BenchmarkUtil.h"
 #include "simulation/PartitionedFIFOScheduler.h"
 #include "simulation/PartitionedFIFOTaskScheduler.h"
+#include "simulation/PartitionedScanTask.h"
 #include "simulation/SinglePartitionedFIFOTaskScheduler.h"
 #include "simulation/SparkScheduler.h"
-#include "simulation/PartitionedScanTask.h"
 #include "simulation/VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
@@ -64,14 +64,13 @@ static const std::string kTestPwd = "testpassword";
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoTaskAlgo = "fifo-task";
-static const std::string kSinglePartitionedFifoTaskAlgo = "single-partitioned-fifo-task";
+static const std::string kSinglePartitionedFifoTaskAlgo =
+    "single-partitioned-fifo-task";
 static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
-static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo,
-                                                            kFifoTaskAlgo,
-                                                            kSinglePartitionedFifoTaskAlgo,
-                                                            kSparkAlgo,
-                                                            kScanTaskAlgo};
+static const std::unordered_set<std::string> kAlgorithms = {
+    kFifoAlgo, kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo, kSparkAlgo,
+    kScanTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // If true, truncate tables after execution.
@@ -96,12 +95,11 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
         voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
         numWorkers, probMultiTx);
   } else if (algo == kSparkAlgo) {
-    scheduler = new SparkScheduler(
-        voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
+    scheduler = new SparkScheduler(voltdbClient, serverAddr, partitions,
+                                   workerCapacity, numWorkers);
   } else if (algo == kScanTaskAlgo) {
-    scheduler = new PartitionedScanTask(
-        voltdbClient, serverAddr, partitions, numTasks,
-        numWorkers, probMultiTx);
+    scheduler = new PartitionedScanTask(voltdbClient, serverAddr, partitions,
+                                        numTasks, numWorkers, probMultiTx);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
