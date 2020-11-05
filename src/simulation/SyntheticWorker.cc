@@ -29,6 +29,8 @@ static int measureIntervalMsec = 2000;  // 2sec in ms.
 static int totalExecTimeMsec = 10000;  // 10sec in ms.
 
 static bool mainFinished = false;  // Control whether to stop the experiment.
+static std::mutex mainLock;  // For the condition variable.
+static std::condition_variable mainCv;  // Condition variable that notifies worker control threads. 
 
 // Type of worker
 // TODO: add more types here.
@@ -60,11 +62,15 @@ static void WorkerThread(const int workerId,
                          const std::string& serverAddr) {
   VoltdbWorkerUtil* worker = constructWorker(workerId, serverAddr, workerType);
   assert(worker != nullptr);
-  // TODO: implement launching executor threads, and dispatch thread.
   worker->setup();
-  do {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  } while (!mainFinished);
+
+  {
+    // Wait for main thread finish signal.
+    std::unique_lock<std::mutex> lock(mainLock);
+    mainCv.wait(lock, []{ return mainFinished; });
+    lock.unlock();
+  } 
+
   // Clean up
   worker->teardown();
   delete worker;
@@ -95,7 +101,9 @@ static bool runBenchmark(const std::string& serverAddr,
     currTime = BenchmarkUtil::getCurrTimeUsec();
   } while (currTime < endTime);
 
+  // Notifying workers to stop.
   mainFinished = true;
+  mainCv.notify_all();
   for (int i = 0; i < numWorkers; ++i) {
     workerThreads[i]->join();
     delete workerThreads[i];
@@ -120,6 +128,9 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
+  std::cerr << "\t-E <number of executors per worker>: default "
+            << numExecutors << "\n";
+
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
   // Print all options here.
   std::cerr << "\t-A <worker type (options: ";
@@ -136,7 +147,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:W:P:A:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:W:P:A:E:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -159,6 +170,9 @@ int main(int argc, char** argv) {
       case 'A':
         workerType = optarg;
         break;
+      case 'E':
+        numExecutors = atoi(optarg);
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -174,6 +188,7 @@ int main(int argc, char** argv) {
   }
   std::cerr << "Worker type: " << workerType << std::endl;
   std::cerr << "Parallel workers: " << numWorkers << std::endl;
+  std::cerr << "Executors per worker: " << numExecutors << std::endl;
   std::cerr << "Partitions: " << partitions << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;

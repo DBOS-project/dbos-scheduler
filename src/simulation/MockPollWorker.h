@@ -26,7 +26,7 @@ public:
 
   // Execute tasks. Potentially run in dedicated executor thread pool.
   // Borrow ideas from: https://github.com/embeddedartistry/embedded-resources/blob/master/examples/cpp/dispatch.cpp
-  void execute(); 
+  void execute(int execId); 
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
