@@ -22,12 +22,20 @@ VoltdbWorkerUtil::~VoltdbWorkerUtil() {
   // placeholder.
 }
 
-voltdb::Client VoltdbWorkerUtil::createVoltdbClient() {
+voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
   // Create a VoltDB client, connect to the DB.
   // SHA-256 can be used as of VoltDB5.2 by specifying voltdb::HASH_SHA256
   voltdb::ClientConfig config(kTestUser, kTestPwd, voltdb::HASH_SHA1);
   voltdb::Client client = voltdb::Client::create(config);
   srand(time(NULL));
+  try {
+    client.createConnection(dbAddr);
+  } catch (std::exception& e) {
+    std::cerr << "An exception occured while connecting to VoltDB "
+              << std::endl;
+    // TODO: more robust error handling.
+    throw;
+  }
   return client;
 }
 

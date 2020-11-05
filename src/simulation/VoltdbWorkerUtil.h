@@ -22,14 +22,9 @@ typedef bool DbosStatus;
 // Call static function createVoltdbClient() to get a local VoltDB client.
 class VoltdbWorkerUtil {
 public:
+  // Task state.
+  enum TaskState { UNKNOWN = 0, PENDING, RUNNING, COMPLETE };
   VoltdbWorkerUtil(DbosId workerId, std::string dbAddr);
-
-  // Dispatch tasks that are assigned to this worker.
-  // Potentially run in a dedicated dispatch thread.
-  virtual void dispatch() = 0;
-
-  // Execute tasks. Potentially run in dedicated executor thread pool.
-  virtual void execute() = 0; 
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
@@ -42,7 +37,7 @@ public:
   virtual ~VoltdbWorkerUtil() = 0;
 
   // Create a VoltDB client and return.
-  static voltdb::Client createVoltdbClient();
+  static voltdb::Client createVoltdbClient(std::string dbAddr);
 
 protected:
   std::string dbAddr_;  // Address to VoltDB server.
