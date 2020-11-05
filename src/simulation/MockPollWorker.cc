@@ -51,38 +51,35 @@ DbosStatus MockPollWorker::teardown() {
 }
 
 void MockPollWorker::dispatch() {
-  //TODO
   std::cout << "A dispatcher for worker " << workerId_ << "\n";
   // Create a local VoltDB client.
-  voltdb::Client voltdbClient =
-      VoltdbWorkerUtil::createVoltdbClient(dbAddr_);
+  voltdb::Client voltdbClient = VoltdbWorkerUtil::createVoltdbClient(dbAddr_);
 
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  voltdb::Procedure procedure("WorkerSelectTask",
-                              parameterTypes);
+  voltdb::Procedure procedure("WorkerSelectTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   do {
     DbosId taskId = -1;
     // Select a task from DB.
     params->addInt32(pkey_).addInt32(workerId_).addInt32(PENDING);
 
-	  voltdb::InvocationResponse r = voltdbClient.invoke(procedure);
-	  if (r.failure()) {
-	    std::cout << "WorkerSelecTask procedure failed. "
-	              << r.toString() << std::endl;
-	    continue;
-	  }
-	  voltdb::Table results = r.results()[0];
+    voltdb::InvocationResponse r = voltdbClient.invoke(procedure);
+    if (r.failure()) {
+      std::cout << "WorkerSelecTask procedure failed. " << r.toString()
+                << std::endl;
+      continue;
+    }
+    voltdb::Table results = r.results()[0];
     voltdb::TableIterator resIter = results.iterator();
     // std::cout << r.toString();
     // TODO: support top-k.
     while (resIter.hasNext()) {
       voltdb::Row row = resIter.next();
       taskId = row.getInt32(0);
-	 
+
       {
         std::lock_guard<std::mutex> lock(lock_);
         taskQueue_.push(taskId);
@@ -97,19 +94,16 @@ void MockPollWorker::dispatch() {
 }
 
 void MockPollWorker::execute(int execId) {
-  // TODO
-  std::cout << "Executor "<< execId << " for worker " << workerId_ << "\n";
+  std::cout << "Executor " << execId << " for worker " << workerId_ << "\n";
   // Create a local VoltDB client.
-  voltdb::Client voltdbClient =
-      VoltdbWorkerUtil::createVoltdbClient(dbAddr_);
+  voltdb::Client voltdbClient = VoltdbWorkerUtil::createVoltdbClient(dbAddr_);
 
   std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[3] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  voltdb::Procedure procedure("WorkerUpdateTask",
-                              parameterTypes);
+  voltdb::Procedure procedure("WorkerUpdateTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
 
   std::unique_lock<std::mutex> lock(lock_);
@@ -117,7 +111,7 @@ void MockPollWorker::execute(int execId) {
   // Wait for tasks
   do {
     // Wait until we have a task, or stop signal.
-    cv_.wait(lock, [this]{return (taskQueue_.size() || stop_); });
+    cv_.wait(lock, [this] { return (taskQueue_.size() || stop_); });
 
     // Get one task
     if (!stop_ && taskQueue_.size()) {
@@ -129,16 +123,17 @@ void MockPollWorker::execute(int execId) {
 
       // std::cout << "worker " << workerId_ << " executor " << execId
       //          << " process taskId " << taskId << std::endl;
-      
+
       // TODO: add parameter to mock execution time.
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       // Update task as completed from DB, and put back one capacity.
-      params->addInt32(pkey_).addInt32(workerId_).addInt32(taskId).addInt32(COMPLETE);
+      params->addInt32(pkey_).addInt32(workerId_).addInt32(taskId).addInt32(
+          COMPLETE);
 
       voltdb::InvocationResponse r = voltdbClient.invoke(procedure);
       if (r.failure()) {
-        std::cout << "WorkerUpdateTask procedure failed. "
-                  << r.toString() << std::endl;
+        std::cout << "WorkerUpdateTask procedure failed. " << r.toString()
+                  << std::endl;
         abort();  // TODO: better error handling.
       }
 
@@ -146,7 +141,6 @@ void MockPollWorker::execute(int execId) {
       lock.lock();
     }
   } while (!stop_);
-  std::cout << "Stopped executor " << execId << " for worker " << workerId_ << "\n";
+  std::cout << "Stopped executor " << execId << " for worker " << workerId_
+            << "\n";
 }
-
-

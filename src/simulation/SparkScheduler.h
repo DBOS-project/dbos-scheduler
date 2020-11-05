@@ -16,8 +16,7 @@
 class SparkScheduler : public VoltdbSchedulerUtil {
 public:
   SparkScheduler(voltdb::Client* client, std::string dbAddr,
-                           int workerPartitions, int workerCapacity,
-                           int numWorkers)
+                 int workerPartitions, int workerCapacity, int numWorkers)
       : VoltdbSchedulerUtil(client, dbAddr),
         workerPartitions_(workerPartitions),
         workerCapacity_(workerCapacity),

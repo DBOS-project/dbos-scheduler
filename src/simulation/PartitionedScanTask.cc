@@ -37,7 +37,7 @@ DbosStatus PartitionedScanTask::insertTask(DbosId taskID) {
   voltdb::ParameterSet* params = procedure.params();
   DbosId workerID = taskID % numWorkers_;  // assign a worker to the task.
   params->addInt32(taskID).addInt32(workerID).addInt32(1).addInt32(workerID %
-                                                             partitions_);
+                                                                   partitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertTask procedure failed. " << r.toString();
@@ -60,8 +60,7 @@ DbosId PartitionedScanTask::selectMostTaskWorker() {
   if (coin > probMultiTx_) {
     // Try to find a worker with most tasks in a single partition.
     for (int count = 1; count <= activePartitions; ++count) {
-      voltdb::Procedure procedure("ScanPartitionedTaskWorker",
-                                  parameterTypes);
+      voltdb::Procedure procedure("ScanPartitionedTaskWorker", parameterTypes);
       voltdb::ParameterSet* params = procedure.params();
       params->addInt32(pkey);
       voltdb::InvocationResponse r = client_->invoke(procedure);
@@ -87,7 +86,8 @@ DbosId PartitionedScanTask::selectMostTaskWorker() {
   voltdb::Procedure naive_procedure("ScanTaskWorker", parameterTypes);
   voltdb::InvocationResponse r = client_->invoke(naive_procedure);
   if (r.failure()) {
-    std::cout << "ScanTaskWorker procedure failed. " << r.toString() << std::endl;
+    std::cout << "ScanTaskWorker procedure failed. " << r.toString()
+              << std::endl;
     return false;
   }
   std::vector<voltdb::Table> results = r.results();
@@ -96,7 +96,6 @@ DbosId PartitionedScanTask::selectMostTaskWorker() {
   if (workerId >= 0) { return workerId; }
 
   return NOWORKER;
-
 }
 
 DbosStatus PartitionedScanTask::setup() {

@@ -15,8 +15,9 @@
 class SinglePartitionedFIFOTaskScheduler : public VoltdbSchedulerUtil {
 public:
   SinglePartitionedFIFOTaskScheduler(voltdb::Client* client, std::string dbAddr,
-                               int partitions, int numTasks, int workerCapacity,
-                               int numWorkers, float probMultiTx)
+                                     int partitions, int numTasks,
+                                     int workerCapacity, int numWorkers,
+                                     float probMultiTx)
       : VoltdbSchedulerUtil(client, dbAddr),
         partitions_(partitions),
         numTasks_(numTasks),

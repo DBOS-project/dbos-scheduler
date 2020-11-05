@@ -40,5 +40,4 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
 }
 
 VoltdbWorkerUtil::VoltdbWorkerUtil(DbosId workerId, std::string dbAddr)
-    : workerId_(workerId), dbAddr_(dbAddr), stop_(false) {
-}
+    : workerId_(workerId), dbAddr_(dbAddr), stop_(false) {}

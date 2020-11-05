@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "simulation/BenchmarkUtil.h"
-#include "simulation/VoltdbWorkerUtil.h"
 #include "simulation/MockPollWorker.h"
+#include "simulation/VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Number of workers
@@ -29,12 +29,14 @@ static int measureIntervalMsec = 2000;  // 2sec in ms.
 static int totalExecTimeMsec = 10000;  // 10sec in ms.
 
 static bool mainFinished = false;  // Control whether to stop the experiment.
-static std::mutex mainLock;  // For the condition variable.
-static std::condition_variable mainCv;  // Condition variable that notifies worker control threads. 
+static std::mutex mainLock;        // For the condition variable.
+static std::condition_variable
+    mainCv;  // Condition variable that notifies worker control threads.
 
 // Type of worker
 // TODO: add more types here.
-static const std::string kMockPoll = "mock-poll";  // Polling DB to find executable tasks.
+static const std::string kMockPoll =
+    "mock-poll";  // Polling DB to find executable tasks.
 static const std::unordered_set<std::string> kWorkerTypes = {kMockPoll};
 static std::string workerType = kMockPoll;
 
@@ -58,8 +60,7 @@ static VoltdbWorkerUtil* constructWorker(const DbosId workerId,
 /*
  * Worker thread.
  */
-static void WorkerThread(const int workerId,
-                         const std::string& serverAddr) {
+static void WorkerThread(const int workerId, const std::string& serverAddr) {
   VoltdbWorkerUtil* worker = constructWorker(workerId, serverAddr, workerType);
   assert(worker != nullptr);
   worker->setup();
@@ -67,9 +68,9 @@ static void WorkerThread(const int workerId,
   {
     // Wait for main thread finish signal.
     std::unique_lock<std::mutex> lock(mainLock);
-    mainCv.wait(lock, []{ return mainFinished; });
+    mainCv.wait(lock, [] { return mainFinished; });
     lock.unlock();
-  } 
+  }
 
   // Clean up
   worker->teardown();
@@ -88,8 +89,7 @@ static bool runBenchmark(const std::string& serverAddr,
 
   // Start worker threads.
   for (int i = 0; i < numWorkers; ++i) {
-    workerThreads.push_back(
-        new std::thread(&WorkerThread, i, serverAddr));
+    workerThreads.push_back(new std::thread(&WorkerThread, i, serverAddr));
   }
 
   uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -128,8 +128,8 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
-  std::cerr << "\t-E <number of executors per worker>: default "
-            << numExecutors << "\n";
+  std::cerr << "\t-E <number of executors per worker>: default " << numExecutors
+            << "\n";
 
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
   // Print all options here.
