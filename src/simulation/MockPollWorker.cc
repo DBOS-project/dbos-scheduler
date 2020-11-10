@@ -31,6 +31,12 @@ DbosStatus MockPollWorker::teardown() {
   // Clean up data and threads.
   std::cout << "Stop worker " << workerId_ << std::endl;
   stopDispatch_ = true;
+
+  // Join dispatch thread first.
+  size_t totalThreads = threads_.size();
+  threads_[totalThreads-1]->join();
+  delete threads_[totalThreads-1];
+
   // Wait until the queue is empty
   while (taskQueue_.size()) {
     std::cout << "Waiting to drain task queue\n";
@@ -43,7 +49,7 @@ DbosStatus MockPollWorker::teardown() {
   }
   cv_.notify_all();
 
-  for (size_t i = 0; i < threads_.size(); ++i) {
+  for (size_t i = 0; i < totalThreads-1; ++i) {
     threads_[i]->join();
     delete threads_[i];
   }
@@ -63,8 +69,8 @@ void MockPollWorker::dispatch() {
   voltdb::ParameterSet* params = procedure.params();
   do {
     DbosId taskId = -1;
-    // Select a task from DB.
-    params->addInt32(pkey_).addInt32(workerId_).addInt32(PENDING);
+    // Select top-k task(s) from DB.
+    params->addInt32(pkey_).addInt32(workerId_).addInt32(topk_);
 
     voltdb::InvocationResponse r = voltdbClient.invoke(procedure);
     if (r.failure()) {
@@ -75,7 +81,6 @@ void MockPollWorker::dispatch() {
     voltdb::Table results = r.results()[0];
     voltdb::TableIterator resIter = results.iterator();
     // std::cout << r.toString();
-    // TODO: support top-k.
     while (resIter.hasNext()) {
       voltdb::Row row = resIter.next();
       taskId = row.getInt32(0);
@@ -87,8 +92,8 @@ void MockPollWorker::dispatch() {
       cv_.notify_one();
       // std::cout << "dispatch taskId " << taskId << "\n";
     }
-    // Busy polling?
-    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    // Busy polling or sleep?
+    // std::this_thread::sleep_for(std::chrono::microseconds(100));
   } while (!stopDispatch_);
   std::cout << "Stopped dispatcher for worker " << workerId_ << "\n";
 }
@@ -125,7 +130,7 @@ void MockPollWorker::execute(int execId) {
       //          << " process taskId " << taskId << std::endl;
 
       // TODO: add parameter to mock execution time.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      // std::this_thread::sleep_for(std::chrono::microseconds(100));
       // Update task as completed from DB, and put back one capacity.
       params->addInt32(pkey_).addInt32(workerId_).addInt32(taskId).addInt32(
           COMPLETE);

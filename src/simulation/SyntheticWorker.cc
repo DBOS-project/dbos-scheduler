@@ -22,6 +22,9 @@ static int numExecutors = 1;
 // Number of worker/task partitions, not VoltDB partitions.
 static int partitions = 8;
 
+// Select top-k tasks at a time.
+static int topkTasks = 1;
+
 // Report latency/throughput stats every interval.
 static int measureIntervalMsec = 2000;  // 2sec in ms.
 
@@ -49,7 +52,7 @@ static VoltdbWorkerUtil* constructWorker(const DbosId workerId,
   VoltdbWorkerUtil* worker = nullptr;
   if (type == kMockPoll) {
     int pkey = workerId % partitions;
-    worker = new MockPollWorker(workerId, pkey, serverAddr, numExecutors);
+    worker = new MockPollWorker(workerId, pkey, serverAddr, numExecutors, topkTasks);
   } else {
     std::cerr << "Unsupported worker type: " << type << "\n";
   }
@@ -130,6 +133,8 @@ static void Usage(char** argv, const std::string& msg = "") {
             << numWorkers << "\n";
   std::cerr << "\t-E <number of executors per worker>: default " << numExecutors
             << "\n";
+  std::cerr << "\t-K <select top-K tasks in a batch>: default " << topkTasks
+            << "\n";
 
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
   // Print all options here.
@@ -147,7 +152,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "ho:s:i:t:W:P:A:E:")) != -1) {
+  while ((opt = getopt(argc, argv, "ho:s:i:t:W:P:A:E:K:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -173,6 +178,9 @@ int main(int argc, char** argv) {
       case 'E':
         numExecutors = atoi(optarg);
         break;
+      case 'K':
+        topkTasks = atoi(optarg);
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -189,6 +197,7 @@ int main(int argc, char** argv) {
   std::cerr << "Worker type: " << workerType << std::endl;
   std::cerr << "Parallel workers: " << numWorkers << std::endl;
   std::cerr << "Executors per worker: " << numExecutors << std::endl;
+  std::cerr << "Task top-k (batch) size: " << topkTasks << std::endl;
   std::cerr << "Partitions: " << partitions << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;

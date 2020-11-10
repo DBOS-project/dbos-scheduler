@@ -14,10 +14,12 @@
 
 class MockPollWorker : public VoltdbWorkerUtil {
 public:
-  MockPollWorker(int workerId, int pkey, std::string dbAddr, int numExecutors)
+  MockPollWorker(int workerId, int pkey, std::string dbAddr, int numExecutors,
+                 int topk)
       : VoltdbWorkerUtil(workerId, dbAddr),
         pkey_(pkey),
-        numExecutors_(numExecutors){};
+        numExecutors_(numExecutors),
+        topk_(topk) {};
 
   // Dispatch tasks that are assigned to this worker.
   // Potentially run in a dedicated dispatch thread.
@@ -48,6 +50,7 @@ private:
   std::queue<DbosId> taskQueue_;  // queue of task Ids
   std::condition_variable cv_;    // used to sync dispatch queue and executors
   bool stopDispatch_ = false;
+  int topk_;  // Select top-K tasks in a batch
 };
 
 #endif  // #ifndef MOCK_POLL_WORKER_H

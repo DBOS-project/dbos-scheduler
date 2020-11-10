@@ -8,7 +8,10 @@ cd ${SCRIPT_DIR}/../
 # Create obj directory
 mkdir -p obj/
 
-# Reload the procedures.
+# On supercloud, use the enterprise version. On local cluster, change the path.
+VOLT_HOME="/home/gridsan/groups/DBOS/shared/VoltDB/voltdb-ent-9.3.2"
+VOLTDB_BIN="${VOLT_HOME}/bin"
+
 javac -classpath "$VOLT_HOME/voltdb/*" -d obj sql/*.java 
 jar cvf build/DBOSProcedures.jar -C obj .   
-echo "load classes build/DBOSProcedures.jar;" | sqlcmd
+${VOLTDB_BIN}/sqlcmd < sql/load_procedures.sql
