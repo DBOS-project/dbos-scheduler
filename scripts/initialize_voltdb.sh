@@ -15,7 +15,7 @@ bash ${SHARED_DIR}/init_start.sh
 # sleep 5
 
 # On supercloud, use the enterprise version. On local cluster, change the path.
-VOLT_HOME="/home/gridsan/groups/DBOS/shared/VoltDB/voltdb-ent-9.3.2"
+VOLT_HOME=${VOLT_HOME:-"/home/gridsan/groups/DBOS/shared/VoltDB/voltdb-ent-9.3.2"}
 VOLTDB_BIN="${VOLT_HOME}/bin"
 
 # Create tables.
