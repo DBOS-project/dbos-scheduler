@@ -7,6 +7,7 @@ scripts/temp/**
 .vscode
 **/obj*/
 **/log*/
+*.csv
 
 # Compiled Object files
 *.slo
