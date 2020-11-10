@@ -42,15 +42,18 @@ void PartitionedFIFOTaskScheduler::truncateTaskTable() {
 
 DbosStatus PartitionedFIFOTaskScheduler::insertWorker(DbosId workerID,
                                                       int32_t capacity) {
-  std::vector<voltdb::Parameter> parameterTypes(3);
+  std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[3] = voltdb::Parameter(voltdb::WIRE_TYPE_STRING);
 
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerID).addInt32(capacity).addInt32(workerID %
-                                                         partitions_);
+  params->addInt32(workerID)
+         .addInt32(capacity)
+         .addInt32(workerID % partitions_)
+         .addString("");
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();

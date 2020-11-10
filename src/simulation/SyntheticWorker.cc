@@ -10,6 +10,7 @@
 
 #include "simulation/BenchmarkUtil.h"
 #include "simulation/MockPollWorker.h"
+#include "simulation/MockHTTPWorker.h"
 #include "simulation/VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
@@ -40,19 +41,25 @@ static std::condition_variable
 // TODO: add more types here.
 static const std::string kMockPoll =
     "mock-poll";  // Polling DB to find executable tasks.
-static const std::unordered_set<std::string> kWorkerTypes = {kMockPoll};
+static const std::string kMockHTTP =
+    "mock-http";  // Listen for HTTP requests to execute.
+static const std::unordered_set<std::string> kWorkerTypes = {kMockPoll, kMockHTTP};
 static std::string workerType = kMockPoll;
 
 /*
  * Return a constructed worker instance based on type.
  */
-static VoltdbWorkerUtil* constructWorker(const DbosId workerId,
+static VoltdbWorkerUtil* constructWorker(voltdb::Client* voltdbClient,
+		                         const DbosId workerId,
                                          const std::string& serverAddr,
                                          const std::string& type) {
   VoltdbWorkerUtil* worker = nullptr;
   if (type == kMockPoll) {
     int pkey = workerId % partitions;
     worker = new MockPollWorker(workerId, pkey, serverAddr, numExecutors, topkTasks);
+  } else if (type == kMockHTTP) {
+    int pkey = workerId % partitions;
+    worker = new MockHTTPWorker(voltdbClient, workerId, pkey, serverAddr);
   } else {
     std::cerr << "Unsupported worker type: " << type << "\n";
   }
@@ -64,7 +71,11 @@ static VoltdbWorkerUtil* constructWorker(const DbosId workerId,
  * Worker thread.
  */
 static void WorkerThread(const int workerId, const std::string& serverAddr) {
-  VoltdbWorkerUtil* worker = constructWorker(workerId, serverAddr, workerType);
+  // Create a local VoltDB client.
+  voltdb::Client voltdbClient =
+      VoltdbWorkerUtil::createVoltdbClient(serverAddr);
+
+  VoltdbWorkerUtil* worker = constructWorker(&voltdbClient, workerId, serverAddr, workerType);
   assert(worker != nullptr);
   worker->setup();
 

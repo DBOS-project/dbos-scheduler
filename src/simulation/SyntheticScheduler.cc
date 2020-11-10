@@ -15,6 +15,7 @@
 #include "simulation/PartitionedFIFOScheduler.h"
 #include "simulation/PartitionedFIFOTaskScheduler.h"
 #include "simulation/PartitionedScanTask.h"
+#include "simulation/PushFIFOScheduler.h"
 #include "simulation/SinglePartitionedFIFOTaskScheduler.h"
 #include "simulation/SparkScheduler.h"
 #include "simulation/VoltdbSchedulerUtil.h"
@@ -68,9 +69,10 @@ static const std::string kSinglePartitionedFifoTaskAlgo =
     "single-partitioned-fifo-task";
 static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
+static const std::string kPushFifoAlgo = "push-fifo";
 static const std::unordered_set<std::string> kAlgorithms = {
     kFifoAlgo, kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo, kSparkAlgo,
-    kScanTaskAlgo};
+    kScanTaskAlgo, kPushFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // If true, truncate tables after execution.
@@ -100,6 +102,9 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   } else if (algo == kScanTaskAlgo) {
     scheduler = new PartitionedScanTask(voltdbClient, serverAddr, partitions,
                                         numTasks, numWorkers, probMultiTx);
+  } else if (algo == kPushFifoAlgo) {
+    scheduler = new PushFIFOScheduler(voltdbClient, serverAddr, partitions,
+                                      numTasks, probMultiTx);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
