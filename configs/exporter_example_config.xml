@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<deployment>
+    <cluster hostcount="1" sitesperhost="1" kfactor="0" schema="ddl"/>
+    <partition-detection/>
+    <heartbeat/>
+    <ssl/>
+    <httpd enabled="true">
+        <jsonapi enabled="true"/>
+    </httpd>
+    <snapshot enabled="false"/>
+    <commandlog enabled="false">
+        <frequency/>
+    </commandlog>
+    <systemsettings>
+        <temptables/>
+        <snapshot/>
+        <elastic/>
+        <query/>
+        <procedure/>
+        <resourcemonitor>
+            <memorylimit/>
+        </resourcemonitor>
+        <flushinterval minimum="1">
+            <dr/>
+            <export interval="1"/>
+        </flushinterval>
+    </systemsettings>
+    <security/>
+    <export>
+	<configuration target="httpexporter" enabled="true" type="custom"
+         exportconnectorclass="dbos.voltdb.exportclient.HttpTaskExporter">
+            <property name="batch.mode">false</property>
+        </configuration>
+    </export>
+</deployment>
