@@ -6,7 +6,7 @@ SCRIPT_DIR=$(dirname $(readlink -f $0))
 cd ${SCRIPT_DIR}/../
 
 # On supercloud, use the enterprise version. On local cluster, change the path.
-VOLT_HOME="/home/gridsan/groups/DBOS/shared/VoltDB/voltdb-ent-9.3.2"
+VOLT_HOME=${VOLT_HOME:-"/home/gridsan/groups/DBOS/shared/VoltDB/voltdb-ent-9.3.2"}
 VOLTDB_BIN="${VOLT_HOME}/bin"
 
 # Create obj directory
@@ -34,7 +34,3 @@ ${VOLTDB_BIN}/sqlcmd < sql/create_task_stream.sql
 
 # Load stored procedures
 bash ${SCRIPT_DIR}/update_voltdb_procedures.sh
-
-javac -classpath "$VOLT_HOME/voltdb/*" -d obj/sql sql/*.java
-jar cvf build/DBOSProcedures.jar -C obj/sql .
-${VOLTDB_BIN}/sqlcmd < sql/load_procedures.sql

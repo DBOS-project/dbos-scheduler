@@ -12,6 +12,6 @@ mkdir -p obj/
 VOLT_HOME=${VOLT_HOME:-"/home/gridsan/groups/DBOS/shared/VoltDB/voltdb-ent-9.3.2"}
 VOLTDB_BIN="${VOLT_HOME}/bin"
 
-javac -classpath "$VOLT_HOME/voltdb/*" -d obj sql/*.java 
-jar cvf build/DBOSProcedures.jar -C obj .   
+javac -classpath "$VOLT_HOME/voltdb/*" -d obj/sql sql/*.java
+jar cvf build/DBOSProcedures.jar -C obj/sql .
 ${VOLTDB_BIN}/sqlcmd < sql/load_procedures.sql
