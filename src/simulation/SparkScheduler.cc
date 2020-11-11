@@ -104,9 +104,10 @@ DbosStatus SparkScheduler::setup() {
   // Clean up data from previous run.
   truncateWorkerTable();
   DbosStatus ret;
-  for (int i = 0; i < numWorkers_; ++i) {
-    for (int j = 0; j < dataPerWorker_; ++j) {
-      ret = insertWorker(i, workerCapacity_, i * dataPerWorker_ + j);
+  int numReplicas = std::min(numWorkers_, 3);
+  for (int i = 0; i < numWorkers_ * dataPerWorker_; ++i) {
+    for (int j = 0; j < numReplicas; ++j) {
+      ret = insertWorker((i + j) % numWorkers_, workerCapacity_, i);
       if (!ret) { return false; }
     }
   }
