@@ -78,10 +78,10 @@ DbosStatus PushFIFOScheduler::teardown() {
 }
 
 DbosStatus PushFIFOScheduler::schedule() {
-  for (int i = 0; i < numTasks_; ++i) {
-    int taskId = taskindex.fetch_add(1);
-    DbosStatus status = selectTaskWorker(taskId);
-    assert(status == true);
-  }
+  //for (int i = 0; i < numTasks_; ++i) {
+  int taskId = taskindex.fetch_add(1);
+  DbosStatus status = selectTaskWorker(taskId);
+  assert(status == true);
+  //}
   return true;
 }

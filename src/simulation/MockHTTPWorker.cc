@@ -68,17 +68,18 @@ void MockHTTPWorker::handle_request(struct http_request_s* request) {
   //TODO Do some work or sleep here...
  
   // Signal completion to the database.
-  std::vector<voltdb::Parameter> parameterTypes(3);
+  std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[3] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
 
-  voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
+  voltdb::Procedure procedure("WorkerUpdateTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(worker->workerId_).addInt32(taskId).addInt32(worker->pkey_);
+  params->addInt32(worker->pkey_).addInt32(worker->workerId_).addInt32(taskId).addInt32(COMPLETE);
   voltdb::InvocationResponse r = worker->client_->invoke(procedure);
   if (r.failure()) {
-    std::cout << "FinishWorkerTask procedure failed. " << r.toString();
+    std::cout << "WorkerUpdateTask procedure failed. " << r.toString();
   }
 }
 

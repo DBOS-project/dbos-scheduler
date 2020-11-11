@@ -3,7 +3,11 @@ package dbos.procedures;
 import org.voltdb.*;
 
 public class FinishWorkerTask extends VoltProcedure {
-    
+    // Task states.
+    final long PENDING = 1;
+    final long RUNNING = 2;
+    final long COMPLETE = 3;
+
     public final SQLStmt getCapacity = new SQLStmt (
         "SELECT Capacity FROM Worker WHERE PKey=? AND WorkerID=?;"
     );
@@ -13,7 +17,7 @@ public class FinishWorkerTask extends VoltProcedure {
     );
 
     public final SQLStmt updateState = new SQLStmt (
-        "UPDATE Task SET State=0 WHERE PKey=? AND taskID=?;"
+        "UPDATE Task SET State=3 WHERE PKey=? AND taskID=?;"
     );
     public long run(int workerID, int taskID, int pkey) throws VoltAbortException {
         voltQueueSQL(getCapacity, pkey, workerID);

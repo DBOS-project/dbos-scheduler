@@ -8,6 +8,12 @@ public class PushTask extends VoltProcedure {
     final long NOTASK = -1;
     final long NOWORKER = -2;
 
+    // Task states.
+    final long PENDING = 1;
+    final long RUNNING = 2;
+    final long COMPLETE = 3;
+
+
     public final SQLStmt selectWorker = new SQLStmt (
         "SELECT WorkerID, Capacity, Url FROM Worker WHERE PKey=? AND Capacity > 0 LIMIT 1;"
     );
@@ -36,7 +42,7 @@ public class PushTask extends VoltProcedure {
         long workerID = r.fetchRow(0).getLong(0);
         long capacity = r.fetchRow(0).getLong(1);
         String url = r.fetchRow(0).getString(2);
-        long state = 1; // RUNNING
+        long state = RUNNING; // RUNNING
 
         // If a worker is available, insert task into table and update the worker capacity.
         voltQueueSQL(insertTask, taskID, workerID, state, pkey);
