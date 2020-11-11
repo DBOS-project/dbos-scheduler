@@ -8,9 +8,14 @@ public class TruncateWorkerTable extends VoltProcedure {
         "TRUNCATE TABLE Worker;"
     );
 
+    public final SQLStmt truncateDataShardTable = new SQLStmt (
+        "TRUNCATE TABLE DataLocation;"
+    );
 
     public long run() throws VoltAbortException {
         voltQueueSQL(truncateWorkerTable);
+        voltExecuteSQL();
+        voltQueueSQL(truncateDataShardTable);
         voltExecuteSQL();
         return 0;
     }

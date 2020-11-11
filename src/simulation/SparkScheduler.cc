@@ -53,10 +53,17 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
   std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  int activePartitions = std::min(workerPartitions_, numWorkers_);
-  int offset = rand() % activePartitions;
-  for (int count = 0; count < activePartitions; count++) {
-    int partitionNum = (count + offset) % activePartitions;
+
+  std::vector<voltdb::Parameter> partitionParameterTypes(1);
+  partitionParameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  voltdb::Procedure procedure("SelectDataShardPartition", partitionParameterTypes);
+  voltdb::ParameterSet* pparams = procedure.params();
+  pparams->addInt32(targetData);
+  voltdb::InvocationResponse pr = client_->invoke(procedure);
+  std::vector<voltdb::Table> presults = pr.results();
+  while(presults[0].iterator().hasNext()) {
+    voltdb::Row prow = presults[0].iterator().next();
+    DbosId partitionNum = prow.getInt64(0);
     voltdb::Procedure procedure("SelectSparkWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(partitionNum);
