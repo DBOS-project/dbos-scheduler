@@ -93,7 +93,7 @@ void MockPollWorker::dispatch() {
       // std::cout << "dispatch taskId " << taskId << "\n";
     }
     // Busy polling or sleep?
-    // std::this_thread::sleep_for(std::chrono::microseconds(100));
+    // std::this_thread::sleep_for(std::chrono::microseconds(10 * topk_));
   } while (!stopDispatch_);
   std::cout << "Stopped dispatcher for worker " << workerId_ << "\n";
 }
