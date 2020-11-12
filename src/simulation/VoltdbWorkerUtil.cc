@@ -19,6 +19,7 @@ static const std::string kTestUser = "testuser";
 static const std::string kTestPwd = "testpassword";
 
 std::atomic<uint64_t> VoltdbWorkerUtil::totalTasks_;
+std::atomic<uint64_t> VoltdbWorkerUtil::totalFinishedTasks_;
 
 VoltdbWorkerUtil::~VoltdbWorkerUtil() {
   // placeholder.

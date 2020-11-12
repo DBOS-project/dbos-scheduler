@@ -48,6 +48,7 @@ static std::string workerType = kMockPoll;
 
 // Record performance
 static std::vector<double> dispatchThroughput;
+static std::vector<double> finishThroughput;
 
 /*
  * Return a constructed worker instance based on type.
@@ -102,6 +103,7 @@ static bool runBenchmark(const std::string& serverAddr,
                          const std::string& outputFile) {
   mainFinished = false;
   VoltdbWorkerUtil::totalTasks_.store(0);
+  VoltdbWorkerUtil::totalFinishedTasks_.store(0);
   std::vector<std::thread*> workerThreads;  // Parallel workers.
 
   // Start worker threads.
@@ -113,18 +115,23 @@ static bool runBenchmark(const std::string& serverAddr,
   uint64_t lastTime = currTime;
   uint64_t endTime = currTime + (totalExecTimeMsec * 1000);
   uint64_t lastTasks = VoltdbWorkerUtil::totalTasks_.load();
+  uint64_t lastFinished = VoltdbWorkerUtil::totalFinishedTasks_.load();
   do {
     std::this_thread::sleep_for(std::chrono::milliseconds(measureIntervalMsec));
     std::cerr << "runBenchmark recording performance...\n";
     // TODO: implement performance benchmarking.
     uint64_t currTasks = VoltdbWorkerUtil::totalTasks_.load();
+    uint64_t currFinished = VoltdbWorkerUtil::totalFinishedTasks_.load();
     currTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Compute throughput
     double currThroughput = (currTasks - lastTasks) * 1.0 / ((currTime - lastTime) / 1000000.0);
+    double currFinishedThroughput = (currFinished - lastFinished) * 1.0 / ((currTime - lastTime) / 1000000.0);
     dispatchThroughput.push_back(currThroughput);
+    finishThroughput.push_back(currFinishedThroughput);
     lastTasks = currTasks;
     lastTime = currTime;
+    lastFinished = currFinished;
   } while (currTime < endTime);
 
   // Notifying workers to stop.
@@ -136,9 +143,9 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   // TODO: Processing the results.
-  std::cerr << "Throughput\n";
-  for (auto t : dispatchThroughput) {
-    std::cerr << t << std::endl;
+  std::cerr << "Dispatch-Throughput,Finished-Throughput\n";
+  for (int i = 0; i < dispatchThroughput.size(); ++i) {
+    std::cerr << dispatchThroughput[i] << ",  " << finishThroughput[i] << std::endl;
   }
 
   // Clean up.
