@@ -66,6 +66,7 @@ void MockHTTPWorker::handle_request(struct http_request_s* request) {
   http_respond(request, response);
 
   //TODO Do some work or sleep here...
+  VoltdbWorkerUtil::totalTasks_.fetch_add(1);
  
   // Signal completion to the database.
   std::vector<voltdb::Parameter> parameterTypes(4);

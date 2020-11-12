@@ -39,6 +39,7 @@ public:
   // Create a VoltDB client and return.
   static voltdb::Client createVoltdbClient(std::string dbAddr);
 
+  static std::atomic<uint64_t> totalTasks_;
 protected:
   std::string dbAddr_;  // Address to VoltDB server.
   DbosId workerId_;     // DBOS worker id.

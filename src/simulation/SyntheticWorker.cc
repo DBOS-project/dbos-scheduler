@@ -46,6 +46,9 @@ static const std::string kMockHTTP =
 static const std::unordered_set<std::string> kWorkerTypes = {kMockPoll, kMockHTTP};
 static std::string workerType = kMockPoll;
 
+// Record performance
+static std::vector<double> dispatchThroughput;
+
 /*
  * Return a constructed worker instance based on type.
  */
@@ -98,7 +101,7 @@ static void WorkerThread(const int workerId, const std::string& serverAddr) {
 static bool runBenchmark(const std::string& serverAddr,
                          const std::string& outputFile) {
   mainFinished = false;
-
+  VoltdbWorkerUtil::totalTasks_.store(0);
   std::vector<std::thread*> workerThreads;  // Parallel workers.
 
   // Start worker threads.
@@ -107,12 +110,21 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
+  uint64_t lastTime = currTime;
   uint64_t endTime = currTime + (totalExecTimeMsec * 1000);
+  uint64_t lastTasks = VoltdbWorkerUtil::totalTasks_.load();
   do {
     std::this_thread::sleep_for(std::chrono::milliseconds(measureIntervalMsec));
     std::cerr << "runBenchmark recording performance...\n";
     // TODO: implement performance benchmarking.
+    uint64_t currTasks = VoltdbWorkerUtil::totalTasks_.load();
     currTime = BenchmarkUtil::getCurrTimeUsec();
+
+    // Compute throughput
+    double currThroughput = (currTasks - lastTasks) * 1.0 / ((currTime - lastTime) / 1000000.0);
+    dispatchThroughput.push_back(currThroughput);
+    lastTasks = currTasks;
+    lastTime = currTime;
   } while (currTime < endTime);
 
   // Notifying workers to stop.
@@ -124,6 +136,10 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   // TODO: Processing the results.
+  std::cerr << "Throughput\n";
+  for (auto t : dispatchThroughput) {
+    std::cerr << t << std::endl;
+  }
 
   // Clean up.
   return true;

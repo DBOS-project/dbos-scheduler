@@ -90,6 +90,7 @@ void MockPollWorker::dispatch() {
         taskQueue_.push(taskId);
       }
       cv_.notify_one();
+      VoltdbWorkerUtil::totalTasks_.fetch_add(1);
       // std::cout << "dispatch taskId " << taskId << "\n";
     }
     // Busy polling or sleep?
