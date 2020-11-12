@@ -3,6 +3,7 @@
 #define __STDC_LIMIT_MACROS
 
 #include <vector>
+#include <thread>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -17,6 +18,7 @@
 #define SUCCESS 0
 #define NOWORKER -2
 
+static const int MAXTRY = 1000;  // At most try 1000 times before returning false.
 static std::atomic<uint32_t> taskindex;
 
 void SinglePartitionedFIFOTaskScheduler::truncateWorkerTable() {
@@ -69,30 +71,34 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
   int activePartitions = std::min(partitions_, numWorkers_);
   int pkey = rand() % activePartitions;
 
-  // Try to find an available worker in the partition.
-  for (int count = 1; count <= activePartitions; ++count) {
-    voltdb::Procedure procedure("SelectSinglePartitionedTaskWorker",
-                                parameterTypes);
-    voltdb::ParameterSet* params = procedure.params();
-    params->addInt32(pkey).addInt32(taskID);
-    voltdb::InvocationResponse r = client_->invoke(procedure);
-    if (r.failure()) {
-      std::cout << "SelectSinglePartitionedTaskWorker procedure failed. "
-                << r.toString() << std::endl;
-      return false;
+  // Try multiple times before giving up.
+  for (int t = 0; t < MAXTRY; t++) {
+    // Try to find an available worker in the partition.
+    for (int count = 1; count <= activePartitions; ++count) {
+      voltdb::Procedure procedure("SelectSinglePartitionedTaskWorker",
+                                  parameterTypes);
+      voltdb::ParameterSet* params = procedure.params();
+      params->addInt32(pkey).addInt32(taskID);
+      voltdb::InvocationResponse r = client_->invoke(procedure);
+      if (r.failure()) {
+        std::cout << "SelectSinglePartitionedTaskWorker procedure failed. "
+                  << r.toString() << std::endl;
+        return false;
+      }
+      std::vector<voltdb::Table> results = r.results();
+      voltdb::Row row = results[0].iterator().next();
+      int status = row.getInt64(0);
+      if (status == SUCCESS) {
+        return true;
+      } else if (status == NOWORKER) {  // implementing basic functionality first
+        // std::cout << "no worker in partition " << count << std::endl;
+        // TODO: If there is no worker, need to check other partitions for
+        // available workers.
+        // TODO: If there are no available workers, put task in a buffer
+      }
+      pkey = (pkey + count) % activePartitions;
     }
-    std::vector<voltdb::Table> results = r.results();
-    voltdb::Row row = results[0].iterator().next();
-    int status = row.getInt64(0);
-    if (status == SUCCESS) {
-      return true;
-    } else if (status == NOWORKER) {  // implementing basic functionality first
-      // std::cout << "no worker in partition " << count << std::endl;
-      // TODO: If there is no worker, need to check other partitions for
-      // available workers.
-      // TODO: If there are no available workers, put task in a buffer
-    }
-    pkey = (pkey + count) % activePartitions;
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
   }
   std::cout << "went through " << activePartitions << " partitions"
             << std::endl;
@@ -124,10 +130,10 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::teardown() {
 
 DbosStatus SinglePartitionedFIFOTaskScheduler::schedule() {
   // std::cout << "Foo" << std::endl;
-  for (int i = 0; i < numTasks_; ++i) {
-    int taskId = taskindex.fetch_add(1);
-    DbosStatus status = selectTaskWorker(taskId);
-    assert(status == true);
-  }
+  //for (int i = 0; i < numTasks_; ++i) {
+  int taskId = taskindex.fetch_add(1);
+  DbosStatus status = selectTaskWorker(taskId);
+  assert(status == true);
+  //}
   return true;
 }
