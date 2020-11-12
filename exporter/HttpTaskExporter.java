@@ -6,6 +6,8 @@ import java.net.URL;
 import java.net.HttpURLConnection;
 import java.util.Properties;
 
+import java.time.LocalTime;
+
 import org.voltdb.VoltType;
 
 import org.voltcore.logging.VoltLogger;
@@ -67,6 +69,7 @@ public class HttpTaskExporter extends ExportClientBase {
       try {
         String url = "";
         int taskID = 0;	
+	String insertion_time = "";
 	for (int i =0; i < row.values.length; i++) {
           String column_name = row.names.get(i);
 	  switch (column_name) {
@@ -76,6 +79,9 @@ public class HttpTaskExporter extends ExportClientBase {
 	    case "URL":
 	      url = (String) row.values[i];
 	      break;
+	    case "MYTIME":
+              insertion_time = row.values[i].toString();
+              break;
             default:
 	      break;
 	  }
@@ -83,6 +89,8 @@ public class HttpTaskExporter extends ExportClientBase {
         URL urlObj = new URL(url);
         HttpURLConnection httpCon = (HttpURLConnection) urlObj.openConnection();
 	httpCon.setRequestProperty("taskID", String.valueOf(taskID));
+	httpCon.setRequestProperty("creation_timestamp", insertion_time);
+	httpCon.setRequestProperty("export_timestamp", String.valueOf(LocalTime.now()));
 
         int responseCode = httpCon.getResponseCode();
         if (responseCode != HttpURLConnection.HTTP_OK) {
