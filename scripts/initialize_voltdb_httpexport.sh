@@ -35,6 +35,7 @@ bash ${SHARED_DIR}/init_start.sh "$TMPDIR" "${CONFIG_FILE}"
 ${VOLTDB_BIN}/sqlcmd < sql/create_task_table.sql
 ${VOLTDB_BIN}/sqlcmd < sql/create_worker_table.sql
 ${VOLTDB_BIN}/sqlcmd < sql/create_task_stream.sql
+${VOLTDB_BIN}/sqlcmd < sql/create_data_table.sql
 
 # Load stored procedures
 bash ${SCRIPT_DIR}/update_voltdb_procedures.sh

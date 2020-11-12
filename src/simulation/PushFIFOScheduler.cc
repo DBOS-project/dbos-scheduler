@@ -34,6 +34,7 @@ DbosStatus PushFIFOScheduler::selectTaskWorker(DbosId taskID) {
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   // Actual num partitions.
+  // TODO: fix this bug. need to use actual number of partitions.
   int pkey = rand() % partitions_;
 
   // Try to find an available worker in the partition.

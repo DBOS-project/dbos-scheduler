@@ -143,6 +143,7 @@ void MockPollWorker::execute(int execId) {
         abort();  // TODO: better error handling.
       }
 
+      VoltdbWorkerUtil::totalFinishedTasks_.fetch_add(1);
       // Re-acquire the lock.
       lock.lock();
     }
