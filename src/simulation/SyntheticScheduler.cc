@@ -83,7 +83,8 @@ static bool cleanDB = false;
  */
 static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
                                                const std::string& serverAddr,
-                                               const std::string& algo) {
+                                               const std::string& algo,
+                                               const int schedulerId = -1) {
   VoltdbSchedulerUtil* scheduler = nullptr;
   if (algo == kFifoAlgo) {
     scheduler = new PartitionedFIFOScheduler(
@@ -95,7 +96,7 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   } else if (algo == kSinglePartitionedFifoTaskAlgo) {
     scheduler = new SinglePartitionedFIFOTaskScheduler(
         voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
-        numWorkers, probMultiTx);
+        numWorkers, probMultiTx, schedulerId);
   } else if (algo == kSparkAlgo) {
     scheduler = new SparkScheduler(voltdbClient, serverAddr, partitions,
                                    workerCapacity, numWorkers);
@@ -124,7 +125,7 @@ static void SchedulerThread(const int schedulerId,
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
   VoltdbSchedulerUtil* scheduler =
-      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
+      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo, schedulerId);
   assert(scheduler != nullptr);
   std::cout << "Scheduler: " << schedulerId << " started\n";
   do {

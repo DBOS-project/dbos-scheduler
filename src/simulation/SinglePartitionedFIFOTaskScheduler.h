@@ -15,15 +15,16 @@
 class SinglePartitionedFIFOTaskScheduler : public VoltdbSchedulerUtil {
 public:
   SinglePartitionedFIFOTaskScheduler(voltdb::Client* client, std::string dbAddr,
-                                     int partitions, int numTasks,
-                                     int workerCapacity, int numWorkers,
-                                     float probMultiTx)
+                                     int partitions, int numTasks, 
+                                     int workerCapacity, int numWorkers, 
+                                     float probMultiTx, int schedulerId)
       : VoltdbSchedulerUtil(client, dbAddr),
         partitions_(partitions),
         numTasks_(numTasks),
         workerCapacity_(workerCapacity),
         numWorkers_(numWorkers),
-        probMultiTx_(probMultiTx){};
+        probMultiTx_(probMultiTx),
+        schedulerId_(schedulerId){};
 
   // Truncate the worker table;
   void truncateWorkerTable();
@@ -33,6 +34,17 @@ public:
 
   // Insert a worker into the worker table.
   DbosStatus insertWorker(DbosId workerID, DbosId capacity);
+
+  // Insert an unassigned task into the task queue.
+  DbosStatus insertUnassignedTask(DbosId taskID);
+
+  DbosStatus assignFromTaskQueue();
+
+  DbosStatus findAvailableTaskWorker(DbosId taskID);
+
+  // Select a worker for a task and update worker capacity and task workerid.
+  // Assign task to worker or put in queue probabilistically.
+  DbosStatus probabilisticSelectTaskWorker(DbosId taskID);
 
   // Select a worker for a task and update worker capacity and task workerid.
   DbosStatus selectTaskWorker(DbosId taskID);
@@ -56,6 +68,7 @@ private:
   int workerCapacity_;
   int numWorkers_;
   float probMultiTx_;
+  DbosId schedulerId_;
 };
 
 #endif  // #ifndef SINGLE_PARTITIONED_FIFO_TASK_SCHEDULER_H

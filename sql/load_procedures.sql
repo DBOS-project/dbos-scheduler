@@ -3,6 +3,9 @@ load classes build/DBOSProcedures.jar;
 DROP PROCEDURE InsertTask IF EXISTS;
 CREATE PROCEDURE FROM CLASS dbos.procedures.InsertTask;
 
+DROP PROCEDURE InsertUnassignedTask IF EXISTS;
+CREATE PROCEDURE FROM CLASS dbos.procedures.InsertUnassignedTask;
+
 DROP PROCEDURE InsertWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey PARAMETER 2 FROM CLASS dbos.procedures.InsertWorker;
 
@@ -20,6 +23,9 @@ CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedure
 
 DROP PROCEDURE SelectSinglePartitionedTaskWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectSinglePartitionedTaskWorker;
+
+DROP PROCEDURE AssignUnassignedTask IF EXISTS;
+CREATE PROCEDURE /*PARTITION ON TABLE Worker COLUMN PKey*/ FROM CLASS dbos.procedures.AssignUnassignedTask;
 
 DROP PROCEDURE SelectSparkWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectSparkWorker;
