@@ -11,16 +11,15 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-#INCLUDE(GRPCGenerateCPP)
-
 # Find gRPC installation
-add_subdirectory(./third_party/grpc ${CMAKE_CURRENT_BINARY_DIR}/grpc EXCLUDE_FROM_ALL)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/grpc ${CMAKE_CURRENT_BINARY_DIR}/grpc EXCLUDE_FROM_ALL)
 message(STATUS "Using gRPC via add_subdirectory.")
 set(_PROTOBUF_LIBPROTOBUF libprotobuf)
 set(_REFLECTION grpc++_reflection)
 find_program(_PROTOBUF_PROTOC protoc)
 set(_GRPC_GRPCPP grpc++)
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/grpc/include)
 
 # Find protobuf installation
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/cmake/install/)
@@ -30,7 +29,7 @@ include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Targets
-add_subdirectory(src)
 add_subdirectory(protos)
-#add_subdirectory(test)
+add_subdirectory(src)
+add_subdirectory(test)
 

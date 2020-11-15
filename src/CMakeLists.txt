@@ -38,4 +38,4 @@ set_target_properties(frontend_grpc_server
 )
 
 # Subdirectories
-#add_subdirectory(simulation)
+add_subdirectory(simulation)

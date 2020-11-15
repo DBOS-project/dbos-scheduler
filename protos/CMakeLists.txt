@@ -1,6 +1,6 @@
 message(STATUS "Building DBOS scheduler protos")
 
-#INCLUDE(GRPCGenerateCPP)
+INCLUDE(GRPCGenerateCPP)
 
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS
   dbos_status.proto
@@ -21,3 +21,6 @@ add_library(dbos-scheduler-protos
 target_include_directories(dbos-scheduler-protos PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+# TODO: how to make sure GRPC is compiled before this target?
+#add_dependencies(dbos-scheduler-protos ...)
