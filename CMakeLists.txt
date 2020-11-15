@@ -6,29 +6,31 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_COLOR_MAKEFILE   ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Build with gRPC
-option(BUILD_WITH_GRPC "Build with gRPC support." OFF)
-
 # Additional CMake files path
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-# If build with gRPC, find protobuf and gRPC installation.
-if(BUILD_WITH_GRPC)
-  # Find Protobuf installation
-  # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
-  set(protobuf_MODULE_COMPATIBLE TRUE)
-  find_package(Protobuf CONFIG REQUIRED)
+#INCLUDE(GRPCGenerateCPP)
 
-  # Find gRPC installation
-  # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
-  find_package(gRPC CONFIG REQUIRED)
+# Find gRPC installation
+add_subdirectory(./third_party/grpc ${CMAKE_CURRENT_BINARY_DIR}/grpc EXCLUDE_FROM_ALL)
+message(STATUS "Using gRPC via add_subdirectory.")
+set(_PROTOBUF_LIBPROTOBUF libprotobuf)
+set(_REFLECTION grpc++_reflection)
+find_program(_PROTOBUF_PROTOC protoc)
+set(_GRPC_GRPCPP grpc++)
+set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
 
-  add_subdirectory(protos)
-endif(BUILD_WITH_GRPC)
+# Find protobuf installation
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/cmake/install/)
+INCLUDE(FindProtobuf)
+find_package(Protobuf CONFIG REQUIRED)
+include_directories(${PROTOBUF_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Targets
 add_subdirectory(src)
-add_subdirectory(test)
+add_subdirectory(protos)
+#add_subdirectory(test)
 
