@@ -98,6 +98,10 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
       }
       pkey = (pkey + count) % activePartitions;
     }
+    // TODO: Sleep 100us is a naive choice right now, to avoid overloading DB.
+    // Because if it cannot find a worker in all partitions, it will need to
+    // wait for the worker to release one capacity and it may take about 100us.
+    // We can refactor this code once we have a task buffer.
     std::this_thread::sleep_for(std::chrono::microseconds(100));
   }
   std::cout << "went through " << activePartitions << " partitions"
@@ -129,11 +133,8 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::teardown() {
 }
 
 DbosStatus SinglePartitionedFIFOTaskScheduler::schedule() {
-  // std::cout << "Foo" << std::endl;
-  //for (int i = 0; i < numTasks_; ++i) {
   int taskId = taskindex.fetch_add(1);
   DbosStatus status = selectTaskWorker(taskId);
   assert(status == true);
-  //}
   return true;
 }
