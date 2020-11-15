@@ -1,6 +1,6 @@
 message(STATUS "Building DBOS scheduler protos")
 
-INCLUDE(GRPCGenerateCPP)
+#INCLUDE(GRPCGenerateCPP)
 
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS
   dbos_status.proto
