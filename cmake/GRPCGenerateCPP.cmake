@@ -1,5 +1,7 @@
 # Origin: https://raw.githubusercontent.com/NVIDIA/yais/master/cmake/GRPCGenerateCPP.cmake
-find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
+#find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin) # Get full path to plugin
+set(GRPC_CPP_PLUGIN $<TARGET_FILE:grpc_cpp_plugin>) # TODO: Need double check this, when TARGET_FILE is set?
+#set(GRPC_CPP_PLUGIN ${CMAKE_BINARY_DIR}/grpc/grpc_cpp_plugin)
 
 function(PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS)
   cmake_parse_arguments(protobuf "" "EXPORT_MACRO;DESCRIPTORS" "" ${ARGN})

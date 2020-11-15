@@ -19,13 +19,29 @@ Install VoltDB:
 ```
 For example: `./install_voltdb.sh /home/`. Then VoltDB will be installed under `/home/voltdb`
 
-(Optional for now) Install CMake-3.17 and gRPC-v1.32
+(Optional for now) Install CMake-3.17
 ```
 ./scripts/install_cmake.sh
-./scripts/install_grpc.sh
 ```
 
-## Build
+## Init and update submodules
+Pull remote grpc and protobuf codebase as third party dependency.
+```
+git submodule update --init --recursive --progress
+```
+
+Then build protobuf:
+```
+cd third_party/protobuf
+mkdir -p ./cmake/build
+mkdir -p ./cmake/install
+cd cmake/build
+cmake -DCMAKE_INSTALL_PREFIX=${PWD}/../install ..
+make -j40
+make install
+```
+
+## Build DBOS scheduler
 ```
 mkdir build/
 cd build/
@@ -51,5 +67,5 @@ Then you could initialize the tables and procedures:
 ## Shutdown VoltDB
 On a single node cluster, run:
 ```
-voltdb stop
+voltadmin shutdown
 ```
