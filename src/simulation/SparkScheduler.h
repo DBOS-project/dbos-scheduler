@@ -9,6 +9,9 @@
 #include "simulation/VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
+#include "simulation/VoltdbWorkerUtil.h"
+#include "simulation/MockGRPCWorker.h"
+
 // Since voltdb::Client only has private constructor, we cannot create a private
 // member variable of it. Each thread needs to:
 // (1) call static function createVoltdbClient() to get a local VoltDB client.
@@ -26,7 +29,7 @@ public:
   void truncateWorkerTable();
 
   // Insert a worker into the worker table.
-  DbosStatus insertWorker(DbosId workerID, DbosId capacity, DbosId workerData);
+  DbosStatus insertWorker(DbosId workerID, DbosId capacity, std::vector<int32_t> workerData);
 
   // Select a worker for a task and update worker capacity.
   // Return the selected worker id.
@@ -57,6 +60,7 @@ private:
   int workerPartitions_;
   int numWorkers_;
   int dataPerWorker_ = 10;
+  std::vector<VoltdbWorkerUtil*> workers_;
 };
 
 #endif

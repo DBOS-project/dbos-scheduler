@@ -25,27 +25,10 @@ void SparkScheduler::truncateWorkerTable() {
 }
 
 DbosStatus SparkScheduler::insertWorker(DbosId workerID, int32_t capacity,
-                                        int32_t workerData) {
-  std::vector<voltdb::Parameter> parameterTypes(5);
-  parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  parameterTypes[3] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  parameterTypes[4] = voltdb::Parameter(voltdb::WIRE_TYPE_STRING);
-
-  voltdb::Procedure procedure("InsertSparkWorker", parameterTypes);
-  voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerID)
-      .addInt32(capacity)
-      .addInt32(workerData)
-      .addInt32(workerID % workerPartitions_)
-      .addString("");
-  voltdb::InvocationResponse r = client_->invoke(procedure);
-  if (r.failure()) {
-    std::cout << "InsertSparkWorker procedure failed. " << r.toString();
-    return false;
-  }
-  return true;
+                                        std::vector<int32_t> workerData) {
+  VoltdbWorkerUtil* worker = new MockGRPCWorker(client_, workerID, workerPartitions_, capacity, workerData);
+  workers_.push_back(worker);
+  return worker->setup();
 }
 
 DbosId SparkScheduler::selectWorker(DbosId targetData) {
@@ -92,13 +75,14 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
 }
 
 DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
-  std::vector<voltdb::Parameter> parameterTypes(2);
+  std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
 
   voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerId).addInt32(workerId % workerPartitions_);
+  params->addInt32(workerId).addInt32(-1).addInt32(workerId % workerPartitions_);
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "assignTaskToWorker procedure failed. " << r.toString();
@@ -112,23 +96,25 @@ DbosStatus SparkScheduler::setup() {
   truncateWorkerTable();
   DbosStatus ret;
   int numReplicas = std::min(numWorkers_, 3);
-  for (int i = 0; i < numWorkers_ * dataPerWorker_; ++i) {
-    for (int j = 0; j < numReplicas; ++j) {
-      ret = insertWorker((i + j) % numWorkers_, workerCapacity_, i);
+  for (int i = 0; i < numWorkers_; ++i) {
+      std::vector<int> t {i};
+      ret = insertWorker(i, workerCapacity_, t);
       if (!ret) { return false; }
-    }
   }
   return true;
 }
 
 DbosStatus SparkScheduler::teardown() {
   // Clean up data from previous run.
+  for (VoltdbWorkerUtil* worker: workers_) {
+    worker->teardown();
+  }
   truncateWorkerTable();
   return true;
 }
 
 DbosStatus SparkScheduler::schedule() {
-  DbosId targetData = rand() % (numWorkers_ * dataPerWorker_);
+  DbosId targetData = rand() % (numWorkers_);
   DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
   return true;

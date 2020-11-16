@@ -15,7 +15,7 @@ message(STATUS "Using Boost ${Boost_VERSION}")
 set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc PartitionedScanTask.cc PushFIFOScheduler.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
-set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.cc MockHTTPWorker.cc)
+set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.cc MockHTTPWorker.cc MockGRPCWorker.cc)
 add_library(simworker-util STATIC ${simworker-util_SOURCES})
 
 # For scheduler simulation
@@ -53,6 +53,10 @@ target_link_libraries(SyntheticScheduler
                       simulation-util
 )
 
+target_link_libraries(SyntheticScheduler
+                      simworker-util
+)
+
 target_link_libraries(SyntheticWorker
                       simworker-util)
 
@@ -62,6 +66,10 @@ target_link_libraries(TestPartitionedFIFOScheduler
 
 target_link_libraries(TestSparkScheduler
                       simulation-util
+)
+
+target_link_libraries(TestSparkScheduler
+                      simworker-util
 )
 
 target_link_libraries(TestPartitionedScanTask
