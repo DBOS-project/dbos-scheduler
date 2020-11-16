@@ -12,6 +12,18 @@
 #include "simulation/VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
+#include <grpcpp/grpcpp.h>
+
+#include "frontend.grpc.pb.h"
+
+using grpc::Server;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Status;
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+
 class MockGRPCWorker : public VoltdbWorkerUtil {
 public:
   MockGRPCWorker(voltdb::Client* voltdbClient, int workerId, int workerPartitions, int capacity, std::vector<int> workerData)
@@ -28,6 +40,8 @@ public:
   // Stop the worker (all executor and dispatch threads) and free up resources.
   DbosStatus teardown();
 
+  void RunServer(const std::string& port);
+
   // Destructor
   ~MockGRPCWorker() { /* placeholder for now. */
   }
@@ -40,6 +54,8 @@ private:
   std::vector<std::thread*>
       threads_;                   // including dispatch and executor threads
   bool stopDispatch_ = false;
+  std::thread* workerThread_;
+  std::unique_ptr<Server> workerServer_;
 };
 
 #endif  // #ifndef MOCK_GRPC_WORKER_H

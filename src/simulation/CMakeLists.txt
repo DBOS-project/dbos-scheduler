@@ -45,7 +45,6 @@ add_executable(SyntheticScheduler SyntheticScheduler.cc)
 add_executable(TestPartitionedFIFOScheduler TestPartitionedFIFOScheduler.cc)
 add_executable(TestSparkScheduler TestSparkScheduler.cc)
 add_executable(TestPartitionedScanTask TestPartitionedScanTask.cc)
-
 add_executable(SyntheticWorker SyntheticWorker.cc)
 
 # Link to libs.
@@ -74,6 +73,20 @@ target_link_libraries(TestSparkScheduler
 
 target_link_libraries(TestPartitionedScanTask
                       simulation-util)
+
+target_link_libraries(TestSparkScheduler dbos-scheduler-protos
+                      ${_REFLECTION}
+                      ${_GRPC_GRPCPP}
+                      ${_PROTOBUF_LIBPROTOBUF}
+                      pthread
+)
+
+target_link_libraries(SyntheticScheduler dbos-scheduler-protos
+                      ${_REFLECTION}
+                      ${_GRPC_GRPCPP}
+                      ${_PROTOBUF_LIBPROTOBUF}
+                      pthread
+)
 
 # Generate output to lib/ or bin/
 set_target_properties(simulation-util simworker-util SyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker
