@@ -16,11 +16,6 @@
 
 #include "simulation/MockGRPCWorker.h"
 
-#define GRPCSERVER_IMPL
-#include "httpserver.h"
-
-thread_local MockGRPCWorker* worker;
-
 DbosStatus MockGRPCWorker::setup() {
   // Add the Worker to the database.
   std::vector<voltdb::Parameter> parameterTypes(5);
@@ -45,8 +40,6 @@ DbosStatus MockGRPCWorker::setup() {
     }
   }
 
-  // Start dispatch thread.
-  threads_.push_back(new std::thread(&MockGRPCWorker::dispatch, this));
   return true;
 }
 
@@ -54,13 +47,4 @@ DbosStatus MockGRPCWorker::teardown() {
   // Clean up data and threads.
   std::cout << "Stop worker " << workerId_ << std::endl;
   return true;
-}
-
-void MockGRPCWorker::handle_request(struct http_request_s* request) {
-}
-
-void MockGRPCWorker::dispatch() {
-}
-
-void MockGRPCWorker::execute(int execId) {
 }

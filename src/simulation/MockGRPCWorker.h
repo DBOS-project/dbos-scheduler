@@ -16,18 +16,10 @@ class MockGRPCWorker : public VoltdbWorkerUtil {
 public:
   MockGRPCWorker(voltdb::Client* voltdbClient, int workerId, int workerPartitions, int capacity, std::vector<int> workerData)
       : client_(voltdbClient),
-	      VoltdbWorkerUtil(workerId, "bob"),
+	      VoltdbWorkerUtil(workerId, "example"),
         workerData_(workerData),
         capacity_(capacity),
         workerPartitions_(workerPartitions) {};
-
-  // Dispatch tasks that are assigned to this worker.
-  // Potentially run in a dedicated dispatch thread.
-  void dispatch();
-  static void handle_request(struct http_request_s* request);
-
-  // Execute tasks. Potentially run in dedicated executor thread pool.
-  void execute(int execId);
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
