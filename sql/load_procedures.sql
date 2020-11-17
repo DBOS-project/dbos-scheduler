@@ -25,7 +25,7 @@ DROP PROCEDURE SelectSinglePartitionedTaskWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectSinglePartitionedTaskWorker;
 
 DROP PROCEDURE AssignUnassignedTask IF EXISTS;
-CREATE PROCEDURE /*PARTITION ON TABLE Worker COLUMN PKey*/ FROM CLASS dbos.procedures.AssignUnassignedTask;
+CREATE PROCEDURE PARTITION ON TABLE TaskQueue COLUMN PKey FROM CLASS dbos.procedures.AssignUnassignedTask;
 
 DROP PROCEDURE SelectSparkWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectSparkWorker;
