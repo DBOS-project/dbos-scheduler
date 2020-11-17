@@ -43,8 +43,9 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
   pparams->addInt32(targetData);
   voltdb::InvocationResponse pr = client_->invoke(procedure);
   std::vector<voltdb::Table> presults = pr.results();
-  while(presults[0].iterator().hasNext()) {
-    voltdb::Row prow = presults[0].iterator().next();
+  voltdb::TableIterator iterator = presults[0].iterator();
+  while(iterator.hasNext()) {
+    voltdb::Row prow = iterator.next();
     DbosId partitionNum = prow.getInt64(0);
     voltdb::Procedure procedure("SelectSparkWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
