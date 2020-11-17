@@ -43,7 +43,7 @@ public:
   DbosStatus assignTaskToWorker(DbosId taskId, DbosId workerId);
 
   // Complete a task, updating the capacity of its worker.
-  DbosStatus finishTask(DbosId taskId, DbosId workerId);
+  DbosStatus finishTask(voltdb::Client client, DbosId taskId, DbosId workerId);
 
   // Setup the database.
   DbosStatus setup();

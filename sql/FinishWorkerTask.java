@@ -31,6 +31,8 @@ public class FinishWorkerTask extends VoltProcedure {
         if (taskID != -1 ) {
             voltQueueSQL(updateState, pkey, taskID);
             voltExecuteSQL();
+        } else {
+            voltExecuteSQL();
         }
         return 0;
     }

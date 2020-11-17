@@ -96,7 +96,6 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   if (finishRequestsThread_ == NULL) {
     finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
   }
-  sleep(1);
   
   return true;
 }
@@ -104,20 +103,23 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
 void SparkScheduler::finishRequests() {
   void* got_tag;
   bool ok = false;
+  // TODO:  Don't hardcode.
+  voltdb::Client client =
+    VoltdbSchedulerUtil::createVoltdbClient("testuser", "testpassword");
+  client.createConnection("localhost");
   // Block until the next result is available in the completion queue "cq".
   while (cq_.Next(&got_tag, &ok)) {
     // The tag in this example is the memory location of the call object
     AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
     assert(ok);
-    assert(call->status.ok());
     std::cout << "Finish: " << call->workerID << std::endl;
-    finishTask(0, call->workerID);
+    finishTask(client, 0, call->workerID);
     delete call;
   }
   std::cout << "End" << std::endl;
 }
 
-DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
+DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, DbosId workerId) {
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -126,7 +128,7 @@ DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
   voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   params->addInt32(workerId).addInt32(-1).addInt32(workerId % workerPartitions_);
-  voltdb::InvocationResponse r = client_->invoke(procedure);
+  voltdb::InvocationResponse r = client.invoke(procedure);
   if (r.failure()) {
     std::cout << "assignTaskToWorker procedure failed. " << r.toString();
     return false;
