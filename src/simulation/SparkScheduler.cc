@@ -24,9 +24,12 @@ void SparkScheduler::truncateWorkerTable() {
   }
 }
 
+std::vector<VoltdbWorkerUtil*> SparkScheduler::workers_;
+
 DbosStatus SparkScheduler::insertWorker(DbosId workerID, int32_t capacity,
                                         std::vector<int32_t> workerData) {
   VoltdbWorkerUtil* worker = new MockGRPCWorker(client_, workerID, workerPartitions_, capacity, workerData);
+  SparkScheduler::workers_.push_back(worker);
   return worker->setup();
 }
 
@@ -92,10 +95,6 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   // server's response; "status" with the indication of whether the operation
   // was successful. Tag the request with the memory address of the call object.
   call->response_reader->Finish(&call->reply, &call->status, (void*)call);
-
-  if (finishRequestsThread_ == NULL) {
-    finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
-  }
   
   return true;
 }
@@ -112,11 +111,11 @@ void SparkScheduler::finishRequests() {
     // The tag in this example is the memory location of the call object
     AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
     assert(ok);
-    std::cout << "Finish: " << call->workerID << std::endl;
+    assert(call->status.ok());
     finishTask(client, 0, call->workerID);
     delete call;
   }
-  std::cout << "End" << std::endl;
+  client.close();
 }
 
 DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, DbosId workerId) {
@@ -146,7 +145,6 @@ DbosStatus SparkScheduler::setup() {
       ret = insertWorker(i, workerCapacity_, t);
       if (!ret) { return false; }
   }
-  // finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
   return true;
 }
 
@@ -155,11 +153,19 @@ DbosStatus SparkScheduler::teardown() {
   cq_.Shutdown();
   finishRequestsThread_->join();
   truncateWorkerTable();
+  for (VoltdbWorkerUtil* worker: SparkScheduler::workers_) {
+    worker->teardown();
+  }
   return true;
 }
 
 
 DbosStatus SparkScheduler::schedule() {
+  // Create the thread that completes asynchronous requests.
+  if (finishRequestsThread_ == NULL) {
+    finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
+  }
+
   int taskID = taskIDs++;
   DbosId targetData = rand() % (numWorkers_);
   DbosId workerId = selectWorker(targetData);

@@ -46,6 +46,9 @@ static int measureIntervalMsec = 2000;  // 2sec in ms.
 // Total benchmarking time.
 static int totalExecTimeMsec = 10000;  // 10sec in ms.
 
+// Wait interval between requests.
+static int arrivalDelay = 0;
+
 static bool mainFinished = false;  // Control whether to stop the experiment.
 
 // Record latencies in a single big array.
@@ -144,8 +147,7 @@ static void SchedulerThread(const int schedulerId,
     // Record latency.
     double latency = (double)(endTime - startTime);
     schedLatencies[aryIndex] = latency;
-    // TODO: maybe sleep random time for different arrival patterns.
-    // std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
   } while (!mainFinished);
 
   // Clean up
@@ -258,6 +260,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
+  std::cerr << "\t-d <arrival delay>: default " << partitions << "\n";
   std::cerr
       << "\t-p <probability of multi-partition transaction> (0-1.0): default "
       << probMultiTx << "\n";
@@ -276,7 +279,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:d:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -311,6 +314,8 @@ int main(int argc, char** argv) {
       case 'p':
         probMultiTx = atof(optarg);
         break;
+      case 'd':
+        arrivalDelay = atoi(optarg);
       case 'x':
         cleanDB = true;
         break;
@@ -339,6 +344,7 @@ int main(int argc, char** argv) {
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";
   std::cerr << "Total execution time: " << totalExecTimeMsec << " msec\n";
+  std::cerr << "Arrival delay: " << arrivalDelay << " msec\n";
 
   // 1) Initialize database state.
   bool res = setup(serverAddr);

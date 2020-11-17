@@ -82,6 +82,8 @@ private:
   std::atomic_int taskIDs;
   std::thread* finishRequestsThread_ = NULL;
 
+  static std::vector<VoltdbWorkerUtil*> workers_;
+
   void finishRequests();
 };
 
