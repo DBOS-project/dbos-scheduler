@@ -12,6 +12,9 @@
 #include "simulation/VoltdbWorkerUtil.h"
 #include "simulation/MockGRPCWorker.h"
 
+using grpc::CompletionQueue;
+using grpc::ClientAsyncResponseReader;
+
 // Since voltdb::Client only has private constructor, we cannot create a private
 // member variable of it. Each thread needs to:
 // (1) call static function createVoltdbClient() to get a local VoltDB client.
@@ -60,6 +63,7 @@ private:
   int workerPartitions_;
   int numWorkers_;
   int dataPerWorker_ = 10;
+  CompletionQueue cq;
 };
 
 #endif

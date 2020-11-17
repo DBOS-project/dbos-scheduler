@@ -82,9 +82,18 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   dbos_scheduler::SubmitTaskResponse st_reply;
 
   ClientContext st_context;
+  Status status;
+  std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> rpc(stub->PrepareAsyncSubmitTask(&st_context, st_request, &cq));
 
-  Status status = stub->SubmitTask(&st_context, st_request, &st_reply);
-  return status.ok();
+  rpc->StartCall();
+  rpc->Finish(&st_reply, &status, (void*) 1);
+
+  void* got_tag;
+  bool ok = false;
+  cq.Next(&got_tag, &ok);
+
+  assert(got_tag == (void*) 1);
+  return ok;
 }
 
 DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
@@ -128,6 +137,5 @@ DbosStatus SparkScheduler::schedule() {
   DbosId targetData = rand() % (numWorkers_);
   DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
-  assignTaskToWorker(0, workerId);
-  return true;
+  return assignTaskToWorker(0, workerId);
 }
