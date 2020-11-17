@@ -55,7 +55,7 @@ private:
       threads_;                   // including dispatch and executor threads
   bool stopDispatch_ = false;
   std::thread* workerThread_;
-  std::unique_ptr<Server> workerServer_;
+  std::unique_ptr<Server> workerServer_ = NULL;
 };
 
 #endif  // #ifndef MOCK_GRPC_WORKER_H

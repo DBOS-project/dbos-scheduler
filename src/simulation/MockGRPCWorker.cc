@@ -56,10 +56,10 @@ Status FrontendServiceImpl::Heartbeat(ServerContext* context,
  */
 Status FrontendServiceImpl::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                   SubmitTaskResponse* reply) {
-  // TODO: implement the actual logic here.
-  std::cout << "Recieved a task: " << request->requirement() << ", "
-            << request->exectime() << "ns." << std::endl;
+  // std::cout << "Recieved a task: " << request->requirement() << ", "
+  //           << request->exectime() << "μs." << std::endl;
 
+  usleep(request->exectime());
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
 }
@@ -71,7 +71,6 @@ Status FrontendServiceImpl::SubmitTask(ServerContext* context, const SubmitTaskR
  */
 void MockGRPCWorker::RunServer(const std::string& port) {
   std::string addr = "0.0.0.0:" + port;
-  std::cout << "Starting frontend server at address: " << addr << std::endl;
 
   dbos_scheduler::FrontendServiceImpl service;
   ServerBuilder builder;
@@ -86,8 +85,6 @@ void MockGRPCWorker::RunServer(const std::string& port) {
 
   // Finally, assemble the server.
   workerServer_ = builder.BuildAndStart();
-  std::cout << "Frontend server listening on: " << addr << std::endl;
-
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
   workerServer_->Wait();
@@ -120,32 +117,8 @@ DbosStatus MockGRPCWorker::setup() {
 
   const std::string& port = std::to_string(8000 + workerId_);
   workerThread_ = new std::thread(&MockGRPCWorker::RunServer, this, port);
-
-  // TESTING
-  sleep(1);
-  std::string addr = "localhost:" + port;
-  std::cout << "Contacting frontend server at address: " << addr << std::endl;
-  std::shared_ptr<Channel> channel =
-      grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
-  std::unique_ptr<dbos_scheduler::Frontend::Stub> stub =
-      dbos_scheduler::Frontend::NewStub(channel);
-
-  ClientContext context;
-
-  // Test heartbeat.
-  dbos_scheduler::HeartbeatRequest request;
-  request.set_msg("hello");
-
-  dbos_scheduler::HeartbeatResponse reply;
-  Status status = stub->Heartbeat(&context, request, &reply);
-  if (!status.ok()) {
-    std::cout << status.error_code() << ": " << status.error_message()
-              << std::endl;
-    exit(1);
-  } else {
-    std::cout << "Heartbeat succeeded!" << std::endl;
-  }
-  // TESTING
+  workerAddr = "localhost:" + port;
+  while (workerServer_ == NULL) {;} // Spin until server is online.
 
   return true;
 }

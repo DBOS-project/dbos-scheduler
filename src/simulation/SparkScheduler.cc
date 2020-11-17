@@ -27,7 +27,6 @@ void SparkScheduler::truncateWorkerTable() {
 DbosStatus SparkScheduler::insertWorker(DbosId workerID, int32_t capacity,
                                         std::vector<int32_t> workerData) {
   VoltdbWorkerUtil* worker = new MockGRPCWorker(client_, workerID, workerPartitions_, capacity, workerData);
-  workers_.push_back(worker);
   return worker->setup();
 }
 
@@ -66,12 +65,26 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
 }
 
 DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
-  // TODO: implement the actual transaction here.
-  std::cout << "assignTaskToWorker, to be implemented." << std::endl;
-  std::cout << taskId << " -> " << workerId << std::endl;
-  DbosStatus retStatus = true;
+  // TODO:  Actually lookup the address somehow.
+  const std::string& port = std::to_string(8000 + workerId);
+  std::string workerAddr = "localhost:" + port;
 
-  return retStatus;
+  // Create stub
+  std::shared_ptr<Channel> channel =
+      grpc::CreateChannel(workerAddr, grpc::InsecureChannelCredentials());
+  std::unique_ptr<dbos_scheduler::Frontend::Stub> stub =
+      dbos_scheduler::Frontend::NewStub(channel);
+
+  // Submit task
+  dbos_scheduler::SubmitTaskRequest st_request;
+  st_request.set_requirement(10);
+  st_request.set_exectime(1000);
+  dbos_scheduler::SubmitTaskResponse st_reply;
+
+  ClientContext st_context;
+
+  Status status = stub->SubmitTask(&st_context, st_request, &st_reply);
+  return status.ok();
 }
 
 DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
@@ -106,16 +119,15 @@ DbosStatus SparkScheduler::setup() {
 
 DbosStatus SparkScheduler::teardown() {
   // Clean up data from previous run.
-  for (VoltdbWorkerUtil* worker: workers_) {
-    worker->teardown();
-  }
   truncateWorkerTable();
   return true;
 }
+
 
 DbosStatus SparkScheduler::schedule() {
   DbosId targetData = rand() % (numWorkers_);
   DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
+  assignTaskToWorker(0, workerId);
   return true;
 }

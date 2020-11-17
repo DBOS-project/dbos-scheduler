@@ -22,5 +22,7 @@ int main(int argc, char** argv) {
   std::cout << "Selected: " << workerId << std::endl;
   ret = scheduler.finishTask(0, workerId);
 
+  scheduler.schedule();
+
   return 0;
 }

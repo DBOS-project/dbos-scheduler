@@ -60,7 +60,6 @@ private:
   int workerPartitions_;
   int numWorkers_;
   int dataPerWorker_ = 10;
-  std::vector<VoltdbWorkerUtil*> workers_;
 };
 
 #endif
