@@ -59,11 +59,30 @@ public:
   }
 
 private:
+
+    struct AsyncClientCall {
+        // Container for the data we expect from the server.
+        dbos_scheduler::SubmitTaskResponse reply;
+        // Context for the client. It could be used to convey extra information to
+        // the server and/or tweak certain RPC behaviors.
+        ClientContext context;
+        // Storage for the status of the RPC upon completion.
+        Status status;
+        // ID of worker to which call was made.
+        int workerID;
+        std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
+    };
+
+
   int workerCapacity_;
   int workerPartitions_;
   int numWorkers_;
   int dataPerWorker_ = 10;
-  CompletionQueue cq;
+  CompletionQueue cq_;
+  std::atomic_int taskIDs;
+  std::thread* finishRequestsThread_ = NULL;
+
+  void finishRequests();
 };
 
 #endif

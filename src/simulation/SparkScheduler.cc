@@ -80,21 +80,41 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   dbos_scheduler::SubmitTaskRequest st_request;
   st_request.set_requirement(10);
   st_request.set_exectime(1000);
-  dbos_scheduler::SubmitTaskResponse st_reply;
 
-  ClientContext st_context;
-  Status status;
-  std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> rpc(stub->PrepareAsyncSubmitTask(&st_context, st_request, &cq));
+  // Call object to store rpc data
+  AsyncClientCall* call = new AsyncClientCall;
+  call->workerID = workerId;
+  // stub_->AsyncSubmitTask() performs the RPC call, returning an instance to
+  // store in "call". Because we are using the asynchronous API, we need to
+  // hold on to the "call" instance in order to get updates on the ongoing RPC.
+  call->response_reader = stub->AsyncSubmitTask(&call->context, st_request, &cq_);
+  // Request that, upon completion of the RPC, "reply" be updated with the
+  // server's response; "status" with the indication of whether the operation
+  // was successful. Tag the request with the memory address of the call object.
+  call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-  rpc->StartCall();
-  rpc->Finish(&st_reply, &status, (void*) 1);
+  if (finishRequestsThread_ == NULL) {
+    finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
+  }
+  sleep(1);
+  
+  return true;
+}
 
+void SparkScheduler::finishRequests() {
   void* got_tag;
   bool ok = false;
-  cq.Next(&got_tag, &ok);
-
-  assert(got_tag == (void*) 1);
-  return ok;
+  // Block until the next result is available in the completion queue "cq".
+  while (cq_.Next(&got_tag, &ok)) {
+    // The tag in this example is the memory location of the call object
+    AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
+    assert(ok);
+    assert(call->status.ok());
+    std::cout << "Finish: " << call->workerID << std::endl;
+    finishTask(0, call->workerID);
+    delete call;
+  }
+  std::cout << "End" << std::endl;
 }
 
 DbosStatus SparkScheduler::finishTask(DbosId taskId, DbosId workerId) {
@@ -124,19 +144,23 @@ DbosStatus SparkScheduler::setup() {
       ret = insertWorker(i, workerCapacity_, t);
       if (!ret) { return false; }
   }
+  // finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
   return true;
 }
 
 DbosStatus SparkScheduler::teardown() {
   // Clean up data from previous run.
+  cq_.Shutdown();
+  finishRequestsThread_->join();
   truncateWorkerTable();
   return true;
 }
 
 
 DbosStatus SparkScheduler::schedule() {
+  int taskID = taskIDs++;
   DbosId targetData = rand() % (numWorkers_);
   DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
-  return assignTaskToWorker(0, workerId);
+  return assignTaskToWorker(taskID, workerId);
 }
