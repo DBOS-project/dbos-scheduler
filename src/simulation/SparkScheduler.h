@@ -60,6 +60,7 @@ public:
 
 private:
 
+
     struct AsyncClientCall {
         // Container for the data we expect from the server.
         dbos_scheduler::SubmitTaskResponse reply;
@@ -73,6 +74,8 @@ private:
         std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
     };
 
+  std::shared_ptr<Channel> addrToChannel(std::string workerAddr);
+  std::unordered_map<std::string, std::shared_ptr<Channel>> channelMap;
 
   int workerCapacity_;
   int workerPartitions_;

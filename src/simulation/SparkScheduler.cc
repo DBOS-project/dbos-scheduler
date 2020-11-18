@@ -74,14 +74,25 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
   return -1;
 }
 
+std::shared_ptr<Channel> SparkScheduler::addrToChannel(std::string workerAddr) {
+  auto got = channelMap.find(workerAddr);
+  if (got != channelMap.end()) {
+    return got->second;
+  } else {
+    std::shared_ptr<Channel> channel =
+        grpc::CreateChannel(workerAddr, grpc::InsecureChannelCredentials());
+    channelMap.emplace(workerAddr, channel);
+    return channel;
+  }
+}
+
 DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   // TODO:  Actually lookup the address somehow.
   const std::string& port = std::to_string(8000 + workerId);
   std::string workerAddr = "localhost:" + port;
 
   // Create stub
-  std::shared_ptr<Channel> channel =
-      grpc::CreateChannel(workerAddr, grpc::InsecureChannelCredentials());
+  std::shared_ptr<Channel> channel = addrToChannel(workerAddr);
   std::unique_ptr<dbos_scheduler::Frontend::Stub> stub =
       dbos_scheduler::Frontend::NewStub(channel);
 
