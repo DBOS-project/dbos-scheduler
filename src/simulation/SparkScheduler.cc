@@ -47,9 +47,15 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
   voltdb::InvocationResponse pr = client_->invoke(procedure);
   std::vector<voltdb::Table> presults = pr.results();
   voltdb::TableIterator iterator = presults[0].iterator();
+  std::vector<int> targetPartitions;
   while(iterator.hasNext()) {
     voltdb::Row prow = iterator.next();
     DbosId partitionNum = prow.getInt64(0);
+    targetPartitions.push_back(partitionNum);
+  }
+  // Poll until a slot is found, randomly selecting partitions.
+  while(true) { // TODO:  Add timeout.
+    int partitionNum = targetPartitions.at(rand() % targetPartitions.size());
     voltdb::Procedure procedure("SelectSparkWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(partitionNum);
