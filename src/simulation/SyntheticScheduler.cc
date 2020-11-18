@@ -150,6 +150,8 @@ static void SchedulerThread(const int schedulerId,
     std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
   } while (!mainFinished);
 
+  sleep(1); // Give outstanding requests time to finish.
+
   // Clean up
   delete scheduler;
   return;
