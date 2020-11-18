@@ -103,11 +103,11 @@ void BenchmarkUtil::printStats(const BenchmarkUtil::Statistics& stats,
   static bool headerPrinted = false;
   if (!headerPrinted) {
     printf(
-        "Benchmark,\tCount,\tAvg,\tStddev,\tMedian,\tMin,\tMax,\tP99,"
+        "Bench,\tCount,\tAvg,\tStddev,\tMedian,\tMin,\tMax,\tP99,"
         "\tThroughput\n");
     headerPrinted = true;
   }
-  printf("%s,\t%lu,\t%.1lf,\t%.1lf,\t%.1lf,\t%.1lf,\t%.1lf,\t%.1lf,\t%.1lf\n",
+  printf("%s,\t%lu,\t%7.1lf,\t%7.1lf,\t%7.1lf,\t%7.1lf,\t%7.1lf,\t%7.1lf,\t%7.1lf\n",
          header.c_str(), stats.count, stats.average, stats.stddev, stats.P50,
          stats.min, stats.max, stats.P99, throughput);
   fflush(stdout);
