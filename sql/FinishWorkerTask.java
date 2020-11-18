@@ -28,8 +28,12 @@ public class FinishWorkerTask extends VoltProcedure {
         }
         long capacity = r.fetchRow(0).getLong(0);
         voltQueueSQL(updateCapacity, capacity + 1, pkey, workerID);
-        voltQueueSQL(updateState, pkey, taskID);
-        voltExecuteSQL();
+        if (taskID != -1 ) {
+            voltQueueSQL(updateState, pkey, taskID);
+            voltExecuteSQL();
+        } else {
+            voltExecuteSQL();
+        }
         return 0;
     }
 }

@@ -15,7 +15,7 @@ message(STATUS "Using Boost ${Boost_VERSION}")
 set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc PartitionedScanTask.cc PushFIFOScheduler.cc)
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
-set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.cc MockHTTPWorker.cc)
+set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.cc MockHTTPWorker.cc MockGRPCWorker.cc)
 add_library(simworker-util STATIC ${simworker-util_SOURCES})
 
 # For scheduler simulation
@@ -45,12 +45,15 @@ add_executable(SyntheticScheduler SyntheticScheduler.cc)
 add_executable(TestPartitionedFIFOScheduler TestPartitionedFIFOScheduler.cc)
 add_executable(TestSparkScheduler TestSparkScheduler.cc)
 add_executable(TestPartitionedScanTask TestPartitionedScanTask.cc)
-
 add_executable(SyntheticWorker SyntheticWorker.cc)
 
 # Link to libs.
 target_link_libraries(SyntheticScheduler
                       simulation-util
+)
+
+target_link_libraries(SyntheticScheduler
+                      simworker-util
 )
 
 target_link_libraries(SyntheticWorker
@@ -64,8 +67,26 @@ target_link_libraries(TestSparkScheduler
                       simulation-util
 )
 
+target_link_libraries(TestSparkScheduler
+                      simworker-util
+)
+
 target_link_libraries(TestPartitionedScanTask
                       simulation-util)
+
+target_link_libraries(TestSparkScheduler dbos-scheduler-protos
+                      ${_REFLECTION}
+                      ${_GRPC_GRPCPP}
+                      ${_PROTOBUF_LIBPROTOBUF}
+                      pthread
+)
+
+target_link_libraries(SyntheticScheduler dbos-scheduler-protos
+                      ${_REFLECTION}
+                      ${_GRPC_GRPCPP}
+                      ${_PROTOBUF_LIBPROTOBUF}
+                      pthread
+)
 
 # Generate output to lib/ or bin/
 set_target_properties(simulation-util simworker-util SyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker

@@ -31,7 +31,7 @@ DROP PROCEDURE TruncateWorkerTable IF EXISTS;
 CREATE PROCEDURE FROM CLASS dbos.procedures.TruncateWorkerTable;
 
 DROP PROCEDURE FinishWorkerTask IF EXISTS;
-CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.FinishWorkerTask;
+CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey PARAMETER 2 FROM CLASS dbos.procedures.FinishWorkerTask;
 
 DROP PROCEDURE ScanPartitionedTaskWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Task COLUMN PKey FROM CLASS dbos.procedures.ScanPartitionedTaskWorker;

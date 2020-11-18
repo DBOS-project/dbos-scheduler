@@ -9,18 +9,52 @@
 int main(int argc, char** argv) {
   voltdb::Client voltdbClient =
       SparkScheduler::createVoltdbClient("testuser", "testpwd");
-  SparkScheduler scheduler(&voltdbClient, "localhost", 8, 2, 2);
+  // Client - Host - Partitions - Capacity - numWorkers
+  SparkScheduler scheduler(&voltdbClient, "localhost", 1, 1, 2);
 
   // Insert then Select a worker.
   scheduler.truncateWorkerTable();
   DbosStatus ret = scheduler.setup();
+  assert(ret);
   DbosId workerId;
+
   workerId = scheduler.selectWorker(0);
-  std::cout << "Selected: " << workerId << std::endl;
-  ret = scheduler.finishTask(0, workerId);
+  assert(workerId != -1);
+  ret = scheduler.finishTask(voltdbClient, 0, workerId);
+
   workerId = scheduler.selectWorker(1);
-  std::cout << "Selected: " << workerId << std::endl;
-  ret = scheduler.finishTask(0, workerId);
+  assert(workerId != -1);
+  ret = scheduler.finishTask(voltdbClient, 0, workerId);
+
+  workerId = scheduler.selectWorker(0);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  workerId = scheduler.selectWorker(0);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  workerId = scheduler.selectWorker(0);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  workerId = scheduler.selectWorker(1);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  workerId = scheduler.selectWorker(0);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  workerId = scheduler.selectWorker(1);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  workerId = scheduler.selectWorker(1);
+  assert(workerId != -1);
+  scheduler.finishTask(voltdbClient, -1, workerId);
+
+  scheduler.schedule();
 
   return 0;
 }
