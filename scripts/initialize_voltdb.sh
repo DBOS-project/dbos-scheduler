@@ -14,13 +14,13 @@ mkdir -p obj/sql
 mkdir -p obj/exporter
 
 # Add custom exporter BEFORE starting the db.
-javac -classpath "$VOLT_HOME/voltdb/*" -d obj/exporter exporter/HttpTaskExporter.java
-jar cvf build/HttpTaskExporter.jar -C obj/exporter .
-cp build/HttpTaskExporter.jar ${VOLT_HOME}/lib/extension/
+# javac -classpath "$VOLT_HOME/voltdb/*" -d obj/exporter exporter/HttpTaskExporter.java
+# jar cvf build/HttpTaskExporter.jar -C obj/exporter .
+# cp build/HttpTaskExporter.jar ${VOLT_HOME}/lib/extension/
 
 # On supercloud, use the shared scripts.
-# SHARED_DIR="/home/gridsan/qianl/DBOS_shared/shared_scripts/voltdb"
-# bash ${SHARED_DIR}/init_start.sh
+SHARED_DIR="/home/gridsan/qianl/DBOS_shared/shared_scripts/voltdb"
+bash ${SHARED_DIR}/init_start.sh
 
 # On local cluster, uncomment the following lines.
 voltdb init -f --dir=/var/tmp
