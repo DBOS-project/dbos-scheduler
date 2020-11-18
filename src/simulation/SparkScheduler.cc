@@ -112,7 +112,7 @@ void SparkScheduler::finishRequests() {
     AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
     assert(ok);
     assert(call->status.ok());
-    finishTask(client, 0, call->workerID);
+    finishTask(client, -1, call->workerID);
     delete call;
   }
   client.close();
@@ -126,10 +126,10 @@ DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, Dbos
 
   voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerId).addInt32(-1).addInt32(workerId % workerPartitions_);
+  params->addInt32(workerId).addInt32(taskId).addInt32(workerId % workerPartitions_);
   voltdb::InvocationResponse r = client.invoke(procedure);
   if (r.failure()) {
-    std::cout << "assignTaskToWorker procedure failed. " << r.toString();
+    std::cout << "finishTask procedure failed. " << r.toString();
     return false;
   }
   return true;
