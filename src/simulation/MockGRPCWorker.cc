@@ -125,7 +125,6 @@ DbosStatus MockGRPCWorker::setup() {
 
 DbosStatus MockGRPCWorker::teardown() {
   // Clean up data and threads.
-  std::cout << "Stop worker " << workerId_ << std::endl;
   workerServer_->Shutdown();
   workerThread_->join();
   delete workerThread_;

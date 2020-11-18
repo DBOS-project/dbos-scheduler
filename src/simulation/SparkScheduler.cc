@@ -150,8 +150,6 @@ DbosStatus SparkScheduler::setup() {
 
 DbosStatus SparkScheduler::teardown() {
   // Clean up data from previous run.
-  cq_.Shutdown();
-  finishRequestsThread_->join();
   truncateWorkerTable();
   for (VoltdbWorkerUtil* worker: SparkScheduler::workers_) {
     worker->teardown();
