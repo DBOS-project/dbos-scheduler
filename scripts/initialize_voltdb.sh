@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ex
 
+# Increase open files limit.
+ulimit -n 32768
+
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 # Enter the root dir of the repo.
 cd ${SCRIPT_DIR}/../
@@ -19,7 +22,7 @@ jar cvf build/HttpTaskExporter.jar -C obj/exporter .
 cp build/HttpTaskExporter.jar ${VOLT_HOME}/lib/extension/
 
 # On supercloud, use the shared scripts.
-SHARED_DIR="/home/gridsan/qianl/DBOS_shared/shared_scripts/voltdb"
+SHARED_DIR="/home/gridsan/groups/DBOS/shared_scripts/voltdb"
 bash ${SHARED_DIR}/init_start.sh
 
 # On local cluster, uncomment the following lines.
