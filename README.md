@@ -41,6 +41,15 @@ make -j40
 make install
 ```
 
+Then build openssl:
+```
+cd third_party/openssl
+mkdir -p ./install
+./config --prefix=${PWD}/install
+make -j40
+make install
+```
+
 ## Build DBOS scheduler
 ```
 mkdir build/
