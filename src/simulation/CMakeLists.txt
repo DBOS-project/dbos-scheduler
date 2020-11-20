@@ -20,6 +20,7 @@ add_library(simworker-util STATIC ${simworker-util_SOURCES})
 
 # For scheduler simulation
 target_link_libraries(simulation-util
+                      dbos-scheduler-protos
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
                       ${_VOLTDB_LIBS_PATH}/libevent.a
                       ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
@@ -31,6 +32,7 @@ target_link_libraries(simulation-util
 
 # For worker simulation
 target_link_libraries(simworker-util
+                      dbos-scheduler-protos
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
                       ${_VOLTDB_LIBS_PATH}/libevent.a
                       ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
