@@ -3,6 +3,9 @@
 #define __STDC_LIMIT_MACROS
 
 #include <vector>
+#include <iterator>
+#include <sstream>
+#include <iostream>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -29,15 +32,47 @@ voltdb::Client VoltdbSchedulerUtil::createVoltdbClient(std::string username,
 }
 
 VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
-                                         std::string dbAddr)
+                                         std::string& dbAddr)
     : client_(client) {
+  // Comma-separated list of hostnames or IPs.
+  std::istringstream addrStream(dbAddr);
+  std::string host;
+  char delim = ',';
+
+  // Connect to each host
+  // TODO: this is not the best practice. Each thread should connect to a
+  // subset of hosts.
+  /*
+  while (std::getline(addrStream, host, delim)) {
+    try {
+      client_->createConnection(host);
+    } catch (std::exception& e) {
+      std::cerr << "An exception occured while connecting to VoltDB " << host
+                << std::endl;
+      std::cerr << e.what();
+      // TODO: more robust error handling.
+      throw;
+    }
+    std::cout << "=== Connected to VoltDB at " << host << " ===\n";
+  }
+  */
+  
+  // Randomly pick one host from the list
+  std::vector<std::string> hostlist;
+  while (std::getline(addrStream, host, delim)) {
+    hostlist.push_back(host);
+  }
+  int randIndex = rand() % hostlist.size();
+  host = hostlist[randIndex];
   try {
-    client_->createConnection(dbAddr);
+    client_->createConnection(host);
   } catch (std::exception& e) {
-    std::cerr << "An exception occured while connecting to VoltDB "
+    std::cerr << "An exception occured while connecting to VoltDB " << host
               << std::endl;
+    std::cerr << e.what();
     // TODO: more robust error handling.
     throw;
   }
-  std::cout << "=== Connected to VoltDB at " << dbAddr << " ===\n";
+  std::cout << "=== Connected to VoltDB at " << host << " ===\n";
+
 }
