@@ -30,12 +30,6 @@ Pull remote grpc and protobuf codebase as third party dependency.
 git submodule update --init --recursive --progress
 ```
 
-To correctly build gRPC, add the following line to the top of the
-third\_party/grpc/cmake/ssl.cmake file:
-```
-set(gRPC_SSL_PROVIDER "package")
-```
-
 Then build protobuf:
 ```
 cd third_party/protobuf
