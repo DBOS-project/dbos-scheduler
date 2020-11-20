@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<deployment>
+    <cluster hostcount="2" sitesperhost="40" kfactor="0" schema="ddl"/>
+    <partition-detection/>
+    <heartbeat/>
+    <ssl/>
+    <httpd enabled="true">
+        <jsonapi enabled="true"/>
+    </httpd>
+    <snapshot enabled="false"/>
+    <commandlog enabled="false">
+        <frequency/>
+    </commandlog>
+    <systemsettings>
+        <temptables/>
+        <snapshot/>
+        <elastic/>
+        <query/>
+        <procedure/>
+        <resourcemonitor>
+            <memorylimit/>
+        </resourcemonitor>
+        <flushinterval>
+            <dr/>
+            <export/>
+        </flushinterval>
+    </systemsettings>
+    <security/>
+</deployment>

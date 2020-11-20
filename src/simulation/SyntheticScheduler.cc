@@ -250,7 +250,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-x: truncate DB tables after execution.\n";
   std::cerr << "\t-o <output log file path>: default "
             << "synthetic_scheduler_results.csv\n";
-  std::cerr << "\t-s <VoltDB master IP address>: default 'localhost'\n";
+  std::cerr << "\t-s <comma-separated list of servers>: default 'localhost'\n";
   std::cerr << "\t-i <measurement interval>: default " << measureIntervalMsec
             << " msec\n";
   std::cerr << "\t-t <total execution time>: default " << totalExecTimeMsec

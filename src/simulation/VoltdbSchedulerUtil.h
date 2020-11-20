@@ -23,7 +23,7 @@ typedef bool DbosStatus;
 // (2) pass the pointer to construct VoltdbSchedulerUtil.
 class VoltdbSchedulerUtil {
 public:
-  VoltdbSchedulerUtil(voltdb::Client* client, std::string dbAddr);
+  VoltdbSchedulerUtil(voltdb::Client* client, std::string& dbAddr);
 
   // Perform a scheduling act.
   virtual DbosStatus schedule() = 0;
