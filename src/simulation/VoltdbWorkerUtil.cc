@@ -3,6 +3,9 @@
 #define __STDC_LIMIT_MACROS
 
 #include <vector>
+#include <iterator>
+#include <sstream>
+#include <iostream>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -31,14 +34,30 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
   voltdb::ClientConfig config(kTestUser, kTestPwd, voltdb::HASH_SHA1);
   voltdb::Client client = voltdb::Client::create(config);
   srand(time(NULL));
+
+  // Comma-separated list of hostnames or IPs.
+  std::istringstream addrStream(dbAddr);
+  std::string host;
+  char delim = ',';
+
+  // Method 2: Randomly pick one host from the list; this may not be optimal as
+  // well. We might need some hashing function or a way to figure out locality.
+  std::vector<std::string> hostlist;
+  while (std::getline(addrStream, host, delim)) {
+    hostlist.push_back(host);
+  }
+  int randIndex = rand() % hostlist.size();
+  host = hostlist[randIndex];
   try {
-    client.createConnection(dbAddr);
+    client.createConnection(host);
   } catch (std::exception& e) {
-    std::cerr << "An exception occured while connecting to VoltDB "
+    std::cerr << "An exception occured while connecting to VoltDB " << host
               << std::endl;
+    std::cerr << e.what();
     // TODO: more robust error handling.
     throw;
   }
+
   return client;
 }
 

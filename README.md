@@ -78,3 +78,13 @@ On a single node cluster, run:
 ```
 voltadmin shutdown
 ```
+
+## Initialize a cluster of DB
+```
+First, follow the instruction in shared_scripts to init and start a cluster.
+Then, on one of the host node, run
+./scripts/create_tables.sh
+./scripts/update_voltdb_procedures.sh
+```
+TODO: figure out a way to automate the process. For now, we need to manually
+start the cluster because `$TMPDIR` is only available inside a slurm session.
