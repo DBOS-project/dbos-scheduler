@@ -40,6 +40,9 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
   std::string host;
   char delim = ',';
 
+  // TODO:for now every scheduler/worker would randomly connect to one host and
+  // all queries will go through that host. We may develop some
+  // locality/affinity, or hashing methods, to improve the locality.  
   // Method 2: Randomly pick one host from the list; this may not be optimal as
   // well. We might need some hashing function or a way to figure out locality.
   std::vector<std::string> hostlist;
