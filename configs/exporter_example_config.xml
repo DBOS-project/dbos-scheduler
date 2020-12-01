@@ -26,7 +26,7 @@
         </flushinterval>
     </systemsettings>
     <security/>
-    <export>
+    <export defaultpoolsize="8">
 	<configuration target="httpexporter" enabled="true" type="custom"
          exportconnectorclass="dbos.voltdb.exportclient.HttpTaskExporter">
             <property name="batch.mode">false</property>
