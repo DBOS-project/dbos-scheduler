@@ -39,7 +39,7 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
   std::string host;
   char delim = ',';
 
-  // Connect to each host
+  // Method 1: Connect to each host
   // TODO: this is not the best practice. Each thread should connect to a
   // subset of hosts.
   /*
@@ -57,7 +57,8 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
   }
   */
   
-  // Randomly pick one host from the list
+  // Method 2: Randomly pick one host from the list; this may not be optimal as
+  // well. We might need some hashing function or a way to figure out locality.
   std::vector<std::string> hostlist;
   while (std::getline(addrStream, host, delim)) {
     hostlist.push_back(host);
