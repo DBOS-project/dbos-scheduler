@@ -49,6 +49,9 @@ public:
   // Perform a scheduling act.
   DbosStatus schedule();
 
+  // Async scheduling.
+  DbosStatus asyncSchedule(boost::shared_ptr<voltdb::ProcedureCallback> callback);
+
   // Destructor
   ~PartitionedFIFOScheduler() { /* placeholder for now. */
   }
