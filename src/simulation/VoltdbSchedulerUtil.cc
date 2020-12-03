@@ -39,10 +39,11 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
   std::string host;
   char delim = ',';
 
-  // Method 1: Connect to each host
+  // Method 1: Connect to each host, rely on VoltDB query affinity to route to
+  // the correct host.
   // TODO: this is not the best practice. Each thread should connect to a
   // subset of hosts.
-  /*
+
   while (std::getline(addrStream, host, delim)) {
     try {
       client_->createConnection(host);
@@ -55,10 +56,11 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
     }
     std::cout << "=== Connected to VoltDB at " << host << " ===\n";
   }
-  */
+
   
   // Method 2: Randomly pick one host from the list; this may not be optimal as
   // well. We might need some hashing function or a way to figure out locality.
+  /*
   std::vector<std::string> hostlist;
   while (std::getline(addrStream, host, delim)) {
     hostlist.push_back(host);
@@ -75,5 +77,6 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
     throw;
   }
   std::cout << "=== Connected to VoltDB at " << host << " ===\n";
+  */
 
 }
