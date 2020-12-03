@@ -47,7 +47,6 @@ DbosStatus PartitionedFIFOScheduler::insertWorker(DbosId workerID,
 }
 
 DbosId PartitionedFIFOScheduler::selectWorker() {
-  // TODO: implement the actual transaction here.
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   int activePartitions = std::min(workerPartitions_, numWorkers_);
@@ -118,5 +117,21 @@ DbosStatus PartitionedFIFOScheduler::teardown() {
 DbosStatus PartitionedFIFOScheduler::schedule() {
   DbosId workerId = selectWorker();
   assert(workerId >= 0);
+  return true;
+}
+
+
+DbosStatus PartitionedFIFOScheduler::asyncSchedule(
+  boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+  std::vector<voltdb::Parameter> parameterTypes(1);
+  parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  int activePartitions = std::min(workerPartitions_, numWorkers_);
+  int partitionNum = rand() % activePartitions;
+  voltdb::Procedure procedure("SelectWorker", parameterTypes);
+  voltdb::ParameterSet* params = procedure.params();
+  params->addInt32(partitionNum);
+  client_->invoke(procedure, callback);
+  // TODO: what if it cannot find a worker? The callback can retry?
+
   return true;
 }

@@ -45,6 +45,7 @@ target_link_libraries(simworker-util
 # Add executable files.
 add_executable(SyntheticScheduler SyntheticScheduler.cc)
 add_executable(LoadGenerator LoadGenerator.cc)
+add_executable(AsyncSyntheticScheduler AsyncSyntheticScheduler.cc)
 add_executable(TestPartitionedFIFOScheduler TestPartitionedFIFOScheduler.cc)
 add_executable(TestSparkScheduler TestSparkScheduler.cc)
 add_executable(TestPartitionedScanTask TestPartitionedScanTask.cc)
@@ -53,9 +54,11 @@ add_executable(SyntheticWorker SyntheticWorker.cc)
 # Link to libs.
 target_link_libraries(SyntheticScheduler
                       simulation-util
+                      simworker-util
 )
 
-target_link_libraries(SyntheticScheduler
+target_link_libraries(AsyncSyntheticScheduler
+                      simulation-util
                       simworker-util
 )
 
@@ -106,8 +109,15 @@ target_link_libraries(LoadGenerator dbos-scheduler-protos
                       pthread
 )
 
+target_link_libraries(AsyncSyntheticScheduler dbos-scheduler-protos
+                      ${_REFLECTION}
+                      ${_GRPC_GRPCPP}
+                      ${_PROTOBUF_LIBPROTOBUF}
+                      pthread
+)
+
 # Generate output to lib/ or bin/
-set_target_properties(simulation-util simworker-util SyntheticScheduler LoadGenerator TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker
+set_target_properties(simulation-util simworker-util SyntheticScheduler LoadGenerator AsyncSyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

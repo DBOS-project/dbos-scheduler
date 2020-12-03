@@ -5,8 +5,10 @@
 #include <atomic>
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 #include "voltdb-client-cpp/include/Client.h"
+#include "voltdb-client-cpp/include/ProcedureCallback.hpp"
 
 // Used for task_id, worker_id in DBOS.
 // TODO: decide whether to use INT or STRING.
@@ -27,6 +29,13 @@ public:
 
   // Perform a scheduling act.
   virtual DbosStatus schedule() = 0;
+
+  // Async schedule. Will return immediately without waiting for response.
+  // TODO: turn this into a pure virtual function.
+  virtual DbosStatus asyncSchedule(boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+    std::cerr << "Not implemented\n";
+    abort();
+  }
 
   // Setup the database to benchmark.
   virtual DbosStatus setup() = 0;
