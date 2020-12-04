@@ -83,8 +83,9 @@ static void SchedulerThread(const int schedulerId,
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  int port = 8000 + schedulerId;
-  GRPCSparkScheduler* scheduler = new GRPCSparkScheduler(port);
+  int port = 9000 + schedulerId;
+  GRPCSparkScheduler* scheduler = new GRPCSparkScheduler(port, &voltdbClient, serverAddr,
+                                                         partitions, workerCapacity, numWorkers);
   scheduler->setup();
   assert(scheduler != nullptr);
   std::cout << "Scheduler: " << schedulerId << " started\n";
