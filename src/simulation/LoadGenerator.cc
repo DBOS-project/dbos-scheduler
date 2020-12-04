@@ -125,25 +125,14 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
  * For now, it will simply select a worker and decrease it's capacity.
  * We will need to add worker (consumer) to mark tasks finished.
  */
-static void SchedulerThread(const int schedulerId,
-                            const std::string& serverAddr) {
-  // Create a local VoltDB client.
-  voltdb::Client voltdbClient =
-      VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
+static void SchedulerThread(std::vector<std::string> schedulerAddresses) {
 
-  int port = 9000 + schedulerId;
-  GRPCSparkScheduler* scheduler = new GRPCSparkScheduler(port, &voltdbClient, serverAddr,
-                                                         partitions, workerCapacity, numWorkers);
-  scheduler->setup();
-  assert(scheduler != nullptr);
-  std::cout << "Scheduler: " << schedulerId << " started\n";
-
-  std::string addr = "localhost:" + std::to_string(port);
-
-  std::shared_ptr<Channel> channel =
-      grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
-  std::unique_ptr<dbos_scheduler::Frontend::Stub> stub =
-      dbos_scheduler::Frontend::NewStub(channel);
+  std::vector<std::shared_ptr<Channel>> channels;
+  for (std::string addr: schedulerAddresses) {
+    std::shared_ptr<Channel> channel =
+        grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+    channels.push_back(channel);
+  }
 
   do {
     auto aryIndex = schedLatsArrayIndex.fetch_add(1);
@@ -162,6 +151,9 @@ static void SchedulerThread(const int schedulerId,
 
     ClientContext st_context;
 
+    std::shared_ptr<Channel> channel = channels[rand() % channels.size()];
+    std::unique_ptr<dbos_scheduler::Frontend::Stub> stub =
+        dbos_scheduler::Frontend::NewStub(channel);
     Status status = stub->SubmitTask(&st_context, st_request, &st_reply);
     assert(status.ok());
 
@@ -173,9 +165,6 @@ static void SchedulerThread(const int schedulerId,
   } while (!mainFinished);
 
   sleep(1); // Give outstanding requests time to finish.
-  scheduler->teardown();
-  // Clean up
-  delete scheduler;
   return;
 }
 
@@ -195,11 +184,25 @@ static bool runBenchmark(const std::string& serverAddr,
   memset(schedLatencies, 0, kMaxEntries * sizeof(double));
   schedLatsArrayIndex.store(0);
   schedIndices.push_back(0);
+  std::vector<std::string> schedulerAddresses;
+
+  for (int schedulerId = 0; schedulerId < numSchedulers; schedulerId++) {
+    int port = 9000 + schedulerId;
+    GRPCSparkScheduler* scheduler =
+        new GRPCSparkScheduler(port, serverAddr, partitions,
+                               workerCapacity, numWorkers);
+    scheduler->setup();
+    assert(scheduler != nullptr);
+    std::cout << "Scheduler: " << schedulerId << " started\n";
+
+    std::string addr = "localhost:" + std::to_string(9000);
+    schedulerAddresses.push_back(addr);
+  }
 
   // Start scheduler threads.
   for (int i = 0; i < numSchedulers; ++i) {
     schedulerThreads.push_back(
-        new std::thread(&SchedulerThread, i, serverAddr));
+        new std::thread(&SchedulerThread, schedulerAddresses));
   }
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -226,7 +229,6 @@ static bool runBenchmark(const std::string& serverAddr,
     std::cerr << "[Warning]: failed to write results to " << outputFile << "\n";
   }
 
-  // Clean up.
   delete[] schedLatencies;
   schedLatencies = nullptr;
   timeStampsUsec.clear();
