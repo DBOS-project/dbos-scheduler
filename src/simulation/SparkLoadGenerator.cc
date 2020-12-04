@@ -69,8 +69,56 @@ static std::vector<uint64_t> timeStampsUsec;
 static const std::string kTestUser = "testuser";
 static const std::string kTestPwd = "testpassword";
 
+// Type of scheduler algorithm
+// TODO: add more types here.
+static const std::string kFifoAlgo = "fifo";
+static const std::string kFifoTaskAlgo = "fifo-task";
+static const std::string kSinglePartitionedFifoTaskAlgo =
+    "single-partitioned-fifo-task";
+static const std::string kSparkAlgo = "spark";
+static const std::string kScanTaskAlgo = "scan-task";
+static const std::string kPushFifoAlgo = "push-fifo";
+static const std::unordered_set<std::string> kAlgorithms = {
+    kFifoAlgo, kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo, kSparkAlgo,
+    kScanTaskAlgo, kPushFifoAlgo};
+static std::string scheduleAlgo = kFifoAlgo;
+
 // If true, truncate tables after execution.
 static bool cleanDB = false;
+
+/*
+ * Return a constructed scheduler instance based on algorithm.
+ */
+static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
+                                               const std::string& serverAddr,
+                                               const std::string& algo) {
+  VoltdbSchedulerUtil* scheduler = nullptr;
+  if (algo == kFifoAlgo) {
+    scheduler = new PartitionedFIFOScheduler(
+        voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
+  } else if (algo == kFifoTaskAlgo) {
+    scheduler = new PartitionedFIFOTaskScheduler(
+        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
+        numWorkers, probMultiTx);
+  } else if (algo == kSinglePartitionedFifoTaskAlgo) {
+    scheduler = new SinglePartitionedFIFOTaskScheduler(
+        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
+        numWorkers, probMultiTx);
+  } else if (algo == kSparkAlgo) {
+    scheduler = new SparkScheduler(voltdbClient, serverAddr, partitions,
+                                   workerCapacity, numWorkers);
+  } else if (algo == kScanTaskAlgo) {
+    scheduler = new PartitionedScanTask(voltdbClient, serverAddr, partitions,
+                                        numTasks, numWorkers, probMultiTx);
+  } else if (algo == kPushFifoAlgo) {
+    scheduler = new PushFIFOScheduler(voltdbClient, serverAddr, partitions,
+                                      numTasks, probMultiTx);
+  } else {
+    std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
+  }
+
+  return scheduler;
+}
 
 /*
  * Scheduler thread.
@@ -173,7 +221,7 @@ static bool runBenchmark(const std::string& serverAddr,
   // Processing the results.
   std::cerr << "Post processing results...\n";
   bool res = BenchmarkUtil::processResults(
-      schedLatencies, schedIndices, timeStampsUsec, outputFile, "Spark");
+      schedLatencies, schedIndices, timeStampsUsec, outputFile, scheduleAlgo);
   if (!res) {
     std::cerr << "[Warning]: failed to write results to " << outputFile << "\n";
   }
@@ -193,8 +241,8 @@ static bool setup(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  VoltdbSchedulerUtil* scheduler = new SparkScheduler(&voltdbClient, serverAddr, partitions,
-                                   workerCapacity, numWorkers);
+  VoltdbSchedulerUtil* scheduler =
+      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   assert(scheduler != nullptr);
   bool res = scheduler->setup();
   delete scheduler;
@@ -209,8 +257,8 @@ static bool teardown(const std::string& serverAddr) {
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  VoltdbSchedulerUtil* scheduler = new SparkScheduler(&voltdbClient, serverAddr, partitions,
-                                   workerCapacity, numWorkers);
+  VoltdbSchedulerUtil* scheduler =
+      constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   assert(scheduler != nullptr);
   bool res = scheduler->teardown();
   delete scheduler;
@@ -240,6 +288,10 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr
       << "\t-p <probability of multi-partition transaction> (0-1.0): default "
       << probMultiTx << "\n";
+  // Print all options here.
+  std::cerr << "\t-A <scheduler algorithm (options: ";
+  for (auto&& it : kAlgorithms) { std::cerr << it << " "; }
+  std::cerr << ")> default " << scheduleAlgo << "\n";
 
   std::cerr << std::endl;
   exit(1);
@@ -277,6 +329,9 @@ int main(int argc, char** argv) {
       case 'P':
         partitions = atoi(optarg);
         break;
+      case 'A':
+        scheduleAlgo = optarg;
+        break;
       case 'T':
         numTasks = atoi(optarg);
         break;
@@ -295,7 +350,13 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::cerr << "Scheduler algorithm: " << "Spark" << std::endl;
+  // Check scheduler algorithm type valid here.
+  auto algoIt = kAlgorithms.find(scheduleAlgo);
+  if (algoIt == kAlgorithms.end()) {
+    std::cerr << "Unsupported algorithm: " << scheduleAlgo << std::endl;
+    Usage(argv);
+  }
+  std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
   std::cerr << "Probability of multi-partition transaction: " << probMultiTx
             << std::endl;
   std::cerr << "Parallel scheduler threads: " << numSchedulers
