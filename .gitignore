@@ -8,6 +8,7 @@ scripts/temp/**
 **/obj*/
 **/log*/
 *.csv
+.idea/
 
 # Compiled Object files
 *.slo
