@@ -1,16 +1,19 @@
 #include "simulation/GRPCSparkscheduler.h"
+#include "simulation/SparkScheduler.h"
 
 namespace dbos_scheduler {
 
 // Implement the frontend gRPC service here.
 class FrontendServiceGRPCSparkScheduler final : public Frontend::Service {
 public:
-  FrontendServiceGRPCSparkScheduler() {
-    // TODO: to be implemented. e.g., initialize connections to VoltDB.
+  FrontendServiceGRPCSparkScheduler(voltdb::Client* client, std::string dbAddr,
+                                    int workerPartitions, int workerCapacity, int numWorkers) {
+    sparkScheduler = new SparkScheduler(client, dbAddr, workerPartitions,
+                                                   workerCapacity, numWorkers);
   }
 
   ~FrontendServiceGRPCSparkScheduler() {
-    // TODO: to be implemented.
+    delete sparkScheduler;
   }
 
 private:
@@ -19,6 +22,8 @@ private:
 
   Status Heartbeat(ServerContext* context, const HeartbeatRequest* request,
                    HeartbeatResponse* reply) override;
+
+  VoltdbSchedulerUtil* sparkScheduler;
 
 };  // class FrontendServiceImpl
 
@@ -41,7 +46,7 @@ Status FrontendServiceGRPCSparkScheduler::SubmitTask(ServerContext* context, con
   // std::cout << "Recieved a task: " << request->requirement() << ", "
   //           << request->exectime() << "μs." << std::endl;
 
-  usleep(request->exectime());
+  sparkScheduler->schedule();
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
 }
@@ -55,7 +60,7 @@ void GRPCSparkScheduler::RunServer() {
   const std::string& port = std::to_string(port_);
   std::string addr = "0.0.0.0:" + port;
 
-  dbos_scheduler::FrontendServiceGRPCSparkScheduler service;
+  dbos_scheduler::FrontendServiceGRPCSparkScheduler service(client, dbAddr, workerPartitions, workerCapacity, numWorkers);
   ServerBuilder builder;
 
   // Listen on the given address without any authentication mechanism.

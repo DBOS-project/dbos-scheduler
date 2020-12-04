@@ -13,8 +13,14 @@
 
 class GRPCSparkScheduler {
 public:
-  GRPCSparkScheduler(int port)
-      : port_(port){};
+  GRPCSparkScheduler(int port, voltdb::Client* client, std::string dbAddr,
+                     int workerPartitions, int workerCapacity, int numWorkers)
+      : port_(port),
+        client(client),
+        dbAddr(dbAddr),
+        workerPartitions(workerPartitions),
+        workerCapacity(workerCapacity),
+        numWorkers(numWorkers){};
   // Setup the database.
   DbosStatus setup();
 
@@ -23,6 +29,11 @@ public:
 
 private:
   void RunServer();
+  voltdb::Client* client;
+  std::string dbAddr;
+  int workerPartitions;
+  int workerCapacity;
+  int numWorkers;
   int port_;
   std::thread* workerThread_;
   std::unique_ptr<Server> workerServer_ = NULL;
