@@ -2,7 +2,7 @@
 // queries the DB to find a worker.  There won't be actual worker or load
 // generator.
 // The goal is to benchmark the basic latency, throughput, and scalability of
-// parallel scheudlers.
+// parallel schedulers.
 
 #include <getopt.h>
 #include <atomic>
@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "simulation/BenchmarkUtil.h"
+#include "simulation/GRPCSparkScheduler.h"
 #include "simulation/PartitionedFIFOScheduler.h"
 #include "simulation/PartitionedFIFOTaskScheduler.h"
 #include "simulation/PartitionedScanTask.h"
@@ -20,6 +21,10 @@
 #include "simulation/SparkScheduler.h"
 #include "simulation/VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
+
+#include <grpcpp/grpcpp.h>
+
+#include "frontend.grpc.pb.h"
 
 // Number of schedulers and workers
 static int numSchedulers = 1;
@@ -78,10 +83,19 @@ static void SchedulerThread(const int schedulerId,
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
 
-  VoltdbSchedulerUtil* scheduler = new SparkScheduler(&voltdbClient, serverAddr, partitions,
-                                   workerCapacity, numWorkers);
+  int port = 8000 + schedulerId;
+  GRPCSparkScheduler* scheduler = new GRPCSparkScheduler(port);
+  scheduler->setup();
   assert(scheduler != nullptr);
   std::cout << "Scheduler: " << schedulerId << " started\n";
+
+  std::string addr = "localhost:" + std::to_string(port);
+
+  std::shared_ptr<Channel> channel =
+      grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+  std::unique_ptr<dbos_scheduler::Frontend::Stub> stub =
+      dbos_scheduler::Frontend::NewStub(channel);
+
   do {
     auto aryIndex = schedLatsArrayIndex.fetch_add(1);
     if (aryIndex >= kMaxEntries) {
@@ -91,9 +105,16 @@ static void SchedulerThread(const int schedulerId,
     }
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
-    // Make scheduling decisions here.
-    auto status = scheduler->schedule();
-    assert(status);
+    // Submit task to scheduler.
+    dbos_scheduler::SubmitTaskRequest st_request;
+    st_request.set_requirement(10);
+    st_request.set_exectime(1000);
+    dbos_scheduler::SubmitTaskResponse st_reply;
+
+    ClientContext st_context;
+
+    Status status = stub->SubmitTask(&st_context, st_request, &st_reply);
+    assert(status.ok());
 
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
     // Record latency.
@@ -103,7 +124,7 @@ static void SchedulerThread(const int schedulerId,
   } while (!mainFinished);
 
   sleep(1); // Give outstanding requests time to finish.
-
+  scheduler->teardown();
   // Clean up
   delete scheduler;
   return;
