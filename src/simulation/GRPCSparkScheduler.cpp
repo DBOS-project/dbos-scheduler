@@ -60,7 +60,10 @@ void GRPCSparkScheduler::RunServer() {
   const std::string& port = std::to_string(port_);
   std::string addr = "0.0.0.0:" + port;
 
-  dbos_scheduler::FrontendServiceGRPCSparkScheduler service(client, dbAddr, workerPartitions, workerCapacity, numWorkers);
+  voltdb::Client voltdbClient =
+      VoltdbSchedulerUtil::createVoltdbClient("testuser", "testpassword");
+
+  dbos_scheduler::FrontendServiceGRPCSparkScheduler service(&voltdbClient, dbAddr, workerPartitions, workerCapacity, numWorkers);
   ServerBuilder builder;
 
   // Listen on the given address without any authentication mechanism.
