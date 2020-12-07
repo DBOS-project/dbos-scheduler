@@ -110,6 +110,9 @@ private:
   void processTaskQueue();
 
   std::queue<TaskData*> taskQueue;
+  std::condition_variable taskCompletionCV;
+  std::mutex taskCompletionMutex;
+  std::unordered_map<int, bool> taskCompletionMap;
 };
 
 #endif

@@ -130,13 +130,19 @@ void SparkScheduler::finishRequests() {
     AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
     assert(ok);
     assert(call->status.ok());
-    finishTask(client, -1, call->workerID);
+    finishTask(client, call->taskID, call->workerID);
     delete call;
   }
   client.close();
 }
 
 DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, DbosId workerId) {
+  // Notify the client that the task is complete.
+  taskCompletionMap[taskId] = true;
+  taskCompletionMutex.lock();
+  taskCompletionCV.notify_all();
+  taskCompletionMutex.unlock();
+  // Update the task's entries in the database.
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -223,4 +229,10 @@ DbosStatus SparkScheduler::submitTask(int targetData) {
   taskData->taskID = taskID;
   taskData->targetData = targetData;
   taskQueue.push(taskData);
+  taskCompletionMap.emplace(taskID, false);
+  std::unique_lock<std::mutex> lock(taskCompletionMutex);
+  while (!taskCompletionMap[taskID]) {
+    taskCompletionCV.wait(lock);
+  }
+  return true;
 }
