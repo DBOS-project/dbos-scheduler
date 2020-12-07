@@ -153,7 +153,7 @@ DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, Dbos
 }
 
 void SparkScheduler::processTaskQueue() {
-  while(true) {
+  while(runTaskQueueThread) {
     if (!taskQueue.empty()) {
       TaskData* taskData = taskQueue.front();
       DbosId workerId = selectWorker(taskData->targetData);
@@ -186,6 +186,22 @@ DbosStatus SparkScheduler::teardown() {
   return true;
 }
 
+DbosStatus SparkScheduler::startInstance() {
+  // Create the thread that processes the queue.
+  processTaskQueueThread_ = new std::thread(&SparkScheduler::processTaskQueue, this);
+  // Create the thread that completes asynchronous requests.
+  finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
+  return true;
+}
+
+DbosStatus SparkScheduler::terminateInstance() {
+  // Clean up data from previous run.
+  cq_.Shutdown();
+  runTaskQueueThread = false;
+  processTaskQueueThread_->join();
+  finishRequestsThread_->join();
+  return true;
+}
 
 DbosStatus SparkScheduler::schedule() {
   // Create the thread that completes asynchronous requests.
@@ -201,18 +217,8 @@ DbosStatus SparkScheduler::schedule() {
 }
 
 DbosStatus SparkScheduler::enqueue(DbosId taskID, int targetData) {
-  // Create the thread that processes the queue.
-  if (processTaskQueueThread_ == NULL) {
-    processTaskQueueThread_ = new std::thread(&SparkScheduler::processTaskQueue, this);
-  }
-  // Create the thread that completes asynchronous requests.
-  if (finishRequestsThread_ == NULL) {
-    finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
-  }
-
   TaskData* taskData = new TaskData;
   taskData->taskID = taskID;
   taskData->targetData = targetData;
-
   taskQueue.push(taskData);
 }
