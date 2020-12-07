@@ -54,12 +54,14 @@ public:
   // Perform a scheduling act.
   DbosStatus schedule();
 
+  // Enqueue a task.
+  DbosStatus enqueue(int taskID, int targetData);
+
   // Destructor
   ~SparkScheduler() { /* placeholder for now. */
   }
 
 private:
-
 
     struct AsyncClientCall {
         // Container for the data we expect from the server.
@@ -74,6 +76,13 @@ private:
         std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
     };
 
+  struct TaskData {
+    // Task ID;
+    DbosId taskID;
+    // Target data for task.
+    int targetData;
+  };
+
   std::shared_ptr<Channel> addrToChannel(std::string workerAddr);
   std::unordered_map<std::string, std::shared_ptr<Channel>> channelMap;
 
@@ -84,10 +93,14 @@ private:
   CompletionQueue cq_;
   std::atomic_int taskIDs;
   std::thread* finishRequestsThread_ = NULL;
+  std::thread* processTaskQueueThread_ = NULL;
 
   static std::vector<VoltdbWorkerUtil*> workers_;
 
   void finishRequests();
+  void processTaskQueue();
+
+  std::queue<TaskData*> taskQueue;
 };
 
 #endif

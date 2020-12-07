@@ -152,6 +152,18 @@ DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, Dbos
   return true;
 }
 
+void SparkScheduler::processTaskQueue() {
+  while(true) {
+    if (!taskQueue.empty()) {
+      TaskData* taskData = taskQueue.front();
+      DbosId workerId = selectWorker(taskData->targetData);
+      assert(workerId >= 0);
+      assignTaskToWorker(taskData->taskID, workerId);
+      taskQueue.pop();
+    }
+  }
+}
+
 DbosStatus SparkScheduler::setup() {
   // Clean up data from previous run.
   truncateWorkerTable();
@@ -186,4 +198,21 @@ DbosStatus SparkScheduler::schedule() {
   DbosId workerId = selectWorker(targetData);
   assert(workerId >= 0);
   return assignTaskToWorker(taskID, workerId);
+}
+
+DbosStatus SparkScheduler::enqueue(DbosId taskID, int targetData) {
+  // Create the thread that processes the queue.
+  if (processTaskQueueThread_ == NULL) {
+    processTaskQueueThread_ = new std::thread(&SparkScheduler::processTaskQueue, this);
+  }
+  // Create the thread that completes asynchronous requests.
+  if (finishRequestsThread_ == NULL) {
+    finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
+  }
+
+  TaskData* taskData = new TaskData;
+  taskData->taskID = taskID;
+  taskData->targetData = targetData;
+
+  taskQueue.push(taskData);
 }
