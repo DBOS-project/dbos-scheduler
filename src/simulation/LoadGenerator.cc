@@ -28,6 +28,7 @@
 
 // Number of schedulers and workers
 static int numSchedulers = 1;
+static int numSchedulerThreads = 1;
 static int numWorkers = 1;
 static int numTasks = 8;
 
@@ -202,7 +203,7 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   // Start scheduler threads.
-  for (int i = 0; i < numSchedulers; ++i) {
+  for (int i = 0; i < numSchedulerThreads; ++i) {
     schedulerThreads.push_back(
         new std::thread(&SchedulerThread, schedulerAddresses));
   }
@@ -218,9 +219,10 @@ static bool runBenchmark(const std::string& serverAddr,
   } while (currTime < endTime);
 
   mainFinished = true;
-  for (int i = 0; i < numSchedulers; ++i) {
-    schedulerThreads[i]->join();
-    delete schedulerThreads[i];
+
+  for (std::thread* schedulerThread: schedulerThreads) {
+    schedulerThread->join();
+    delete schedulerThread;
   }
 
   for (GRPCSparkScheduler* scheduler: schedulers) {
@@ -285,7 +287,9 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-t <total execution time>: default " << totalExecTimeMsec
             << " msec\n";
-  std::cerr << "\t-N <number of parallel schedulers (threads)>: default "
+  std::cerr << "\t-N <number of parallel scheduler threads>: default "
+            << numSchedulerThreads << "\n";
+  std::cerr << "\t-S <number of schedulers>: default "
             << numSchedulers << "\n";
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
@@ -311,7 +315,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:d:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:S:W:C:P:A:T:p:d:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -326,6 +330,9 @@ int main(int argc, char** argv) {
         totalExecTimeMsec = atoi(optarg);
         break;
       case 'N':
+        numSchedulerThreads = atoi(optarg);
+        break;
+      case 'S':
         numSchedulers = atoi(optarg);
         break;
       case 'W':
@@ -367,8 +374,9 @@ int main(int argc, char** argv) {
   std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
   std::cerr << "Probability of multi-partition transaction: " << probMultiTx
             << std::endl;
-  std::cerr << "Parallel scheduler threads: " << numSchedulers
+  std::cerr << "Parallel scheduler threads: " << numSchedulerThreads
             << "; workers: " << numWorkers << "; tasks: " << numTasks
+            << "; schedulers: " << numSchedulers
             << std::endl;
   std::cerr << "Worker capacity: " << workerCapacity << std::endl;
   std::cerr << "Partitions: " << partitions << std::endl;
