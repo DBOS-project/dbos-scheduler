@@ -57,11 +57,11 @@ public:
   // Terminate a scheduler instance.
   DbosStatus terminateInstance();
 
-  // Perform a scheduling act.
+  // Create and schedule a task, return when task complete.
   DbosStatus schedule();
 
-  // Enqueue a task.
-  DbosStatus enqueue(int taskID, int targetData);
+  // Submit a task, return when task complete.
+  DbosStatus submitTask(int targetData);
 
   // Destructor
   ~SparkScheduler() { /* placeholder for now. */
@@ -79,6 +79,8 @@ private:
         Status status;
         // ID of worker to which call was made.
         int workerID;
+        // Task ID.
+        int taskID;
         std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
     };
 
