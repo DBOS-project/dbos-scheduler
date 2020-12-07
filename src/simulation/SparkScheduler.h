@@ -26,7 +26,12 @@ public:
       : VoltdbSchedulerUtil(client, dbAddr),
         workerPartitions_(workerPartitions),
         workerCapacity_(workerCapacity),
-        numWorkers_(numWorkers){};
+        numWorkers_(numWorkers) {
+          // Create the thread that processes the queue.
+          processTaskQueueThread_ = new std::thread(&SparkScheduler::processTaskQueue, this);
+          // Create the thread that completes asynchronous requests.
+          finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
+        };
 
   // Truncate the worker table;
   void truncateWorkerTable();
@@ -51,12 +56,6 @@ public:
   // Tear down the database after benchmarking.
   DbosStatus teardown();
 
-  // Start a scheduler instance.
-  DbosStatus startInstance();
-
-  // Terminate a scheduler instance.
-  DbosStatus terminateInstance();
-
   // Create and schedule a task, return when task complete.
   DbosStatus schedule();
 
@@ -64,7 +63,14 @@ public:
   DbosStatus submitTask(int targetData);
 
   // Destructor
-  ~SparkScheduler() { /* placeholder for now. */
+  ~SparkScheduler() {
+    cq_.Shutdown();
+    runTaskQueueThread = false;
+    taskProcessMutex.lock();
+    taskProcessCV.notify_one();
+    taskProcessMutex.unlock();
+    processTaskQueueThread_->join();
+    finishRequestsThread_->join();
   }
 
 private:

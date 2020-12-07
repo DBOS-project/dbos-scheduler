@@ -195,37 +195,9 @@ DbosStatus SparkScheduler::teardown() {
   return true;
 }
 
-DbosStatus SparkScheduler::startInstance() {
-  // Create the thread that processes the queue.
-  processTaskQueueThread_ = new std::thread(&SparkScheduler::processTaskQueue, this);
-  // Create the thread that completes asynchronous requests.
-  finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
-  return true;
-}
-
-DbosStatus SparkScheduler::terminateInstance() {
-  // Clean up data from previous run.
-  cq_.Shutdown();
-  runTaskQueueThread = false;
-  taskProcessMutex.lock();
-  taskProcessCV.notify_one();
-  taskProcessMutex.unlock();
-  processTaskQueueThread_->join();
-  finishRequestsThread_->join();
-  return true;
-}
-
 DbosStatus SparkScheduler::schedule() {
-  // Create the thread that completes asynchronous requests.
-  if (finishRequestsThread_ == NULL) {
-    finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
-  }
-
-  int taskID = taskIDs++;
   DbosId targetData = rand() % (numWorkers_);
-  DbosId workerId = selectWorker(targetData);
-  assert(workerId >= 0);
-  return assignTaskToWorker(taskID, workerId);
+  return submitTask(targetData);
 }
 
 DbosStatus SparkScheduler::submitTask(int targetData) {
