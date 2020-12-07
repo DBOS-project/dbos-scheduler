@@ -114,7 +114,7 @@ private:
   std::mutex taskCompletionMutex;
   std::condition_variable taskProcessCV;
   std::mutex taskProcessMutex;
-  std::unordered_map<int, bool> taskCompletionMap;
+  std::unordered_set<int> taskCompletionSet;
 };
 
 #endif
