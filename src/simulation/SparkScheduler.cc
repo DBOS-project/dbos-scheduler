@@ -104,6 +104,7 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
   // Call object to store rpc data
   AsyncClientCall* call = new AsyncClientCall;
   call->workerID = workerId;
+  call->taskID = taskId;
   // stub_->AsyncSubmitTask() performs the RPC call, returning an instance to
   // store in "call". Because we are using the asynchronous API, we need to
   // hold on to the "call" instance in order to get updates on the ongoing RPC.
@@ -216,7 +217,8 @@ DbosStatus SparkScheduler::schedule() {
   return assignTaskToWorker(taskID, workerId);
 }
 
-DbosStatus SparkScheduler::enqueue(DbosId taskID, int targetData) {
+DbosStatus SparkScheduler::submitTask(int targetData) {
+  int taskID = taskIDs++;
   TaskData* taskData = new TaskData;
   taskData->taskID = taskID;
   taskData->targetData = targetData;

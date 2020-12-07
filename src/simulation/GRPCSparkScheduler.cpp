@@ -51,7 +51,7 @@ Status FrontendServiceGRPCSparkScheduler::SubmitTask(ServerContext* context, con
   //           << request->exectime() << "μs." << std::endl;
 
   DbosId targetData = rand() % (numWorkers_);
-  sparkScheduler->enqueue(0, targetData);
+  sparkScheduler->submitTask(targetData);
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
 }
