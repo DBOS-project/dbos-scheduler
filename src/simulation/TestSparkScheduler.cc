@@ -56,5 +56,6 @@ int main(int argc, char** argv) {
 
   scheduler.schedule();
 
+  scheduler.teardown();
   return 0;
 }
