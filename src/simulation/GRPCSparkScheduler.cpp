@@ -11,9 +11,11 @@ public:
     numWorkers_ = numWorkers;
     sparkScheduler = new SparkScheduler(client, dbAddr, workerPartitions,
                                                    workerCapacity, numWorkers);
+    sparkScheduler->startInstance();
   }
 
   ~FrontendServiceGRPCSparkScheduler() {
+    sparkScheduler->terminateInstance();
     delete sparkScheduler;
   }
 

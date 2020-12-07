@@ -51,6 +51,12 @@ public:
   // Tear down the database after benchmarking.
   DbosStatus teardown();
 
+  // Start a scheduler instance.
+  DbosStatus startInstance();
+
+  // Terminate a scheduler instance.
+  DbosStatus terminateInstance();
+
   // Perform a scheduling act.
   DbosStatus schedule();
 
@@ -94,6 +100,7 @@ private:
   std::atomic_int taskIDs;
   std::thread* finishRequestsThread_ = NULL;
   std::thread* processTaskQueueThread_ = NULL;
+  bool runTaskQueueThread = true;
 
   static std::vector<VoltdbWorkerUtil*> workers_;
 

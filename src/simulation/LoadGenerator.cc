@@ -184,6 +184,7 @@ static bool runBenchmark(const std::string& serverAddr,
   memset(schedLatencies, 0, kMaxEntries * sizeof(double));
   schedLatsArrayIndex.store(0);
   schedIndices.push_back(0);
+  std::vector<GRPCSparkScheduler*> schedulers;
   std::vector<std::string> schedulerAddresses;
 
   for (int schedulerId = 0; schedulerId < numSchedulers; schedulerId++) {
@@ -191,11 +192,12 @@ static bool runBenchmark(const std::string& serverAddr,
     GRPCSparkScheduler* scheduler =
         new GRPCSparkScheduler(port, serverAddr, partitions,
                                workerCapacity, numWorkers);
+    schedulers.push_back(scheduler);
     scheduler->setup();
     assert(scheduler != nullptr);
     std::cout << "Scheduler: " << schedulerId << " started\n";
 
-    std::string addr = "localhost:" + std::to_string(9000);
+    std::string addr = "localhost:" + std::to_string(port);
     schedulerAddresses.push_back(addr);
   }
 
@@ -219,6 +221,10 @@ static bool runBenchmark(const std::string& serverAddr,
   for (int i = 0; i < numSchedulers; ++i) {
     schedulerThreads[i]->join();
     delete schedulerThreads[i];
+  }
+
+  for (GRPCSparkScheduler* scheduler: schedulers) {
+    delete scheduler;
   }
 
   // Processing the results.
