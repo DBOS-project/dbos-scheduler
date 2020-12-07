@@ -28,7 +28,7 @@
 
 // Number of schedulers and workers
 static int numSchedulers = 1;
-static int numSchedulerThreads = 1;
+static int numClientThreads = 1;
 static int numWorkers = 1;
 static int numTasks = 8;
 
@@ -126,7 +126,7 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
  * For now, it will simply select a worker and decrease it's capacity.
  * We will need to add worker (consumer) to mark tasks finished.
  */
-static void SchedulerThread(std::vector<std::string> schedulerAddresses) {
+static void ClientThread(std::vector<std::string> schedulerAddresses) {
 
   std::vector<std::shared_ptr<Channel>> channels;
   for (std::string addr: schedulerAddresses) {
@@ -176,7 +176,7 @@ static bool runBenchmark(const std::string& serverAddr,
                          const std::string& outputFile) {
   mainFinished = false;
 
-  std::vector<std::thread*> schedulerThreads;  // Parallel schedulers.
+  std::vector<std::thread*> clientThreads;  // Parallel client threads.
 
   // Initialize measurement arrays.
   uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -202,9 +202,9 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   // Start scheduler threads.
-  for (int i = 0; i < numSchedulerThreads; ++i) {
-    schedulerThreads.push_back(
-        new std::thread(&SchedulerThread, schedulerAddresses));
+  for (int i = 0; i < numClientThreads; ++i) {
+    clientThreads.push_back(
+        new std::thread(&ClientThread, schedulerAddresses));
   }
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -219,7 +219,7 @@ static bool runBenchmark(const std::string& serverAddr,
 
   mainFinished = true;
 
-  for (std::thread* schedulerThread: schedulerThreads) {
+  for (std::thread* schedulerThread: clientThreads) {
     schedulerThread->join();
     delete schedulerThread;
   }
@@ -286,8 +286,8 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-t <total execution time>: default " << totalExecTimeMsec
             << " msec\n";
-  std::cerr << "\t-N <number of parallel scheduler threads>: default "
-            << numSchedulerThreads << "\n";
+  std::cerr << "\t-N <number of parallel client threads>: default "
+            << numClientThreads << "\n";
   std::cerr << "\t-S <number of schedulers>: default "
             << numSchedulers << "\n";
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
@@ -329,7 +329,7 @@ int main(int argc, char** argv) {
         totalExecTimeMsec = atoi(optarg);
         break;
       case 'N':
-        numSchedulerThreads = atoi(optarg);
+        numClientThreads = atoi(optarg);
         break;
       case 'S':
         numSchedulers = atoi(optarg);
@@ -373,7 +373,7 @@ int main(int argc, char** argv) {
   std::cerr << "Scheduler algorithm: " << scheduleAlgo << std::endl;
   std::cerr << "Probability of multi-partition transaction: " << probMultiTx
             << std::endl;
-  std::cerr << "Parallel scheduler threads: " << numSchedulerThreads
+  std::cerr << "Parallel scheduler threads: " << numClientThreads
             << "; workers: " << numWorkers << "; tasks: " << numTasks
             << "; schedulers: " << numSchedulers
             << std::endl;
