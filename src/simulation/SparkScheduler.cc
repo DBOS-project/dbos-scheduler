@@ -237,7 +237,7 @@ DbosStatus SparkScheduler::submitTask(int targetData) {
   taskProcessMutex.lock();
   taskProcessCV.notify_one();
   taskProcessMutex.unlock();
-  taskCompletionMap.emplace(taskID, false);
+  taskCompletionMap[taskID] = false;
   std::unique_lock<std::mutex> lock(taskCompletionMutex);
   while (!taskCompletionMap[taskID]) {
     taskCompletionCV.wait(lock);
