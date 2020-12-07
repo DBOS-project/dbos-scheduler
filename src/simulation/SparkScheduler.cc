@@ -160,8 +160,10 @@ DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, Dbos
 }
 
 void SparkScheduler::processTaskQueue() {
+  std::unique_lock<std::mutex> lock(taskProcessMutex);
   while(runTaskQueueThread) {
-    if (!taskQueue.empty()) {
+    taskProcessCV.wait(lock);
+    while (!taskQueue.empty()) {
       TaskData* taskData = taskQueue.front();
       DbosId workerId = selectWorker(taskData->targetData);
       assert(workerId >= 0);
@@ -205,6 +207,9 @@ DbosStatus SparkScheduler::terminateInstance() {
   // Clean up data from previous run.
   cq_.Shutdown();
   runTaskQueueThread = false;
+  taskProcessMutex.lock();
+  taskProcessCV.notify_one();
+  taskProcessMutex.unlock();
   processTaskQueueThread_->join();
   finishRequestsThread_->join();
   return true;
@@ -229,6 +234,9 @@ DbosStatus SparkScheduler::submitTask(int targetData) {
   taskData->taskID = taskID;
   taskData->targetData = targetData;
   taskQueue.push(taskData);
+  taskProcessMutex.lock();
+  taskProcessCV.notify_one();
+  taskProcessMutex.unlock();
   taskCompletionMap.emplace(taskID, false);
   std::unique_lock<std::mutex> lock(taskCompletionMutex);
   while (!taskCompletionMap[taskID]) {
