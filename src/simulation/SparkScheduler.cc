@@ -138,8 +138,8 @@ void SparkScheduler::finishRequests() {
 
 DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, DbosId workerId) {
   // Notify the client that the task is complete.
-  taskCompletionMap[taskId] = true;
   taskCompletionMutex.lock();
+  taskCompletionSet.insert(taskId);
   taskCompletionCV.notify_all();
   taskCompletionMutex.unlock();
   // Update the task's entries in the database.
@@ -233,13 +233,12 @@ DbosStatus SparkScheduler::submitTask(int targetData) {
   TaskData* taskData = new TaskData;
   taskData->taskID = taskID;
   taskData->targetData = targetData;
-  taskQueue.push(taskData);
   taskProcessMutex.lock();
+  taskQueue.push(taskData);
   taskProcessCV.notify_one();
   taskProcessMutex.unlock();
-  taskCompletionMap[taskID] = false;
   std::unique_lock<std::mutex> lock(taskCompletionMutex);
-  while (!taskCompletionMap[taskID]) {
+  while (taskCompletionSet.find(taskID) == taskCompletionSet.end()) {
     taskCompletionCV.wait(lock);
   }
   return true;
