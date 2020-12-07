@@ -194,7 +194,6 @@ static bool runBenchmark(const std::string& serverAddr,
         new GRPCSparkScheduler(port, serverAddr, partitions,
                                workerCapacity, numWorkers);
     schedulers.push_back(scheduler);
-    scheduler->setup();
     assert(scheduler != nullptr);
     std::cout << "Scheduler: " << schedulerId << " started\n";
 
