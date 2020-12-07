@@ -1,4 +1,4 @@
-#include "simulation/GRPCSparkscheduler.h"
+#include "simulation/GRPCSparkScheduler.h"
 #include "simulation/SparkScheduler.h"
 
 namespace dbos_scheduler {
