@@ -83,18 +83,3 @@ void GRPCSparkScheduler::RunServer() {
   // responsible for shutting down the server for this call to ever return.
   workerServer_->Wait();
 }
-
-DbosStatus GRPCSparkScheduler::setup() {
-  workerThread_ = new std::thread(&GRPCSparkScheduler::RunServer, this);
-  while (workerServer_ == NULL) {;} // Spin until server is online.
-
-  return true;
-}
-
-DbosStatus GRPCSparkScheduler::teardown() {
-  // Clean up data and threads.
-  workerServer_->Shutdown();
-  workerThread_->join();
-  delete workerThread_;
-  return true;
-}

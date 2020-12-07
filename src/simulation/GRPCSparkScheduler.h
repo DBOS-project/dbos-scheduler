@@ -19,12 +19,17 @@ public:
         dbAddr(dbAddr),
         workerPartitions(workerPartitions),
         workerCapacity(workerCapacity),
-        numWorkers(numWorkers){};
-  // Setup the database.
-  DbosStatus setup();
+        numWorkers(numWorkers){
+          workerThread_ = new std::thread(&GRPCSparkScheduler::RunServer, this);
+          while (workerServer_ == NULL) {;} // Spin until server is online.
+        };
 
-  // Tear down the database after benchmarking.
-  DbosStatus teardown();
+  ~GRPCSparkScheduler() {
+    // Clean up data and threads.
+    workerServer_->Shutdown();
+    workerThread_->join();
+    delete workerThread_;
+  }
 
 private:
   void RunServer();
