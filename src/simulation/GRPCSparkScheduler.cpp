@@ -8,6 +8,7 @@ class FrontendServiceGRPCSparkScheduler final : public Frontend::Service {
 public:
   FrontendServiceGRPCSparkScheduler(voltdb::Client* client, std::string dbAddr,
                                     int workerPartitions, int workerCapacity, int numWorkers) {
+    numWorkers_ = numWorkers;
     sparkScheduler = new SparkScheduler(client, dbAddr, workerPartitions,
                                                    workerCapacity, numWorkers);
   }
@@ -23,7 +24,8 @@ private:
   Status Heartbeat(ServerContext* context, const HeartbeatRequest* request,
                    HeartbeatResponse* reply) override;
 
-  VoltdbSchedulerUtil* sparkScheduler;
+  SparkScheduler* sparkScheduler;
+  int numWorkers_;
 
 };  // class FrontendServiceImpl
 
@@ -46,7 +48,8 @@ Status FrontendServiceGRPCSparkScheduler::SubmitTask(ServerContext* context, con
   // std::cout << "Recieved a task: " << request->requirement() << ", "
   //           << request->exectime() << "μs." << std::endl;
 
-  sparkScheduler->schedule();
+  DbosId targetData = rand() % (numWorkers_);
+  sparkScheduler->enqueue(0, targetData);
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
 }
