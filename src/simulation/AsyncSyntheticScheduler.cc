@@ -1,8 +1,8 @@
-// This the **asynchronous** synthetic multi-thread scheduler will create
-// "fake" task ids, and queries the DB to find a worker.  There won't be actual
-// worker or load generator.
+// This **asynchronous** synthetic multi-thread scheduler will create
+// "fake" task ids, and query the DB to find a worker.  There won't be actual
+// workers or load generators.
 // The goal is to benchmark the basic latency, throughput, and scalability of
-// parallel scheudlers.
+// parallel schedulers.
 
 #include <getopt.h>
 #include <atomic>
