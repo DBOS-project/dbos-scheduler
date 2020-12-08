@@ -64,9 +64,6 @@ target_link_libraries(AsyncSyntheticScheduler
 
 target_link_libraries(LoadGenerator
                       simulation-util
-)
-
-target_link_libraries(LoadGenerator
                       simworker-util
 )
 
