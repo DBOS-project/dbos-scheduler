@@ -295,7 +295,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
-  std::cerr << "\t-d <arrival delay>: default " << partitions << "\n";
+  std::cerr << "\t-d <arrival delay>: default " << arrivalDelay << "\n";
   std::cerr
       << "\t-p <probability of multi-partition transaction> (0-1.0): default "
       << probMultiTx << "\n";
