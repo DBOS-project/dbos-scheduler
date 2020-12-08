@@ -78,9 +78,10 @@ static const std::string kSinglePartitionedFifoTaskAlgo =
 static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
 static const std::string kPushFifoAlgo = "push-fifo";
+
+// TODO: currently only FIFO supports async. Will add more.
 static const std::unordered_set<std::string> kAlgorithms = {
-    kFifoAlgo, kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo, kSparkAlgo,
-    kScanTaskAlgo, kPushFifoAlgo};
+    kFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // Max outstanding requests per thread.
@@ -89,7 +90,14 @@ static int maxOutstanding = 1;
 // If true, truncate tables after execution.
 static bool cleanDB = false;
 
+// If true, do not setup tables before execution. Otherwise, setup the table.
+static bool noSetupDB = false;
+
 // Callback for async client.
+// Note: VoltDB C++ client is single threaded; thus the callback is executed on
+// the same thread as the one sending requests. Therefore, the sender thread
+// needs to periodically call "runOnce()" to enter the event loop and process
+// callbacks.
 class SchedulerCallback: public voltdb::ProcedureCallback {
 public:
   SchedulerCallback(int64_t maxOutCnt): outCnt_(0), endThresh_(maxOutCnt/2) {}
@@ -109,6 +117,10 @@ public:
     }
 
     // Convert to microseconds.
+    // NOTE: the clusterRoundTripTime is the VoltDB internal server side
+    // latency, and in millisecond granularity. Thus, it is normal to have
+    // "zero" latency here.
+    // TODO: figure out a better way to measure async client side latency.
     double latency = (double)response.clusterRoundTripTime() * 1000.0;
     schedLatencies[aryIndex] = latency;
     std::vector<voltdb::Table> results = response.results();
@@ -118,6 +130,10 @@ public:
 
     outCnt_--;
     if (outCnt_ <= endThresh_) {
+      // If reaches the threshold, break the event loop and return to
+      // scheduling. Otherwise, the event loop would continue to process all
+      // responses.
+      // TODO: find a better heuristic to end the loop.
       retVal = true;
     }
     return retVal;
@@ -180,18 +196,24 @@ static void SchedulerThread(const int schedulerId,
   boost::shared_ptr<SchedulerCallback> callback(new SchedulerCallback(maxOutstanding));
   callback->outCnt_ = 0;
   do {
-    // Make scheduling decisions here.
+    // Make async scheduling decisions here.
     auto status = scheduler->asyncSchedule(callback);
     assert(status);
     callback->outCnt_++;
     std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
     if (callback->outCnt_ >= maxOutstanding) {
-      voltdbClient.runOnce();  // Block? until the event loop finished or callback returns true.
+      // Run the event loop once; return immediately if no responses. It will
+      // process callbacks until the event loop finished or callback returns
+      // true.
+      // TODO: either find a better heuristic, or run callbacks on a separate thread.
+      voltdbClient.runOnce();
       continue;
     }
 
     if (callback->outCnt_ > maxOutstanding/2) {
-      voltdbClient.runOnce();  // Actually execute the requests.
+      // Heuristic to process responses in time.
+      // TODO: either find a better heuristic, or run callbacks on a separate thread.
+      voltdbClient.runOnce();
       continue;
     }
 
@@ -297,6 +319,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "Usage: " << argv[0] << "[options]\n";
   std::cerr << "\t-h: show this message\n";
   std::cerr << "\t-x: truncate DB tables after execution.\n";
+  std::cerr << "\t-X: NOT setup DB tables before execution.\n";
   std::cerr << "\t-o <output log file path>: default "
             << "synthetic_scheduler_results.csv\n";
   std::cerr << "\t-s <comma-separated list of servers>: default 'localhost'\n";
@@ -311,7 +334,9 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
-  std::cerr << "\t-d <arrival delay>: default " << partitions << "\n";
+  std::cerr << "\t-d <arrival delay>: default " << arrivalDelay << "\n";
+  // Max outstanding requests: if reaches this threshold, runs the event loop
+  // once to process potential responses.
   std::cerr << "\t-m <max outstanding requests>: default " << maxOutstanding << "\n";
   std::cerr
       << "\t-p <probability of multi-partition transaction> (0-1.0): default "
@@ -331,7 +356,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:d:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxXo:s:i:t:N:W:C:P:A:T:p:d:m:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -372,6 +397,9 @@ int main(int argc, char** argv) {
       case 'x':
         cleanDB = true;
         break;
+      case 'X':
+        noSetupDB = true;
+        break;
       case 'm':
         maxOutstanding = atoi(optarg);
         break;
@@ -404,10 +432,14 @@ int main(int argc, char** argv) {
   std::cerr << "Maximum outstanding requests: " << maxOutstanding << "\n";
 
   // 1) Initialize database state.
-  bool res = setup(serverAddr);
-  if (!res) {
-    std::cerr << "Failed to initialize database state." << std::endl;
-    exit(1);
+  bool res = false;
+  
+  if (!noSetupDB) {
+    res = setup(serverAddr);
+    if (!res) {
+      std::cerr << "Failed to initialize database state." << std::endl;
+      exit(1);
+    }
   }
 
   // 2) Run experiments and parse results.
