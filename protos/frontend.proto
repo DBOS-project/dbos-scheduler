@@ -15,7 +15,7 @@ service Frontend {
 
 // Message types for Frontend
 message SubmitTaskRequest {
-  int64 requirement = 1; // resource requirement.
+  int64 targetdata = 1; // resource requirement.
   int64 exectime = 2;    // execution time in nanoseconds.
 }
 

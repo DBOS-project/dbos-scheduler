@@ -24,7 +24,7 @@ private:
 Status FrontendServiceGRPCScheduler::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                                        SubmitTaskResponse* reply) {
   Task* task = new Task;
-  task->targetData = request->requirement();
+  task->targetData = request->targetdata();
   task->execTime = request->exectime();
   scheduler_->schedule(task);
   delete task;
