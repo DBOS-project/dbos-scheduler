@@ -33,23 +33,10 @@ private:
   Status SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                     SubmitTaskResponse* reply) override;
 
-  Status Heartbeat(ServerContext* context, const HeartbeatRequest* request,
-                   HeartbeatResponse* reply) override;
-
   // TODO: add more functions / internal variables to connect with DB.
 
 };  // class FrontendServiceImpl
 
-/*
- * Simply print the message and return.
- */
-Status FrontendServiceImpl::Heartbeat(ServerContext* context,
-                                      const HeartbeatRequest* request,
-                                      HeartbeatResponse* reply) {
-  std::cout << "Received heartbeat msg: " << request->msg() << std::endl;
-  reply->set_status(DbosStatusEnum::SUCCESS);
-  return Status::OK;
-}
 
 /*
  * Receive a submitted task from the client.

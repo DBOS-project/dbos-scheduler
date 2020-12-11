@@ -11,9 +11,6 @@ import "dbos_status.proto";
 service Frontend {
   // Client sends a task to the scheduler.
   rpc SubmitTask(SubmitTaskRequest) returns (SubmitTaskResponse) {}
-
-  // Heartbeat to scheduler.
-  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
 }
 
 // Message types for Frontend
@@ -25,12 +22,3 @@ message SubmitTaskRequest {
 message SubmitTaskResponse {
   DbosStatusEnum status = 1;
 }
-
-message HeartbeatRequest {
-  string msg = 1;
-}
-
-message HeartbeatResponse {
-	DbosStatusEnum status = 1;
-}
-
