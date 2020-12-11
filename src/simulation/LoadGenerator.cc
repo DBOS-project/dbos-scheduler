@@ -191,9 +191,12 @@ static bool runBenchmark(const std::string& serverAddr,
   std::vector<voltdb::Client> clients;
 
   for (int schedulerId = 0; schedulerId < numSchedulers; schedulerId++) {
+    clients.push_back(VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd));
+  }
+
+  for (int schedulerId = 0; schedulerId < numSchedulers; schedulerId++) {
     int port = 9000 + schedulerId;
 
-    clients.push_back(VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd));
     VoltdbSchedulerUtil* scheduler =
         constructScheduler(&clients[schedulerId], serverAddr, "spark");
     GRPCScheduler* grpcScheduler =
