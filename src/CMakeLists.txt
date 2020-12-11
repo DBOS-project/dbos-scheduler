@@ -22,20 +22,5 @@ set(PROTOS_PATH "${CMAKE_CURRENT_BINARY_DIR}/../protos")
 
 include_directories(${PROTOS_PATH})
 
-add_executable(frontend_grpc_server frontend_grpc_server.cc)
-target_link_libraries(frontend_grpc_server dbos-scheduler-protos
-                      ${_REFLECTION}
-                      ${_GRPC_GRPCPP}
-                      ${_PROTOBUF_LIBPROTOBUF}
-                      pthread
-)
-
-set_target_properties(frontend_grpc_server
-  PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
 # Subdirectories
 add_subdirectory(simulation)

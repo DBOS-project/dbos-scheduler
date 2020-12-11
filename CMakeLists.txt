@@ -37,5 +37,4 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # Targets
 add_subdirectory(protos)
 add_subdirectory(src)
-add_subdirectory(test)
 
