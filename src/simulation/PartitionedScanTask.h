@@ -39,7 +39,7 @@ public:
   DbosStatus teardown();
 
   // Perform a scheduling act.
-  DbosStatus schedule();
+  DbosStatus schedule(Task* task);
 
   // Destructor
   ~PartitionedScanTask() { /* placeholder for now. */

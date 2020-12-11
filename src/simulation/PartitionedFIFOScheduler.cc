@@ -114,7 +114,7 @@ DbosStatus PartitionedFIFOScheduler::teardown() {
   return true;
 }
 
-DbosStatus PartitionedFIFOScheduler::schedule() {
+DbosStatus PartitionedFIFOScheduler::schedule(Task* task) {
   DbosId workerId = selectWorker();
   assert(workerId >= 0);
   return true;

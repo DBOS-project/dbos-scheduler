@@ -132,7 +132,7 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::teardown() {
   return true;
 }
 
-DbosStatus SinglePartitionedFIFOTaskScheduler::schedule() {
+DbosStatus SinglePartitionedFIFOTaskScheduler::schedule(Task* task) {
   int taskId = taskindex.fetch_add(1);
   DbosStatus status = selectTaskWorker(taskId);
   assert(status == true);

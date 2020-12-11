@@ -31,11 +31,7 @@ private:
  */
 Status FrontendServiceGRPCSparkScheduler::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                                        SubmitTaskResponse* reply) {
-  // std::cout << "Recieved a task: " << request->requirement() << ", "
-  //           << request->exectime() << "μs." << std::endl;
-
-  DbosId targetData = rand() % (numWorkers_);
-  sparkScheduler->submitTask(targetData);
+  sparkScheduler->schedule(NULL);
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
 }

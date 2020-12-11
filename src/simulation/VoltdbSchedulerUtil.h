@@ -9,6 +9,7 @@
 
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ProcedureCallback.hpp"
+#include "Task.h"
 
 // Used for task_id, worker_id in DBOS.
 // TODO: decide whether to use INT or STRING.
@@ -28,7 +29,7 @@ public:
   VoltdbSchedulerUtil(voltdb::Client* client, std::string& dbAddr);
 
   // Perform a scheduling act.
-  virtual DbosStatus schedule() = 0;
+  virtual DbosStatus schedule(Task* task) = 0;
 
   // Async schedule. Will return immediately without waiting for response.
   // TODO: turn this into a pure virtual function.

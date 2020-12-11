@@ -140,7 +140,7 @@ static void SchedulerThread(const int schedulerId,
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Make scheduling decisions here.
-    auto status = scheduler->schedule();
+    auto status = scheduler->schedule(NULL);
     assert(status);
 
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
