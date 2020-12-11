@@ -21,24 +21,10 @@ private:
   Status SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                     SubmitTaskResponse* reply) override;
 
-  Status Heartbeat(ServerContext* context, const HeartbeatRequest* request,
-                   HeartbeatResponse* reply) override;
-
   SparkScheduler* sparkScheduler;
   int numWorkers_;
 
 };  // class FrontendServiceImpl
-
-/*
- * Simply print the message and return.
- */
-Status FrontendServiceGRPCSparkScheduler::Heartbeat(ServerContext* context,
-                                      const HeartbeatRequest* request,
-                                      HeartbeatResponse* reply) {
-  std::cout << "Received heartbeat msg: " << request->msg() << std::endl;
-  reply->set_status(DbosStatusEnum::SUCCESS);
-  return Status::OK;
-}
 
 /*
  * Receive a submitted task from the client.
