@@ -98,7 +98,7 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId, Ta
 
   // Submit task
   dbos_scheduler::SubmitTaskRequest st_request;
-  st_request.set_requirement(task->targetData);
+  st_request.set_targetdata(task->targetData);
   st_request.set_exectime(task->execTime);
 
   // Call object to store rpc data
