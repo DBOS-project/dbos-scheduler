@@ -54,26 +54,24 @@ public:
 
 private:
 
-    struct AsyncClientCall {
-        // Container for the data we expect from the server.
-        dbos_scheduler::SubmitTaskResponse reply;
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
-        // Storage for the status of the RPC upon completion.
-        Status status;
-        // ID of worker to which call was made.
-        int workerID;
-        // Task ID.
-        int taskID;
-        std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
-    };
+  struct AsyncClientCall {
+    // Container for the data we expect from the server.
+    dbos_scheduler::SubmitTaskResponse reply;
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
+    // Storage for the status of the RPC upon completion.
+    Status status;
+    // ID of worker to which call was made.
+    int workerID;
+    // Task ID.
+    int taskID;
+    std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
+  };
 
   struct TaskData {
-    // Task ID;
     DbosId taskID;
-    // Target data for task.
-    int targetData;
+    Task* taskStruct;
   };
 
   // Truncate the worker table;
@@ -88,7 +86,7 @@ private:
 
   // Update which worker the task is assigned to, and update worker status to
   // scheduled.
-  DbosStatus assignTaskToWorker(DbosId taskId, DbosId workerId);
+  DbosStatus assignTaskToWorker(DbosId taskId, DbosId workerId, Task* task);
 
   // Complete a task, updating the capacity of its worker.
   DbosStatus finishTask(voltdb::Client client, DbosId taskId, DbosId workerId);

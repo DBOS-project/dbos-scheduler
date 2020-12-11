@@ -28,7 +28,7 @@ class VoltdbSchedulerUtil {
 public:
   VoltdbSchedulerUtil(voltdb::Client* client, std::string& dbAddr);
 
-  // Perform a scheduling act.
+  // Schedule and execute a task, return its status when complete.
   virtual DbosStatus schedule(Task* task) = 0;
 
   // Async schedule. Will return immediately without waiting for response.

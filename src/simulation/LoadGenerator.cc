@@ -146,7 +146,7 @@ static void ClientThread(std::vector<std::string> schedulerAddresses) {
 
     // Submit task to scheduler.
     dbos_scheduler::SubmitTaskRequest st_request;
-    st_request.set_requirement(10);
+    st_request.set_requirement(rand() % numWorkers);
     st_request.set_exectime(1000);
     dbos_scheduler::SubmitTaskResponse st_reply;
 

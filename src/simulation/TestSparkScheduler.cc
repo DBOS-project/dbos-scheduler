@@ -20,19 +20,19 @@ int main(int argc, char** argv) {
   Task* task = new Task;
   task->execTime = 1000;
 
-  task->requirement = 1;
+  task->targetData = 1;
   scheduler.schedule(task);
 
-  task->requirement = 0;
+  task->targetData = 0;
   scheduler.schedule(task);
 
-  task->requirement = 1;
+  task->targetData = 1;
   scheduler.schedule(task);
 
-  task->requirement = 0;
+  task->targetData = 0;
   scheduler.schedule(task);
 
-  task->requirement = 0;
+  task->targetData = 0;
   scheduler.schedule(task);
 
   delete task;
