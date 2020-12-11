@@ -1,5 +1,5 @@
-#ifndef DBOS_SCHEDULER_GRPCSPARKSCHEDULER_H
-#define DBOS_SCHEDULER_GRPCSPARKSCHEDULER_H
+#ifndef DBOS_SCHEDULER_GRPCSCHEDULER_H
+#define DBOS_SCHEDULER_GRPCSCHEDULER_H
 
 #include <atomic>
 #include <string>
@@ -11,16 +11,16 @@
 #include "simulation/VoltdbWorkerUtil.h"
 #include "simulation/MockGRPCWorker.h"
 
-class GRPCSparkScheduler {
+class GRPCScheduler {
 public:
-  GRPCSparkScheduler(int port, VoltdbSchedulerUtil* scheduler)
+  GRPCScheduler(int port, VoltdbSchedulerUtil* scheduler)
       : port_(port),
         scheduler_(scheduler) {
-          workerThread_ = new std::thread(&GRPCSparkScheduler::RunServer, this);
+          workerThread_ = new std::thread(&GRPCScheduler::RunServer, this);
           while (workerServer_ == NULL) {;} // Spin until server is online.
         };
 
-  ~GRPCSparkScheduler() {
+  ~GRPCScheduler() {
     // Clean up data and threads.
     workerServer_->Shutdown();
     workerThread_->join();
@@ -36,4 +36,4 @@ private:
 
 };
 
-#endif  // DBOS_SCHEDULER_GRPCSPARKSCHEDULER_H
+#endif  // DBOS_SCHEDULER_GRPCSCHEDULER_H

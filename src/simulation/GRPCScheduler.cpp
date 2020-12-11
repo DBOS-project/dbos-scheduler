@@ -1,15 +1,14 @@
-#include "simulation/GRPCSparkScheduler.h"
-#include "simulation/SparkScheduler.h"
+#include "simulation/GRPCScheduler.h"
 
 namespace dbos_scheduler {
 
 // Implement the frontend gRPC service here.
-class FrontendServiceGRPCSparkScheduler final : public Frontend::Service {
+class FrontendServiceGRPCScheduler final : public Frontend::Service {
 public:
-  FrontendServiceGRPCSparkScheduler(VoltdbSchedulerUtil* scheduler)
+  FrontendServiceGRPCScheduler(VoltdbSchedulerUtil* scheduler)
       : scheduler_(scheduler){}
 
-  ~FrontendServiceGRPCSparkScheduler() {}
+  ~FrontendServiceGRPCScheduler() {}
 
 private:
   Status SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
@@ -22,7 +21,7 @@ private:
 /*
  * Receive a submitted task from the client.
  */
-Status FrontendServiceGRPCSparkScheduler::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
+Status FrontendServiceGRPCScheduler::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                                        SubmitTaskResponse* reply) {
   scheduler_->schedule(NULL);
   reply->set_status(DbosStatusEnum::SUCCESS);
@@ -34,11 +33,11 @@ Status FrontendServiceGRPCSparkScheduler::SubmitTask(ServerContext* context, con
 /*
  * Actually start the gRPC server on a port number.
  */
-void GRPCSparkScheduler::RunServer() {
+void GRPCScheduler::RunServer() {
   const std::string& port = std::to_string(port_);
   std::string addr = "0.0.0.0:" + port;
 
-  dbos_scheduler::FrontendServiceGRPCSparkScheduler service(scheduler_);
+  dbos_scheduler::FrontendServiceGRPCScheduler service(scheduler_);
   ServerBuilder builder;
 
   // Listen on the given address without any authentication mechanism.
