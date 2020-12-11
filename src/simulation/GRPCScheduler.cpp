@@ -23,11 +23,8 @@ private:
  */
 Status FrontendServiceGRPCScheduler::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                                        SubmitTaskResponse* reply) {
-  Task* task = new Task;
-  task->targetData = request->targetdata();
-  task->execTime = request->exectime();
-  scheduler_->schedule(task);
-  delete task;
+  Task task = protobufToTask(request);
+  scheduler_->schedule(&task);
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
 }

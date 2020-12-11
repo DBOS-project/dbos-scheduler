@@ -145,9 +145,10 @@ static void ClientThread(std::vector<std::string> schedulerAddresses) {
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Submit task to scheduler.
-    dbos_scheduler::SubmitTaskRequest st_request;
-    st_request.set_targetdata(rand() % numWorkers);
-    st_request.set_exectime(1000);
+    Task task;
+    task.targetData = rand() % numWorkers;
+    task.execTime = 1000;
+    dbos_scheduler::SubmitTaskRequest st_request = taskToProtobuf(&task);
     dbos_scheduler::SubmitTaskResponse st_reply;
 
     ClientContext st_context;
