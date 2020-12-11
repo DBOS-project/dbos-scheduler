@@ -86,7 +86,7 @@ std::shared_ptr<Channel> SparkScheduler::addrToChannel(std::string workerAddr) {
   }
 }
 
-DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
+DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId, Task* task) {
   // TODO:  Actually lookup the address somehow.
   const std::string& port = std::to_string(8000 + workerId);
   std::string workerAddr = "localhost:" + port;
@@ -98,8 +98,8 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId) {
 
   // Submit task
   dbos_scheduler::SubmitTaskRequest st_request;
-  st_request.set_requirement(10);
-  st_request.set_exectime(1000);
+  st_request.set_requirement(task->targetData);
+  st_request.set_exectime(task->execTime);
 
   // Call object to store rpc data
   AsyncClientCall* call = new AsyncClientCall;
@@ -165,9 +165,9 @@ void SparkScheduler::processTaskQueue() {
     taskProcessCV.wait(lock);
     while (!taskQueue.empty()) {
       TaskData* taskData = taskQueue.front();
-      DbosId workerId = selectWorker(taskData->targetData);
+      DbosId workerId = selectWorker(taskData->taskStruct->targetData);
       assert(workerId >= 0);
-      assignTaskToWorker(taskData->taskID, workerId);
+      assignTaskToWorker(taskData->taskID, workerId, taskData->taskStruct);
       taskQueue.pop();
     }
   }
@@ -196,11 +196,11 @@ DbosStatus SparkScheduler::teardown() {
 }
 
 DbosStatus SparkScheduler::schedule(Task* task) {
-  DbosId targetData = rand() % (numWorkers_);
   int taskID = taskIDs++;
   TaskData* taskData = new TaskData;
   taskData->taskID = taskID;
-  taskData->targetData = targetData;
+  taskData->taskStruct = task;
+
   taskProcessMutex.lock();
   taskQueue.push(taskData);
   taskProcessCV.notify_one();
@@ -209,5 +209,6 @@ DbosStatus SparkScheduler::schedule(Task* task) {
   while (taskCompletionSet.find(taskID) == taskCompletionSet.end()) {
     taskCompletionCV.wait(lock);
   }
+  delete taskData;
   return true;
 }

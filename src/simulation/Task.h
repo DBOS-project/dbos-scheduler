@@ -6,7 +6,7 @@
 #define DBOS_SCHEDULER_TASK_H
 
 struct Task {
-  int requirement;
+  int targetData;
   int execTime;
 };
 

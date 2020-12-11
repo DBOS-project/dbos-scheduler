@@ -140,8 +140,13 @@ static void SchedulerThread(const int schedulerId,
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Make scheduling decisions here.
-    auto status = scheduler->schedule(NULL);
+    // TODO:  Create a "Task for scheduler" function parametrized by workload.
+    Task* task = new Task;
+    task->targetData = rand() % numWorkers;
+    task->execTime = 1000;
+    auto status = scheduler->schedule(task);
     assert(status);
+    delete task;
 
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
     // Record latency.
