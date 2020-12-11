@@ -113,6 +113,18 @@ target_link_libraries(AsyncSyntheticScheduler dbos-scheduler-protos
                       pthread
 )
 
+target_link_libraries(TestPartitionedScanTask dbos-scheduler-protos
+        ${_REFLECTION}
+        ${_GRPC_GRPCPP}
+        ${_PROTOBUF_LIBPROTOBUF}
+        pthread)
+
+target_link_libraries(TestPartitionedFIFOScheduler dbos-scheduler-protos
+        ${_REFLECTION}
+        ${_GRPC_GRPCPP}
+        ${_PROTOBUF_LIBPROTOBUF}
+        pthread)
+
 # Generate output to lib/ or bin/
 set_target_properties(simulation-util simworker-util SyntheticScheduler LoadGenerator AsyncSyntheticScheduler TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker
   PROPERTIES

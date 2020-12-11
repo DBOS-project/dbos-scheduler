@@ -197,18 +197,17 @@ DbosStatus SparkScheduler::teardown() {
 
 DbosStatus SparkScheduler::schedule(Task* task) {
   int taskID = taskIDs++;
-  TaskData* taskData = new TaskData;
-  taskData->taskID = taskID;
-  taskData->taskStruct = task;
+  TaskData taskData;
+  taskData.taskID = taskID;
+  taskData.taskStruct = task;
 
   taskProcessMutex.lock();
-  taskQueue.push(taskData);
+  taskQueue.push(&taskData);
   taskProcessCV.notify_one();
   taskProcessMutex.unlock();
   std::unique_lock<std::mutex> lock(taskCompletionMutex);
   while (taskCompletionSet.find(taskID) == taskCompletionSet.end()) {
     taskCompletionCV.wait(lock);
   }
-  delete taskData;
   return true;
 }
