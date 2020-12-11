@@ -32,24 +32,6 @@ public:
           // Create the thread that completes asynchronous requests.
           finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
         };
-
-  // Truncate the worker table;
-  void truncateWorkerTable();
-
-  // Insert a worker into the worker table.
-  DbosStatus insertWorker(DbosId workerID, DbosId capacity, std::vector<int32_t> workerData);
-
-  // Select a worker for a task and update worker capacity.
-  // Return the selected worker id.
-  DbosId selectWorker(DbosId targetData);
-
-  // Update which worker the task is assigned to, and update worker status to
-  // scheduled.
-  DbosStatus assignTaskToWorker(DbosId taskId, DbosId workerId);
-
-  // Complete a task, updating the capacity of its worker.
-  DbosStatus finishTask(voltdb::Client client, DbosId taskId, DbosId workerId);
-
   // Setup the database.
   DbosStatus setup();
 
@@ -93,6 +75,23 @@ private:
     // Target data for task.
     int targetData;
   };
+
+  // Truncate the worker table;
+  void truncateWorkerTable();
+
+  // Insert a worker into the worker table.
+  DbosStatus insertWorker(DbosId workerID, DbosId capacity, std::vector<int32_t> workerData);
+
+  // Select a worker for a task and update worker capacity.
+  // Return the selected worker id.
+  DbosId selectWorker(DbosId targetData);
+
+  // Update which worker the task is assigned to, and update worker status to
+  // scheduled.
+  DbosStatus assignTaskToWorker(DbosId taskId, DbosId workerId);
+
+  // Complete a task, updating the capacity of its worker.
+  DbosStatus finishTask(voltdb::Client client, DbosId taskId, DbosId workerId);
 
   std::shared_ptr<Channel> addrToChannel(std::string workerAddr);
   std::unordered_map<std::string, std::shared_ptr<Channel>> channelMap;
