@@ -13,13 +13,9 @@
 
 class GRPCSparkScheduler {
 public:
-  GRPCSparkScheduler(int port, std::string dbAddr,
-                     int workerPartitions, int workerCapacity, int numWorkers)
+  GRPCSparkScheduler(int port, VoltdbSchedulerUtil* scheduler)
       : port_(port),
-        dbAddr(dbAddr),
-        workerPartitions(workerPartitions),
-        workerCapacity(workerCapacity),
-        numWorkers(numWorkers){
+        scheduler_(scheduler) {
           workerThread_ = new std::thread(&GRPCSparkScheduler::RunServer, this);
           while (workerServer_ == NULL) {;} // Spin until server is online.
         };
@@ -33,11 +29,8 @@ public:
 
 private:
   void RunServer();
-  std::string dbAddr;
-  int workerPartitions;
-  int workerCapacity;
-  int numWorkers;
   int port_;
+  VoltdbSchedulerUtil* scheduler_;
   std::thread* workerThread_;
   std::unique_ptr<Server> workerServer_ = NULL;
 
