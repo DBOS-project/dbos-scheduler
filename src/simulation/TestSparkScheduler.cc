@@ -54,7 +54,11 @@ int main(int argc, char** argv) {
   assert(workerId != -1);
   scheduler.finishTask(voltdbClient, -1, workerId);
 
-  scheduler.schedule();
+  Task* task = new Task;
+  task->execTime = 1000;
+  task->requirement = 1;
+  scheduler.schedule(task);
+  delete task;
 
   scheduler.teardown();
   return 0;

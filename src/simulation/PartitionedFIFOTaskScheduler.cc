@@ -165,7 +165,7 @@ DbosStatus PartitionedFIFOTaskScheduler::teardown() {
   return true;
 }
 
-DbosStatus PartitionedFIFOTaskScheduler::schedule() {
+DbosStatus PartitionedFIFOTaskScheduler::schedule(Task* task) {
   DbosStatus status = selectTaskWorker();
   assert(status == true);
   return true;

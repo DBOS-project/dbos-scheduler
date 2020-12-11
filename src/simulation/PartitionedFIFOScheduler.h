@@ -47,7 +47,7 @@ public:
   DbosStatus teardown();
 
   // Perform a scheduling act.
-  DbosStatus schedule();
+  DbosStatus schedule(Task* task);
 
   // Async scheduling.
   DbosStatus asyncSchedule(boost::shared_ptr<voltdb::ProcedureCallback> callback);

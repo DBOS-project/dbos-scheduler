@@ -57,10 +57,7 @@ public:
   DbosStatus teardown();
 
   // Create and schedule a task, return when task complete.
-  DbosStatus schedule();
-
-  // Submit a task, return when task complete.
-  DbosStatus submitTask(int targetData);
+  DbosStatus schedule(Task* task);
 
   // Destructor
   ~SparkScheduler() {

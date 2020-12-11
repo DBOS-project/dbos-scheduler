@@ -44,7 +44,7 @@ public:
   DbosStatus teardown();
 
   // Perform a scheduling act.
-  DbosStatus schedule();
+  DbosStatus schedule(Task* task);
 
   // Destructor
   ~SinglePartitionedFIFOTaskScheduler() { /* placeholder for now. */

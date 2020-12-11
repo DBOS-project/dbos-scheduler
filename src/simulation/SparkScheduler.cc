@@ -195,12 +195,8 @@ DbosStatus SparkScheduler::teardown() {
   return true;
 }
 
-DbosStatus SparkScheduler::schedule() {
+DbosStatus SparkScheduler::schedule(Task* task) {
   DbosId targetData = rand() % (numWorkers_);
-  return submitTask(targetData);
-}
-
-DbosStatus SparkScheduler::submitTask(int targetData) {
   int taskID = taskIDs++;
   TaskData* taskData = new TaskData;
   taskData->taskID = taskID;

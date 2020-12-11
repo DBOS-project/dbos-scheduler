@@ -116,7 +116,7 @@ DbosStatus PartitionedScanTask::teardown() {
   return true;
 }
 
-DbosStatus PartitionedScanTask::schedule() {
+DbosStatus PartitionedScanTask::schedule(Task* task) {
   DbosId status = selectMostTaskWorker();
   assert(status >= 0);
   return true;

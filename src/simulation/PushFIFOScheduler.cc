@@ -78,7 +78,7 @@ DbosStatus PushFIFOScheduler::teardown() {
   return true;
 }
 
-DbosStatus PushFIFOScheduler::schedule() {
+DbosStatus PushFIFOScheduler::schedule(Task* task) {
   //for (int i = 0; i < numTasks_; ++i) {
   int taskId = taskindex.fetch_add(1);
   DbosStatus status = selectTaskWorker(taskId);
