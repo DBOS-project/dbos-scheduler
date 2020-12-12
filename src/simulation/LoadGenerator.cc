@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "simulation/BenchmarkUtil.h"
-#include "simulation/GRPCScheduler.h"
+#include "simulation/SchedulerServer.h"
 #include "simulation/PartitionedFIFOScheduler.h"
 #include "simulation/PartitionedFIFOTaskScheduler.h"
 #include "simulation/PartitionedScanTask.h"
@@ -186,7 +186,7 @@ static bool runBenchmark(const std::string& serverAddr,
   memset(schedLatencies, 0, kMaxEntries * sizeof(double));
   schedLatsArrayIndex.store(0);
   schedIndices.push_back(0);
-  std::vector<GRPCScheduler*> schedulers;
+  std::vector<SchedulerServer*> schedulers;
   std::vector<std::string> schedulerAddresses;
   std::vector<voltdb::Client> clients;
 
@@ -199,10 +199,10 @@ static bool runBenchmark(const std::string& serverAddr,
 
     VoltdbSchedulerUtil* scheduler =
         constructScheduler(&clients[schedulerId], serverAddr, "spark");
-    GRPCScheduler* grpcScheduler =
-        new GRPCScheduler(port, scheduler);
+    SchedulerServer* schedulerServer =
+        new SchedulerServer(port, scheduler);
 
-    schedulers.push_back(grpcScheduler);
+    schedulers.push_back(schedulerServer);
     assert(scheduler != nullptr);
     std::cout << "Scheduler: " << schedulerId << " started\n";
 
@@ -233,7 +233,7 @@ static bool runBenchmark(const std::string& serverAddr,
     delete schedulerThread;
   }
 
-  for (GRPCScheduler* scheduler: schedulers) {
+  for (SchedulerServer* scheduler: schedulers) {
     delete scheduler;
   }
 
