@@ -1,14 +1,14 @@
-#include "simulation/GRPCScheduler.h"
+#include "simulation/SchedulerServer.h"
 
 namespace dbos_scheduler {
 
 // Implement the frontend gRPC service here.
-class FrontendServiceGRPCScheduler final : public Frontend::Service {
+class FrontendServiceServer final : public Frontend::Service {
 public:
-  FrontendServiceGRPCScheduler(VoltdbSchedulerUtil* scheduler)
+  FrontendServiceServer(VoltdbSchedulerUtil* scheduler)
       : scheduler_(scheduler){}
 
-  ~FrontendServiceGRPCScheduler() {}
+  ~FrontendServiceServer() {}
 
 private:
   Status SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
@@ -21,7 +21,7 @@ private:
 /*
  * Receive a submitted task from the client.
  */
-Status FrontendServiceGRPCScheduler::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
+Status FrontendServiceServer::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
                                        SubmitTaskResponse* reply) {
   Task task = protobufToTask(request);
   scheduler_->schedule(&task);
@@ -34,11 +34,11 @@ Status FrontendServiceGRPCScheduler::SubmitTask(ServerContext* context, const Su
 /*
  * Actually start the gRPC server on a port number.
  */
-void GRPCScheduler::RunServer() {
+void SchedulerServer::RunServer() {
   const std::string& port = std::to_string(port_);
   std::string addr = "0.0.0.0:" + port;
 
-  dbos_scheduler::FrontendServiceGRPCScheduler service(scheduler_);
+  dbos_scheduler::FrontendServiceServer service(scheduler_);
   ServerBuilder builder;
 
   // Listen on the given address without any authentication mechanism.
