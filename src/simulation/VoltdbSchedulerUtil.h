@@ -38,6 +38,34 @@ public:
     abort();
   }
 
+  // Send message to <num_partitions> DB partitions starting from <partition>.
+  // TODO: use an array of partition numbers as argument.
+  // TODO: include message content.
+  virtual DbosStatus asyncSendMessage(int partition, int num_partitions,
+      boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+    for (int i = partition; i < partition + num_partitions; ++i) {
+      std::vector<voltdb::Parameter> parameterTypes(1);
+      parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+      voltdb::Procedure procedure("SendMessage", parameterTypes);
+      voltdb::ParameterSet* params = procedure.params();
+      params->addInt32(i);
+      client_->invoke(procedure, callback);
+    }
+    return true;
+  }
+
+  // Broadcast message to all DB partitions using a replicated table.
+  // TODO: include message content.
+  virtual DbosStatus asyncBroadcastMessage(boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+    std::vector<voltdb::Parameter> parameterTypes(1);
+    parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+    voltdb::Procedure procedure("BroadcastMessage", parameterTypes);
+    voltdb::ParameterSet* params = procedure.params();
+    params->addInt32(0);
+    client_->invoke(procedure, callback);
+    return true;
+  }
+
   // Setup the database to benchmark.
   virtual DbosStatus setup() = 0;
 
