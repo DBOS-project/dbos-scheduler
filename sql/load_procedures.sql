@@ -50,3 +50,9 @@ CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedure
 
 DROP PROCEDURE SelectDataShardPartition IF EXISTS;
 CREATE PROCEDURE FROM CLASS dbos.procedures.SelectDataShardPartition;
+
+DROP PROCEDURE SendMessage IF EXISTS;
+CREATE PROCEDURE PARTITION ON TABLE Message COLUMN PKey FROM CLASS dbos.procedures.SendMessage;
+
+DROP PROCEDURE BroadcastMessage IF EXISTS;
+CREATE PROCEDURE FROM CLASS dbos.procedures.BroadcastMessage;
