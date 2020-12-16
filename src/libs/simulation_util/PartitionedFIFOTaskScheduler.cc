@@ -12,7 +12,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/PartitionedFIFOTaskScheduler.h"
+#include "PartitionedFIFOTaskScheduler.h"
 
 #define SUCCESS 0
 #define NOTASK -1

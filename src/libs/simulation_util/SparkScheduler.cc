@@ -12,7 +12,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/SparkScheduler.h"
+#include "SparkScheduler.h"
 
 void SparkScheduler::truncateWorkerTable() {
   std::vector<voltdb::Parameter> parameterTypes(0);

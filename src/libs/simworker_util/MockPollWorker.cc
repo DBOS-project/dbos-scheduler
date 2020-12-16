@@ -12,7 +12,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/MockPollWorker.h"
+#include "MockPollWorker.h"
 
 DbosStatus MockPollWorker::setup() {
   std::cout << "Setup worker " << workerId_ << std::endl;

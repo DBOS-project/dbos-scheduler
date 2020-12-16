@@ -12,7 +12,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/PartitionedFIFOScheduler.h"
+#include "PartitionedFIFOScheduler.h"
 
 void PartitionedFIFOScheduler::truncateWorkerTable() {
   std::vector<voltdb::Parameter> parameterTypes(0);

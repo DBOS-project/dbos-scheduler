@@ -12,6 +12,7 @@ set(_VOLTDB_LIBS_PATH "${CMAKE_SOURCE_DIR}/third_party/voltdb-client-cpp/lib")
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 include_directories("${CMAKE_SOURCE_DIR}/third_party")
+include_directories("${CMAKE_SOURCE_DIR}/libs")
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib /usr/local/lib64)
@@ -23,4 +24,5 @@ set(PROTOS_PATH "${CMAKE_CURRENT_BINARY_DIR}/../protos")
 include_directories(${PROTOS_PATH})
 
 # Subdirectories
+add_subdirectory(libs)
 add_subdirectory(simulation)

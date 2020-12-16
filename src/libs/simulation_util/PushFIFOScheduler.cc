@@ -12,7 +12,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/PushFIFOScheduler.h"
+#include "PushFIFOScheduler.h"
 
 #define SUCCESS 0
 #define NOWORKER -2

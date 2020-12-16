@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "httpserver.h"
-#include "simulation/VoltdbWorkerUtil.h"
+#include "VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 class MockHTTPWorker : public VoltdbWorkerUtil {

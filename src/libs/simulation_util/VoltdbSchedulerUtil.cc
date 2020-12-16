@@ -15,36 +15,52 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/VoltdbWorkerUtil.h"
+#include "VoltdbSchedulerUtil.h"
 
-// Synthetic username, passwd.
-static const std::string kTestUser = "testuser";
-static const std::string kTestPwd = "testpassword";
-
-std::atomic<uint64_t> VoltdbWorkerUtil::totalTasks_;
-std::atomic<uint64_t> VoltdbWorkerUtil::totalFinishedTasks_;
-
-VoltdbWorkerUtil::~VoltdbWorkerUtil() {
+VoltdbSchedulerUtil::~VoltdbSchedulerUtil() {
   // placeholder.
 }
 
-voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
+voltdb::Client VoltdbSchedulerUtil::createVoltdbClient(std::string username,
+                                                       std::string password) {
   // Create a VoltDB client, connect to the DB.
   // SHA-256 can be used as of VoltDB5.2 by specifying voltdb::HASH_SHA256
-  voltdb::ClientConfig config(kTestUser, kTestPwd, voltdb::HASH_SHA1);
+  voltdb::ClientConfig config(username, password, voltdb::HASH_SHA1);
   voltdb::Client client = voltdb::Client::create(config);
   srand(time(NULL));
+  return client;
+}
 
+VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
+                                         std::string& dbAddr)
+    : client_(client) {
   // Comma-separated list of hostnames or IPs.
   std::istringstream addrStream(dbAddr);
   std::string host;
   char delim = ',';
 
-  // TODO:for now every scheduler/worker would randomly connect to one host and
-  // all queries will go through that host. We may develop some
-  // locality/affinity, or hashing methods, to improve the locality.  
+  // Method 1: Connect to each host, rely on VoltDB query affinity to route to
+  // the correct host.
+  // TODO: this is not the best practice. Each thread should connect to a
+  // subset of hosts.
+
+  while (std::getline(addrStream, host, delim)) {
+    try {
+      client_->createConnection(host);
+    } catch (std::exception& e) {
+      std::cerr << "An exception occured while connecting to VoltDB " << host
+                << std::endl;
+      std::cerr << e.what();
+      // TODO: more robust error handling.
+      throw;
+    }
+    std::cout << "=== Connected to VoltDB at " << host << " ===\n";
+  }
+
+  
   // Method 2: Randomly pick one host from the list; this may not be optimal as
   // well. We might need some hashing function or a way to figure out locality.
+  /*
   std::vector<std::string> hostlist;
   while (std::getline(addrStream, host, delim)) {
     hostlist.push_back(host);
@@ -52,7 +68,7 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
   int randIndex = rand() % hostlist.size();
   host = hostlist[randIndex];
   try {
-    client.createConnection(host);
+    client_->createConnection(host);
   } catch (std::exception& e) {
     std::cerr << "An exception occured while connecting to VoltDB " << host
               << std::endl;
@@ -60,9 +76,7 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
     // TODO: more robust error handling.
     throw;
   }
+  std::cout << "=== Connected to VoltDB at " << host << " ===\n";
+  */
 
-  return client;
 }
-
-VoltdbWorkerUtil::VoltdbWorkerUtil(DbosId workerId, std::string dbAddr)
-    : workerId_(workerId), dbAddr_(dbAddr), stop_(false) {}

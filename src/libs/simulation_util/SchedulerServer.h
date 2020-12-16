@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "simulation/VoltdbSchedulerUtil.h"
+#include "VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
-#include "simulation/VoltdbWorkerUtil.h"
-#include "simulation/MockGRPCWorker.h"
+#include "VoltdbWorkerUtil.h"
+#include "MockGRPCWorker.h"
 
 class SchedulerServer {
 public:

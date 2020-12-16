@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-#include "simulation/VoltdbWorkerUtil.h"
+#include "VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 class MockPollWorker : public VoltdbWorkerUtil {
