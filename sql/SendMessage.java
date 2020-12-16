@@ -11,7 +11,7 @@ public class SendMessage extends VoltProcedure {
 
     public long run(int pkey) throws VoltAbortException {
         voltQueueSQL(sendMessage, pkey);
-	voltExecuteSQL();
-	return SUCCESS;
+        voltExecuteSQL();
+        return SUCCESS;
     }
 }

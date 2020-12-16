@@ -11,7 +11,7 @@ public class BroadcastMessage extends VoltProcedure {
 
     public long run(int msg) throws VoltAbortException {
         voltQueueSQL(broadcastMessage, msg);
-	voltExecuteSQL();
-	return SUCCESS;
+        voltExecuteSQL();
+        return SUCCESS;
     }
 }
