@@ -98,7 +98,7 @@ static bool cleanDB = false;
 static bool noSetupDB = false;
 
 // If true, use a VoltDB replicated table to broadcast a message.
-static bool broadcast;
+static bool broadcast = false;
 
 // Callback for async client.
 // Note: VoltDB C++ client is single threaded; thus the callback is executed on
