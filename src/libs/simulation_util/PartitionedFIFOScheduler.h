@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "simulation/VoltdbSchedulerUtil.h"
+#include "VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Since voltdb::Client only has private constructor, we cannot create a private

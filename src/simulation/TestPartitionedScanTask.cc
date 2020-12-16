@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "simulation/PartitionedScanTask.h"
-#include "simulation/VoltdbSchedulerUtil.h"
+#include "PartitionedScanTask.h"
+#include "VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 int main(int argc, char** argv) {

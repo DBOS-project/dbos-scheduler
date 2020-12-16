@@ -14,7 +14,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/MockGRPCWorker.h"
+#include "MockGRPCWorker.h"
 
 namespace dbos_scheduler {
 

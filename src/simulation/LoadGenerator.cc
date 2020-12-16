@@ -11,15 +11,15 @@
 #include <unordered_set>
 #include <vector>
 
-#include "simulation/BenchmarkUtil.h"
-#include "simulation/SchedulerServer.h"
-#include "simulation/PartitionedFIFOScheduler.h"
-#include "simulation/PartitionedFIFOTaskScheduler.h"
-#include "simulation/PartitionedScanTask.h"
-#include "simulation/PushFIFOScheduler.h"
-#include "simulation/SinglePartitionedFIFOTaskScheduler.h"
-#include "simulation/SparkScheduler.h"
-#include "simulation/VoltdbSchedulerUtil.h"
+#include "BenchmarkUtil.h"
+#include "SchedulerServer.h"
+#include "PartitionedFIFOScheduler.h"
+#include "PartitionedFIFOTaskScheduler.h"
+#include "PartitionedScanTask.h"
+#include "PushFIFOScheduler.h"
+#include "SinglePartitionedFIFOTaskScheduler.h"
+#include "SparkScheduler.h"
+#include "VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 #include <grpcpp/grpcpp.h>

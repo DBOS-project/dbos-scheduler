@@ -8,10 +8,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "simulation/BenchmarkUtil.h"
-#include "simulation/MockPollWorker.h"
-#include "simulation/MockHTTPWorker.h"
-#include "simulation/VoltdbWorkerUtil.h"
+#include "BenchmarkUtil.h"
+#include "MockPollWorker.h"
+#include "MockHTTPWorker.h"
+#include "VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Number of workers

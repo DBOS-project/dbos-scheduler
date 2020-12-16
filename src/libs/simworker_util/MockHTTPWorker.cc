@@ -14,7 +14,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "simulation/MockHTTPWorker.h"
+#include "MockHTTPWorker.h"
 
 #define HTTPSERVER_IMPL
 #include "httpserver.h"
