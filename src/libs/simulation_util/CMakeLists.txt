@@ -12,7 +12,7 @@ set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskSched
 add_library(simulation-util STATIC ${simulation-util_SOURCES})
 
 # For scheduler simulation
-target_include_directories(simulation-util PUBLIC ./)
+target_include_directories(simulation-util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(simulation-util
                       dbos-scheduler-protos
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
@@ -22,7 +22,7 @@ target_link_libraries(simulation-util
                       ${_VOLTDB_LIBS_PATH}/libssl.a
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
                       pthread Boost::system Boost::thread dl
-		      simworker-util
+                      simworker-util
 )
 
 set_target_properties(simulation-util
