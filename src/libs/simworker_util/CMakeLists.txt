@@ -15,7 +15,7 @@ set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.c
 add_library(simworker-util STATIC ${simworker-util_SOURCES})
 
 # For worker simulation
-target_include_directories(simworker-util PUBLIC ./)
+target_include_directories(simworker-util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(simworker-util
                       dbos-scheduler-protos
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
@@ -25,7 +25,6 @@ target_link_libraries(simworker-util
                       ${_VOLTDB_LIBS_PATH}/libssl.a
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
                       pthread Boost::system Boost::thread dl
-		      simulation-util
 )
 
 set_target_properties(simworker-util

@@ -10,10 +10,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(_VOLTDB_LIBS_PATH "${CMAKE_SOURCE_DIR}/third_party/voltdb-client-cpp/lib")
 
-include_directories("${CMAKE_SOURCE_DIR}/src")
 include_directories("${CMAKE_SOURCE_DIR}/third_party")
-include_directories("${CMAKE_SOURCE_DIR}/libs")
-
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib /usr/local/lib64)
 
