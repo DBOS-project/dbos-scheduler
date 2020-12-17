@@ -26,7 +26,7 @@ target_link_libraries(SyntheticWorker
                       simworker-util)
 
 target_link_libraries(SyntheticScheduler
-                      simulation-util
+                      lib_scheduler
                       simworker-util
                       dbos-scheduler-protos
                       ${_REFLECTION}
@@ -36,7 +36,7 @@ target_link_libraries(SyntheticScheduler
 )
 
 target_link_libraries(LoadGenerator
-                      simulation-util
+                      lib_scheduler
                       simworker-util
                       dbos-scheduler-protos
                       ${_REFLECTION}
@@ -46,7 +46,7 @@ target_link_libraries(LoadGenerator
 )
 
 target_link_libraries(AsyncSyntheticScheduler
-                      simulation-util
+                      lib_scheduler
                       simworker-util
                       dbos-scheduler-protos
                       ${_REFLECTION}
@@ -56,7 +56,7 @@ target_link_libraries(AsyncSyntheticScheduler
 )
 
 target_link_libraries(CommunicationBench
-                      simulation-util
+                      lib_scheduler
                       simworker-util
                       dbos-scheduler-protos
                       ${_REFLECTION}
@@ -66,7 +66,7 @@ target_link_libraries(CommunicationBench
 )
 
 target_link_libraries(TestPartitionedScanTask
-                      simulation-util
+                      lib_scheduler
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -75,7 +75,7 @@ target_link_libraries(TestPartitionedScanTask
 )
 
 target_link_libraries(TestPartitionedFIFOScheduler
-                      simulation-util
+                      lib_scheduler
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -84,7 +84,7 @@ target_link_libraries(TestPartitionedFIFOScheduler
 )
 
 target_link_libraries(TestSparkScheduler 
-                      simulation-util
+                      lib_scheduler
                       simworker-util
                       dbos-scheduler-protos
                       ${_REFLECTION}

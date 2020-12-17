@@ -1,2 +1,2 @@
-add_subdirectory(simulation_util)
+add_subdirectory(lib_scheduler)
 add_subdirectory(simworker_util)
