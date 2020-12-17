@@ -9,8 +9,8 @@
 #include "VoltdbSchedulerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
-#include "VoltdbWorkerUtil.h"
 #include "MockGRPCWorker.h"
+#include "VoltdbWorkerUtil.h"
 
 using grpc::CompletionQueue;
 using grpc::ClientAsyncResponseReader;
@@ -27,11 +27,13 @@ public:
         workerPartitions_(workerPartitions),
         workerCapacity_(workerCapacity),
         numWorkers_(numWorkers) {
-          // Create the thread that processes the queue.
-          processTaskQueueThread_ = new std::thread(&SparkScheduler::processTaskQueue, this);
-          // Create the thread that completes asynchronous requests.
-          finishRequestsThread_ = new std::thread(&SparkScheduler::finishRequests, this);
-        };
+    // Create the thread that processes the queue.
+    processTaskQueueThread_ =
+        new std::thread(&SparkScheduler::processTaskQueue, this);
+    // Create the thread that completes asynchronous requests.
+    finishRequestsThread_ =
+        new std::thread(&SparkScheduler::finishRequests, this);
+  };
   // Setup the database.
   DbosStatus setup();
 
@@ -53,7 +55,6 @@ public:
   }
 
 private:
-
   struct AsyncClientCall {
     // Container for the data we expect from the server.
     dbos_scheduler::SubmitTaskResponse reply;
@@ -66,7 +67,9 @@ private:
     int workerID;
     // Task ID.
     int taskID;
-    std::unique_ptr<ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>> response_reader;
+    std::unique_ptr<
+        ClientAsyncResponseReader<dbos_scheduler::SubmitTaskResponse>>
+        response_reader;
   };
 
   struct TaskData {
@@ -78,7 +81,8 @@ private:
   void truncateWorkerTable();
 
   // Insert a worker into the worker table.
-  DbosStatus insertWorker(DbosId workerID, DbosId capacity, std::vector<int32_t> workerData);
+  DbosStatus insertWorker(DbosId workerID, DbosId capacity,
+                          std::vector<int32_t> workerData);
 
   // Select a worker for a task and update worker capacity.
   // Return the selected worker id.

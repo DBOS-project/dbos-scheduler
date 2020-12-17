@@ -44,8 +44,8 @@ DbosStatus PushFIFOScheduler::selectTaskWorker(DbosId taskID) {
     params->addInt32(pkey).addInt32(taskID);
     voltdb::InvocationResponse r = client_->invoke(procedure);
     if (r.failure()) {
-      std::cout << "PushFIFOTask procedure failed. "
-                << r.toString() << std::endl;
+      std::cout << "PushFIFOTask procedure failed. " << r.toString()
+                << std::endl;
       return false;
     }
     std::vector<voltdb::Table> results = r.results();
@@ -61,8 +61,7 @@ DbosStatus PushFIFOScheduler::selectTaskWorker(DbosId taskID) {
     }
     pkey = (pkey + count) % partitions_;
   }
-  std::cout << "went through " << partitions_ << " partitions"
-            << std::endl;
+  std::cout << "went through " << partitions_ << " partitions" << std::endl;
   return false;
 }
 
@@ -79,7 +78,7 @@ DbosStatus PushFIFOScheduler::teardown() {
 }
 
 DbosStatus PushFIFOScheduler::schedule(Task* task) {
-  //for (int i = 0; i < numTasks_; ++i) {
+  // for (int i = 0; i < numTasks_; ++i) {
   int taskId = taskindex.fetch_add(1);
   DbosStatus status = selectTaskWorker(taskId);
   assert(status == true);

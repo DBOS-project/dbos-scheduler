@@ -2,9 +2,9 @@
 #define __STDC_CONSTANT_MACROS
 #define __STDC_LIMIT_MACROS
 
-#include <vector>
-#include <thread>
 #include <functional>
+#include <thread>
+#include <vector>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -37,12 +37,12 @@ private:
 
 };  // class FrontendServiceImpl
 
-
 /*
  * Receive a submitted task from the client.
  */
-Status FrontendServiceImpl::SubmitTask(ServerContext* context, const SubmitTaskRequest* request,
-                  SubmitTaskResponse* reply) {
+Status FrontendServiceImpl::SubmitTask(ServerContext* context,
+                                       const SubmitTaskRequest* request,
+                                       SubmitTaskResponse* reply) {
   // std::cout << "Recieved a task: " << request->requirement() << ", "
   //           << request->exectime() << "μs." << std::endl;
 
@@ -77,7 +77,6 @@ void MockGRPCWorker::RunServer(const std::string& port) {
   workerServer_->Wait();
 }
 
-
 DbosStatus MockGRPCWorker::setup() {
   // Add the Worker to the database.
   std::vector<voltdb::Parameter> parameterTypes(5);
@@ -88,7 +87,7 @@ DbosStatus MockGRPCWorker::setup() {
   parameterTypes[4] = voltdb::Parameter(voltdb::WIRE_TYPE_STRING);
 
   voltdb::Procedure procedure("InsertSparkWorker", parameterTypes);
-  for (int data: workerData_) {
+  for (int data : workerData_) {
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(workerId_)
         .addInt32(capacity_)
@@ -105,7 +104,7 @@ DbosStatus MockGRPCWorker::setup() {
   const std::string& port = std::to_string(8000 + workerId_);
   workerThread_ = new std::thread(&MockGRPCWorker::RunServer, this, port);
   workerAddr = "localhost:" + port;
-  while (workerServer_ == NULL) {;} // Spin until server is online.
+  while (workerServer_ == NULL) { ; }  // Spin until server is online.
 
   return true;
 }

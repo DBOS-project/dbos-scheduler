@@ -50,7 +50,8 @@ public:
   DbosStatus schedule(Task* task);
 
   // Async scheduling.
-  DbosStatus asyncSchedule(boost::shared_ptr<voltdb::ProcedureCallback> callback);
+  DbosStatus asyncSchedule(
+      boost::shared_ptr<voltdb::ProcedureCallback> callback);
 
   // Destructor
   ~PartitionedFIFOScheduler() { /* placeholder for now. */

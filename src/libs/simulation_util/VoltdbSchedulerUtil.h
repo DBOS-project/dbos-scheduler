@@ -3,13 +3,13 @@
 #define DBOS_VOLTDB_SCHEDULER_UTIL_H
 
 #include <atomic>
+#include <boost/shared_ptr.hpp>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
+#include "Task.h"
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ProcedureCallback.hpp"
-#include "Task.h"
 
 // Used for task_id, worker_id in DBOS.
 // TODO: decide whether to use INT or STRING.
@@ -33,7 +33,8 @@ public:
 
   // Async schedule. Will return immediately without waiting for response.
   // TODO: turn this into a pure virtual function.
-  virtual DbosStatus asyncSchedule(boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+  virtual DbosStatus asyncSchedule(
+      boost::shared_ptr<voltdb::ProcedureCallback> callback) {
     std::cerr << "Not implemented\n";
     abort();
   }
@@ -41,7 +42,8 @@ public:
   // Send message to <num_partitions> DB partitions starting from <partition>.
   // TODO: use an array of partition numbers as argument.
   // TODO: include message content.
-  virtual DbosStatus asyncSendMessage(int partition, int num_partitions,
+  virtual DbosStatus asyncSendMessage(
+      int partition, int num_partitions,
       boost::shared_ptr<voltdb::ProcedureCallback> callback) {
     for (int i = partition; i < partition + num_partitions; ++i) {
       std::vector<voltdb::Parameter> parameterTypes(1);
@@ -56,7 +58,8 @@ public:
 
   // Broadcast message to all DB partitions using a replicated table.
   // TODO: include message content.
-  virtual DbosStatus asyncBroadcastMessage(boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+  virtual DbosStatus asyncBroadcastMessage(
+      boost::shared_ptr<voltdb::ProcedureCallback> callback) {
     std::vector<voltdb::Parameter> parameterTypes(1);
     parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
     voltdb::Procedure procedure("BroadcastMessage", parameterTypes);

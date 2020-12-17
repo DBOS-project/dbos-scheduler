@@ -2,8 +2,8 @@
 #define __STDC_CONSTANT_MACROS
 #define __STDC_LIMIT_MACROS
 
-#include <vector>
 #include <thread>
+#include <vector>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -18,7 +18,8 @@
 #define SUCCESS 0
 #define NOWORKER -2
 
-static const int MAXTRY = 1000;  // At most try 1000 times before returning false.
+static const int MAXTRY =
+    1000;  // At most try 1000 times before returning false.
 static std::atomic<uint32_t> taskindex;
 
 void SinglePartitionedFIFOTaskScheduler::truncateWorkerTable() {
@@ -52,9 +53,9 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::insertWorker(DbosId workerID,
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   params->addInt32(workerID)
-	 .addInt32(capacity)
-	 .addInt32(workerID % partitions_)
-	 .addString("");
+      .addInt32(capacity)
+      .addInt32(workerID % partitions_)
+      .addString("");
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
@@ -90,7 +91,8 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::selectTaskWorker(DbosId taskID) {
       int status = row.getInt64(0);
       if (status == SUCCESS) {
         return true;
-      } else if (status == NOWORKER) {  // implementing basic functionality first
+      } else if (status ==
+                 NOWORKER) {  // implementing basic functionality first
         // std::cout << "no worker in partition " << count << std::endl;
         // TODO: If there is no worker, need to check other partitions for
         // available workers.

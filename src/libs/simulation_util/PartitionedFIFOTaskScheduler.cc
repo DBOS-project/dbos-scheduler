@@ -51,9 +51,9 @@ DbosStatus PartitionedFIFOTaskScheduler::insertWorker(DbosId workerID,
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   params->addInt32(workerID)
-         .addInt32(capacity)
-         .addInt32(workerID % partitions_)
-         .addString("");
+      .addInt32(capacity)
+      .addInt32(workerID % partitions_)
+      .addString("");
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();

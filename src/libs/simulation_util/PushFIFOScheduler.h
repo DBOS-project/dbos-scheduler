@@ -14,8 +14,8 @@
 // (2) pass the pointer to construct PartitionedFIFOScheduler.
 class PushFIFOScheduler : public VoltdbSchedulerUtil {
 public:
-  PushFIFOScheduler(voltdb::Client* client, std::string dbAddr,
-                        int partitions, int numTasks, float probMultiTx)
+  PushFIFOScheduler(voltdb::Client* client, std::string dbAddr, int partitions,
+                    int numTasks, float probMultiTx)
       : VoltdbSchedulerUtil(client, dbAddr),
         partitions_(partitions),
         numTasks_(numTasks),

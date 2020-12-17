@@ -19,7 +19,7 @@ public:
       : VoltdbWorkerUtil(workerId, dbAddr),
         pkey_(pkey),
         numExecutors_(numExecutors),
-        topk_(topk) {};
+        topk_(topk){};
 
   // Dispatch tasks that are assigned to this worker.
   // Potentially run in a dedicated dispatch thread.
