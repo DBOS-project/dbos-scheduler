@@ -22,7 +22,7 @@ target_link_libraries(lib_scheduler
                       ${_VOLTDB_LIBS_PATH}/libssl.a
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
                       pthread Boost::system Boost::thread dl
-                      simworker-util
+                      lib_worker
 )
 
 set_target_properties(lib_scheduler

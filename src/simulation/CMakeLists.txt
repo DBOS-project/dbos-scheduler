@@ -23,11 +23,11 @@ add_executable(SyntheticWorker SyntheticWorker.cc)
 
 # Link to libs.
 target_link_libraries(SyntheticWorker
-                      simworker-util)
+                      lib_worker)
 
 target_link_libraries(SyntheticScheduler
                       lib_scheduler
-                      simworker-util
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -37,7 +37,7 @@ target_link_libraries(SyntheticScheduler
 
 target_link_libraries(LoadGenerator
                       lib_scheduler
-                      simworker-util
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -47,7 +47,7 @@ target_link_libraries(LoadGenerator
 
 target_link_libraries(AsyncSyntheticScheduler
                       lib_scheduler
-                      simworker-util
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -57,7 +57,7 @@ target_link_libraries(AsyncSyntheticScheduler
 
 target_link_libraries(CommunicationBench
                       lib_scheduler
-                      simworker-util
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -85,7 +85,7 @@ target_link_libraries(TestPartitionedFIFOScheduler
 
 target_link_libraries(TestSparkScheduler 
                       lib_scheduler
-                      simworker-util
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
