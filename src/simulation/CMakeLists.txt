@@ -23,11 +23,13 @@ add_executable(SyntheticWorker SyntheticWorker.cc)
 
 # Link to libs.
 target_link_libraries(SyntheticWorker
-                      simworker-util)
+                      lib_worker
+                      lib_util)
 
 target_link_libraries(SyntheticScheduler
-                      simulation-util
-                      simworker-util
+                      lib_scheduler
+                      lib_worker
+                      lib_util
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -36,8 +38,9 @@ target_link_libraries(SyntheticScheduler
 )
 
 target_link_libraries(LoadGenerator
-                      simulation-util
-                      simworker-util
+                      lib_scheduler
+                      lib_worker
+                      lib_util
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -46,8 +49,9 @@ target_link_libraries(LoadGenerator
 )
 
 target_link_libraries(AsyncSyntheticScheduler
-                      simulation-util
-                      simworker-util
+                      lib_scheduler
+                      lib_worker
+                      lib_util
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -56,8 +60,8 @@ target_link_libraries(AsyncSyntheticScheduler
 )
 
 target_link_libraries(CommunicationBench
-                      simulation-util
-                      simworker-util
+                      lib_scheduler
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -66,7 +70,7 @@ target_link_libraries(CommunicationBench
 )
 
 target_link_libraries(TestPartitionedScanTask
-                      simulation-util
+                      lib_scheduler
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -75,7 +79,7 @@ target_link_libraries(TestPartitionedScanTask
 )
 
 target_link_libraries(TestPartitionedFIFOScheduler
-                      simulation-util
+                      lib_scheduler
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -84,8 +88,8 @@ target_link_libraries(TestPartitionedFIFOScheduler
 )
 
 target_link_libraries(TestSparkScheduler 
-                      simulation-util
-                      simworker-util
+                      lib_scheduler
+                      lib_worker
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}

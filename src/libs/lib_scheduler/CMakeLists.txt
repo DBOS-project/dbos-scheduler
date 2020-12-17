@@ -1,4 +1,4 @@
-message(STATUS "Building DBOS scheduler lib/simulation_util")
+message(STATUS "Building DBOS scheduler lib/lib_scheduler")
 
 # Dependencies
 # Find boost static libs, statically linked to C++ runtime.
@@ -8,12 +8,12 @@ set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
-set(simulation-util_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc SchedulerServer.cpp PartitionedScanTask.cc PushFIFOScheduler.cc)
-add_library(simulation-util STATIC ${simulation-util_SOURCES})
+set(lib_scheduler_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc SchedulerServer.cpp PartitionedScanTask.cc PushFIFOScheduler.cc)
+add_library(lib_scheduler STATIC ${lib_scheduler_SOURCES})
 
 # For scheduler simulation
-target_include_directories(simulation-util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(simulation-util
+target_include_directories(lib_scheduler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(lib_scheduler
                       dbos-scheduler-protos
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
                       ${_VOLTDB_LIBS_PATH}/libevent.a
@@ -22,10 +22,10 @@ target_link_libraries(simulation-util
                       ${_VOLTDB_LIBS_PATH}/libssl.a
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
                       pthread Boost::system Boost::thread dl
-                      simworker-util
+                      lib_worker
 )
 
-set_target_properties(simulation-util
+set_target_properties(lib_scheduler
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

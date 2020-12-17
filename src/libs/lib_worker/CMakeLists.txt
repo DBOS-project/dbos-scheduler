@@ -1,4 +1,4 @@
-message(STATUS "Building DBOS scheduler libs/simworker_util")
+message(STATUS "Building DBOS scheduler libs/lib_worker")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -11,12 +11,12 @@ set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
-set(simworker-util_SOURCES BenchmarkUtil.cc VoltdbWorkerUtil.cc MockPollWorker.cc MockHTTPWorker.cc MockGRPCWorker.cc)
-add_library(simworker-util STATIC ${simworker-util_SOURCES})
+set(lib_worker_SOURCES VoltdbWorkerUtil.cc MockPollWorker.cc MockHTTPWorker.cc MockGRPCWorker.cc)
+add_library(lib_worker STATIC ${lib_worker_SOURCES})
 
 # For worker simulation
-target_include_directories(simworker-util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(simworker-util
+target_include_directories(lib_worker PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(lib_worker
                       dbos-scheduler-protos
                       ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
                       ${_VOLTDB_LIBS_PATH}/libevent.a
@@ -27,7 +27,7 @@ target_link_libraries(simworker-util
                       pthread Boost::system Boost::thread dl
 )
 
-set_target_properties(simworker-util
+set_target_properties(lib_worker
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
