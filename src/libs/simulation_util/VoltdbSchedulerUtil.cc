@@ -2,10 +2,10 @@
 #define __STDC_CONSTANT_MACROS
 #define __STDC_LIMIT_MACROS
 
-#include <vector>
+#include <iostream>
 #include <iterator>
 #include <sstream>
-#include <iostream>
+#include <vector>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -57,7 +57,6 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
     std::cout << "=== Connected to VoltDB at " << host << " ===\n";
   }
 
-  
   // Method 2: Randomly pick one host from the list; this may not be optimal as
   // well. We might need some hashing function or a way to figure out locality.
   /*
@@ -78,5 +77,4 @@ VoltdbSchedulerUtil::VoltdbSchedulerUtil(voltdb::Client* client,
   }
   std::cout << "=== Connected to VoltDB at " << host << " ===\n";
   */
-
 }

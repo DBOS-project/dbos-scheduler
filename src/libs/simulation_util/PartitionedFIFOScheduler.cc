@@ -35,9 +35,9 @@ DbosStatus PartitionedFIFOScheduler::insertWorker(DbosId workerID,
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   params->addInt32(workerID)
-         .addInt32(capacity)
-         .addInt32(workerID % workerPartitions_)
-         .addString("");
+      .addInt32(capacity)
+      .addInt32(workerID % workerPartitions_)
+      .addString("");
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
@@ -120,9 +120,8 @@ DbosStatus PartitionedFIFOScheduler::schedule(Task* task) {
   return true;
 }
 
-
 DbosStatus PartitionedFIFOScheduler::asyncSchedule(
-  boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+    boost::shared_ptr<voltdb::ProcedureCallback> callback) {
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   int activePartitions = std::min(workerPartitions_, numWorkers_);

@@ -2,10 +2,10 @@
 #define __STDC_CONSTANT_MACROS
 #define __STDC_LIMIT_MACROS
 
-#include <vector>
+#include <iostream>
 #include <iterator>
 #include <sstream>
-#include <iostream>
+#include <vector>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -42,13 +42,11 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
 
   // TODO:for now every scheduler/worker would randomly connect to one host and
   // all queries will go through that host. We may develop some
-  // locality/affinity, or hashing methods, to improve the locality.  
+  // locality/affinity, or hashing methods, to improve the locality.
   // Method 2: Randomly pick one host from the list; this may not be optimal as
   // well. We might need some hashing function or a way to figure out locality.
   std::vector<std::string> hostlist;
-  while (std::getline(addrStream, host, delim)) {
-    hostlist.push_back(host);
-  }
+  while (std::getline(addrStream, host, delim)) { hostlist.push_back(host); }
   int randIndex = rand() % hostlist.size();
   host = hostlist[randIndex];
   try {

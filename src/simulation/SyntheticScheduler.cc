@@ -74,8 +74,8 @@ static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
 static const std::string kPushFifoAlgo = "push-fifo";
 static const std::unordered_set<std::string> kAlgorithms = {
-    kFifoAlgo, kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo, kSparkAlgo,
-    kScanTaskAlgo, kPushFifoAlgo};
+    kFifoAlgo,  kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo,
+    kSparkAlgo, kScanTaskAlgo, kPushFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // If true, truncate tables after execution.
@@ -155,7 +155,7 @@ static void SchedulerThread(const int schedulerId,
     std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
   } while (!mainFinished);
 
-  sleep(1); // Give outstanding requests time to finish.
+  sleep(1);  // Give outstanding requests time to finish.
 
   // Clean up
   delete scheduler;

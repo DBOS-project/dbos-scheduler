@@ -26,12 +26,14 @@ using grpc::Status;
 
 class MockGRPCWorker : public VoltdbWorkerUtil {
 public:
-  MockGRPCWorker(voltdb::Client* voltdbClient, int workerId, int workerPartitions, int capacity, std::vector<int> workerData)
+  MockGRPCWorker(voltdb::Client* voltdbClient, int workerId,
+                 int workerPartitions, int capacity,
+                 std::vector<int> workerData)
       : client_(voltdbClient),
-	      VoltdbWorkerUtil(workerId, "example"),
+        VoltdbWorkerUtil(workerId, "example"),
         workerData_(workerData),
         capacity_(capacity),
-        workerPartitions_(workerPartitions) {};
+        workerPartitions_(workerPartitions){};
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
@@ -52,7 +54,7 @@ private:
   int capacity_;
   std::vector<int> workerData_;
   std::vector<std::thread*>
-      threads_;                   // including dispatch and executor threads
+      threads_;  // including dispatch and executor threads
   bool stopDispatch_ = false;
   std::thread* workerThread_;
   std::unique_ptr<Server> workerServer_ = NULL;

@@ -6,11 +6,11 @@
 
 #include <getopt.h>
 #include <atomic>
+#include <boost/shared_ptr.hpp>
 #include <string>
 #include <thread>
 #include <unordered_set>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
 #include "BenchmarkUtil.h"
 #include "PartitionedFIFOScheduler.h"
@@ -80,8 +80,7 @@ static const std::string kScanTaskAlgo = "scan-task";
 static const std::string kPushFifoAlgo = "push-fifo";
 
 // TODO: currently only FIFO supports async. Will add more.
-static const std::unordered_set<std::string> kAlgorithms = {
-    kFifoAlgo};
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // Max outstanding requests per thread.
@@ -98,11 +97,12 @@ static bool noSetupDB = false;
 // the same thread as the one sending requests. Therefore, the sender thread
 // needs to periodically call "runOnce()" to enter the event loop and process
 // callbacks.
-class SchedulerCallback: public voltdb::ProcedureCallback {
+class SchedulerCallback : public voltdb::ProcedureCallback {
 public:
-  SchedulerCallback(int64_t maxOutCnt): outCnt_(0), endThresh_(maxOutCnt/2) {}
+  SchedulerCallback(int64_t maxOutCnt)
+      : outCnt_(0), endThresh_(maxOutCnt / 2) {}
 
-  bool callback(voltdb::InvocationResponse response) throw (voltdb::Exception) {
+  bool callback(voltdb::InvocationResponse response) throw(voltdb::Exception) {
     bool retVal = false;
     if (response.failure()) {
       std::cerr << "Failed to execute!\n";
@@ -140,6 +140,7 @@ public:
   }
 
   int64_t outCnt_;
+
 private:
   int64_t endThresh_;  // threshold to end the event loop.
 };
@@ -193,7 +194,8 @@ static void SchedulerThread(const int schedulerId,
       constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   assert(scheduler != nullptr);
   std::cout << "Scheduler: " << schedulerId << " started\n";
-  boost::shared_ptr<SchedulerCallback> callback(new SchedulerCallback(maxOutstanding));
+  boost::shared_ptr<SchedulerCallback> callback(
+      new SchedulerCallback(maxOutstanding));
   callback->outCnt_ = 0;
   do {
     // Make async scheduling decisions here.
@@ -205,18 +207,19 @@ static void SchedulerThread(const int schedulerId,
       // Run the event loop once; return immediately if no responses. It will
       // process callbacks until the event loop finished or callback returns
       // true.
-      // TODO: either find a better heuristic, or run callbacks on a separate thread.
+      // TODO: either find a better heuristic, or run callbacks on a separate
+      // thread.
       voltdbClient.runOnce();
       continue;
     }
 
-    if (callback->outCnt_ > maxOutstanding/2) {
+    if (callback->outCnt_ > maxOutstanding / 2) {
       // Heuristic to process responses in time.
-      // TODO: either find a better heuristic, or run callbacks on a separate thread.
+      // TODO: either find a better heuristic, or run callbacks on a separate
+      // thread.
       voltdbClient.runOnce();
       continue;
     }
-
 
   } while (!mainFinished);
 
@@ -337,7 +340,8 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-d <arrival delay>: default " << arrivalDelay << "\n";
   // Max outstanding requests: if reaches this threshold, runs the event loop
   // once to process potential responses.
-  std::cerr << "\t-m <max outstanding requests>: default " << maxOutstanding << "\n";
+  std::cerr << "\t-m <max outstanding requests>: default " << maxOutstanding
+            << "\n";
   std::cerr
       << "\t-p <probability of multi-partition transaction> (0-1.0): default "
       << probMultiTx << "\n";
@@ -433,7 +437,7 @@ int main(int argc, char** argv) {
 
   // 1) Initialize database state.
   bool res = false;
-  
+
   if (!noSetupDB) {
     res = setup(serverAddr);
     if (!res) {

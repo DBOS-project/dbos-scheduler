@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "BenchmarkUtil.h"
-#include "MockPollWorker.h"
 #include "MockHTTPWorker.h"
+#include "MockPollWorker.h"
 #include "VoltdbWorkerUtil.h"
 #include "voltdb-client-cpp/include/Client.h"
 
@@ -43,7 +43,8 @@ static const std::string kMockPoll =
     "mock-poll";  // Polling DB to find executable tasks.
 static const std::string kMockHTTP =
     "mock-http";  // Listen for HTTP requests to execute.
-static const std::unordered_set<std::string> kWorkerTypes = {kMockPoll, kMockHTTP};
+static const std::unordered_set<std::string> kWorkerTypes = {kMockPoll,
+                                                             kMockHTTP};
 static std::string workerType = kMockPoll;
 
 // Record performance
@@ -54,13 +55,14 @@ static std::vector<double> finishThroughput;
  * Return a constructed worker instance based on type.
  */
 static VoltdbWorkerUtil* constructWorker(voltdb::Client* voltdbClient,
-		                         const DbosId workerId,
+                                         const DbosId workerId,
                                          const std::string& serverAddr,
                                          const std::string& type) {
   VoltdbWorkerUtil* worker = nullptr;
   if (type == kMockPoll) {
     int pkey = workerId % partitions;
-    worker = new MockPollWorker(workerId, pkey, serverAddr, numExecutors, topkTasks);
+    worker =
+        new MockPollWorker(workerId, pkey, serverAddr, numExecutors, topkTasks);
   } else if (type == kMockHTTP) {
     int pkey = workerId % partitions;
     worker = new MockHTTPWorker(voltdbClient, workerId, pkey, serverAddr);
@@ -79,7 +81,8 @@ static void WorkerThread(const int workerId, const std::string& serverAddr) {
   voltdb::Client voltdbClient =
       VoltdbWorkerUtil::createVoltdbClient(serverAddr);
 
-  VoltdbWorkerUtil* worker = constructWorker(&voltdbClient, workerId, serverAddr, workerType);
+  VoltdbWorkerUtil* worker =
+      constructWorker(&voltdbClient, workerId, serverAddr, workerType);
   assert(worker != nullptr);
   worker->setup();
 
@@ -125,8 +128,10 @@ static bool runBenchmark(const std::string& serverAddr,
     currTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Compute throughput
-    double currThroughput = (currTasks - lastTasks) * 1.0 / ((currTime - lastTime) / 1000000.0);
-    double currFinishedThroughput = (currFinished - lastFinished) * 1.0 / ((currTime - lastTime) / 1000000.0);
+    double currThroughput =
+        (currTasks - lastTasks) * 1.0 / ((currTime - lastTime) / 1000000.0);
+    double currFinishedThroughput = (currFinished - lastFinished) * 1.0 /
+                                    ((currTime - lastTime) / 1000000.0);
     dispatchThroughput.push_back(currThroughput);
     finishThroughput.push_back(currFinishedThroughput);
     lastTasks = currTasks;
@@ -145,7 +150,8 @@ static bool runBenchmark(const std::string& serverAddr,
   // TODO: Processing the results.
   std::cerr << "Dispatch-Throughput,Finished-Throughput\n";
   for (int i = 0; i < dispatchThroughput.size(); ++i) {
-    std::cerr << dispatchThroughput[i] << ",  " << finishThroughput[i] << std::endl;
+    std::cerr << dispatchThroughput[i] << ",  " << finishThroughput[i]
+              << std::endl;
   }
 
   // Clean up.

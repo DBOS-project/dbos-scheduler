@@ -5,11 +5,11 @@
 
 #include <getopt.h>
 #include <atomic>
+#include <boost/shared_ptr.hpp>
 #include <string>
 #include <thread>
 #include <unordered_set>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
 #include "BenchmarkUtil.h"
 #include "PartitionedFIFOScheduler.h"
@@ -84,8 +84,7 @@ static const std::string kScanTaskAlgo = "scan-task";
 static const std::string kPushFifoAlgo = "push-fifo";
 
 // Exists for compatibility with the scheduler API.
-static const std::unordered_set<std::string> kAlgorithms = {
-    kFifoAlgo};
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // Max outstanding requests per thread.
@@ -105,11 +104,11 @@ static bool broadcast = false;
 // the same thread as the one sending requests. Therefore, the sender thread
 // needs to periodically call "runOnce()" to enter the event loop and process
 // callbacks.
-class SenderCallback: public voltdb::ProcedureCallback {
+class SenderCallback : public voltdb::ProcedureCallback {
 public:
-  SenderCallback(int64_t maxOutCnt): outCnt_(0), endThresh_(maxOutCnt/2) {}
+  SenderCallback(int64_t maxOutCnt) : outCnt_(0), endThresh_(maxOutCnt / 2) {}
 
-  bool callback(voltdb::InvocationResponse response) throw (voltdb::Exception) {
+  bool callback(voltdb::InvocationResponse response) throw(voltdb::Exception) {
     bool retVal = false;
     if (response.failure()) {
       std::cerr << "Failed to execute!\n";
@@ -143,6 +142,7 @@ public:
   }
 
   int64_t outCnt_;
+
 private:
   int64_t endThresh_;  // threshold to end the event loop.
 };
@@ -185,8 +185,7 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
  * Sender thread.
  * For now, it will simply insert messages to the DB.
  */
-static void SenderThread(const int schedulerId,
-                         const std::string& serverAddr) {
+static void SenderThread(const int schedulerId, const std::string& serverAddr) {
   // Create a local VoltDB client.
   voltdb::Client voltdbClient =
       VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd);
@@ -195,7 +194,8 @@ static void SenderThread(const int schedulerId,
       constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   assert(scheduler != nullptr);
   std::cout << "Sender: " << schedulerId << " started\n";
-  boost::shared_ptr<SenderCallback> callback(new SenderCallback(maxOutstanding));
+  boost::shared_ptr<SenderCallback> callback(
+      new SenderCallback(maxOutstanding));
   callback->outCnt_ = 0;
   do {
     // Make async scheduling decisions here.
@@ -213,18 +213,19 @@ static void SenderThread(const int schedulerId,
       // Run the event loop once; return immediately if no responses. It will
       // process callbacks until the event loop finished or callback returns
       // true.
-      // TODO: either find a better heuristic, or run callbacks on a separate thread.
+      // TODO: either find a better heuristic, or run callbacks on a separate
+      // thread.
       voltdbClient.runOnce();
       continue;
     }
 
-    if (callback->outCnt_ > maxOutstanding/2) {
+    if (callback->outCnt_ > maxOutstanding / 2) {
       // Heuristic to process responses in time.
-      // TODO: either find a better heuristic, or run callbacks on a separate thread.
+      // TODO: either find a better heuristic, or run callbacks on a separate
+      // thread.
       voltdbClient.runOnce();
       continue;
     }
-
 
   } while (!mainFinished);
 
@@ -255,8 +256,7 @@ static bool runBenchmark(const std::string& serverAddr,
 
   // Start scheduler threads.
   for (int i = 0; i < numSenders; ++i) {
-    schedulerThreads.push_back(
-        new std::thread(&SenderThread, i, serverAddr));
+    schedulerThreads.push_back(new std::thread(&SenderThread, i, serverAddr));
   }
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -342,7 +342,8 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-d <arrival delay>: default " << arrivalDelay << "\n";
   // Max outstanding requests: if reaches this threshold, runs the event loop
   // once to process potential responses.
-  std::cerr << "\t-m <max outstanding requests>: default " << maxOutstanding << "\n";
+  std::cerr << "\t-m <max outstanding requests>: default " << maxOutstanding
+            << "\n";
   // Print all options here.
 
   std::cerr << std::endl;
@@ -388,8 +389,8 @@ int main(int argc, char** argv) {
         maxOutstanding = atoi(optarg);
         break;
       case 'b':
-	broadcast = true;
-	break;
+        broadcast = true;
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -408,7 +409,7 @@ int main(int argc, char** argv) {
 
   // 1) Initialize database state.
   bool res = false;
- 
+
   if (!noSetupDB) {
     res = setup(serverAddr);
     if (!res) {

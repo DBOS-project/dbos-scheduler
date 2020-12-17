@@ -2,9 +2,9 @@
 #define __STDC_CONSTANT_MACROS
 #define __STDC_LIMIT_MACROS
 
-#include <vector>
-#include <thread>
 #include <functional>
+#include <thread>
+#include <vector>
 #include "voltdb-client-cpp/include/Client.h"
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
@@ -33,8 +33,10 @@ DbosStatus MockHTTPWorker::setup() {
 
   voltdb::Procedure procedure("InsertWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerId_).addInt32(999999999/*capacity*/).addInt32(pkey_)
-	  .addString("http://localhost:" + std::to_string(9090 + workerId_));
+  params->addInt32(workerId_)
+      .addInt32(999999999 /*capacity*/)
+      .addInt32(pkey_)
+      .addString("http://localhost:" + std::to_string(9090 + workerId_));
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "InsertWorker procedure failed. " << r.toString();
@@ -65,9 +67,9 @@ void MockHTTPWorker::handle_request(struct http_request_s* request) {
   http_response_body(response, RESPONSE, sizeof(RESPONSE) - 1);
   http_respond(request, response);
 
-  //TODO Do some work or sleep here...
+  // TODO Do some work or sleep here...
   VoltdbWorkerUtil::totalTasks_.fetch_add(1);
- 
+
   // Signal completion to the database.
   std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -77,7 +79,10 @@ void MockHTTPWorker::handle_request(struct http_request_s* request) {
 
   voltdb::Procedure procedure("WorkerUpdateTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(worker->pkey_).addInt32(worker->workerId_).addInt32(taskId).addInt32(COMPLETE);
+  params->addInt32(worker->pkey_)
+      .addInt32(worker->workerId_)
+      .addInt32(taskId)
+      .addInt32(COMPLETE);
   voltdb::InvocationResponse r = worker->client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "WorkerUpdateTask procedure failed. " << r.toString();
@@ -89,12 +94,10 @@ void MockHTTPWorker::dispatch() {
   worker = this;
 
   std::cout << "Listen for HTTP requests for worker " << workerId_ << "\n";
-  struct http_server_s* server = http_server_init(9090 + workerId_,
-		                                  handle_request);
+  struct http_server_s* server =
+      http_server_init(9090 + workerId_, handle_request);
   http_server_listen_poll(server);
-  do {
-    http_server_poll(server);
-  } while (!stopDispatch_);
+  do { http_server_poll(server); } while (!stopDispatch_);
 }
 
 void MockHTTPWorker::execute(int execId) {

@@ -34,8 +34,8 @@ DbosStatus MockPollWorker::teardown() {
 
   // Join dispatch thread first.
   size_t totalThreads = threads_.size();
-  threads_[totalThreads-1]->join();
-  delete threads_[totalThreads-1];
+  threads_[totalThreads - 1]->join();
+  delete threads_[totalThreads - 1];
 
   // Wait until the queue is empty
   while (taskQueue_.size()) {
@@ -49,7 +49,7 @@ DbosStatus MockPollWorker::teardown() {
   }
   cv_.notify_all();
 
-  for (size_t i = 0; i < totalThreads-1; ++i) {
+  for (size_t i = 0; i < totalThreads - 1; ++i) {
     threads_[i]->join();
     delete threads_[i];
   }

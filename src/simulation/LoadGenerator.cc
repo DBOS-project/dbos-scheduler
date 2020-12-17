@@ -12,11 +12,11 @@
 #include <vector>
 
 #include "BenchmarkUtil.h"
-#include "SchedulerServer.h"
 #include "PartitionedFIFOScheduler.h"
 #include "PartitionedFIFOTaskScheduler.h"
 #include "PartitionedScanTask.h"
 #include "PushFIFOScheduler.h"
+#include "SchedulerServer.h"
 #include "SinglePartitionedFIFOTaskScheduler.h"
 #include "SparkScheduler.h"
 #include "VoltdbSchedulerUtil.h"
@@ -80,8 +80,8 @@ static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
 static const std::string kPushFifoAlgo = "push-fifo";
 static const std::unordered_set<std::string> kAlgorithms = {
-    kFifoAlgo, kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo, kSparkAlgo,
-    kScanTaskAlgo, kPushFifoAlgo};
+    kFifoAlgo,  kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo,
+    kSparkAlgo, kScanTaskAlgo, kPushFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // If true, truncate tables after execution.
@@ -127,9 +127,8 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
  * We will need to add worker (consumer) to mark tasks finished.
  */
 static void ClientThread(std::vector<std::string> schedulerAddresses) {
-
   std::vector<std::shared_ptr<Channel>> channels;
-  for (std::string addr: schedulerAddresses) {
+  for (std::string addr : schedulerAddresses) {
     std::shared_ptr<Channel> channel =
         grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
     channels.push_back(channel);
@@ -166,7 +165,7 @@ static void ClientThread(std::vector<std::string> schedulerAddresses) {
     std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
   } while (!mainFinished);
 
-  sleep(1); // Give outstanding requests time to finish.
+  sleep(1);  // Give outstanding requests time to finish.
   return;
 }
 
@@ -191,7 +190,8 @@ static bool runBenchmark(const std::string& serverAddr,
   std::vector<voltdb::Client> clients;
 
   for (int schedulerId = 0; schedulerId < numSchedulers; schedulerId++) {
-    clients.push_back(VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd));
+    clients.push_back(
+        VoltdbSchedulerUtil::createVoltdbClient(kTestUser, kTestPwd));
   }
 
   for (int schedulerId = 0; schedulerId < numSchedulers; schedulerId++) {
@@ -199,8 +199,7 @@ static bool runBenchmark(const std::string& serverAddr,
 
     VoltdbSchedulerUtil* scheduler =
         constructScheduler(&clients[schedulerId], serverAddr, "spark");
-    SchedulerServer* schedulerServer =
-        new SchedulerServer(port, scheduler);
+    SchedulerServer* schedulerServer = new SchedulerServer(port, scheduler);
 
     schedulers.push_back(schedulerServer);
     assert(scheduler != nullptr);
@@ -212,8 +211,7 @@ static bool runBenchmark(const std::string& serverAddr,
 
   // Start scheduler threads.
   for (int i = 0; i < numClientThreads; ++i) {
-    clientThreads.push_back(
-        new std::thread(&ClientThread, schedulerAddresses));
+    clientThreads.push_back(new std::thread(&ClientThread, schedulerAddresses));
   }
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -228,14 +226,12 @@ static bool runBenchmark(const std::string& serverAddr,
 
   mainFinished = true;
 
-  for (std::thread* schedulerThread: clientThreads) {
+  for (std::thread* schedulerThread : clientThreads) {
     schedulerThread->join();
     delete schedulerThread;
   }
 
-  for (SchedulerServer* scheduler: schedulers) {
-    delete scheduler;
-  }
+  for (SchedulerServer* scheduler : schedulers) { delete scheduler; }
 
   // Processing the results.
   std::cerr << "Post processing results...\n";
@@ -297,8 +293,7 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-N <number of parallel client threads>: default "
             << numClientThreads << "\n";
-  std::cerr << "\t-S <number of schedulers>: default "
-            << numSchedulers << "\n";
+  std::cerr << "\t-S <number of schedulers>: default " << numSchedulers << "\n";
   std::cerr << "\t-W <number of workers (#rows in table)>: default "
             << numWorkers << "\n";
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
@@ -384,8 +379,7 @@ int main(int argc, char** argv) {
             << std::endl;
   std::cerr << "Parallel scheduler threads: " << numClientThreads
             << "; workers: " << numWorkers << "; tasks: " << numTasks
-            << "; schedulers: " << numSchedulers
-            << std::endl;
+            << "; schedulers: " << numSchedulers << std::endl;
   std::cerr << "Worker capacity: " << workerCapacity << std::endl;
   std::cerr << "Partitions: " << partitions << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;

@@ -28,7 +28,8 @@ std::vector<VoltdbWorkerUtil*> SparkScheduler::workers_;
 
 DbosStatus SparkScheduler::insertWorker(DbosId workerID, int32_t capacity,
                                         std::vector<int32_t> workerData) {
-  VoltdbWorkerUtil* worker = new MockGRPCWorker(client_, workerID, workerPartitions_, capacity, workerData);
+  VoltdbWorkerUtil* worker = new MockGRPCWorker(
+      client_, workerID, workerPartitions_, capacity, workerData);
   SparkScheduler::workers_.push_back(worker);
   return worker->setup();
 }
@@ -41,20 +42,21 @@ DbosId SparkScheduler::selectWorker(DbosId targetData) {
 
   std::vector<voltdb::Parameter> partitionParameterTypes(1);
   partitionParameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
-  voltdb::Procedure procedure("SelectDataShardPartition", partitionParameterTypes);
+  voltdb::Procedure procedure("SelectDataShardPartition",
+                              partitionParameterTypes);
   voltdb::ParameterSet* pparams = procedure.params();
   pparams->addInt32(targetData);
   voltdb::InvocationResponse pr = client_->invoke(procedure);
   std::vector<voltdb::Table> presults = pr.results();
   voltdb::TableIterator iterator = presults[0].iterator();
   std::vector<int> targetPartitions;
-  while(iterator.hasNext()) {
+  while (iterator.hasNext()) {
     voltdb::Row prow = iterator.next();
     DbosId partitionNum = prow.getInt64(0);
     targetPartitions.push_back(partitionNum);
   }
   // Poll until a slot is found, randomly selecting partitions.
-  while(true) { // TODO:  Add timeout.
+  while (true) {  // TODO:  Add timeout.
     int partitionNum = targetPartitions.at(rand() % targetPartitions.size());
     voltdb::Procedure procedure("SelectSparkWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
@@ -86,7 +88,8 @@ std::shared_ptr<Channel> SparkScheduler::addrToChannel(std::string workerAddr) {
   }
 }
 
-DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId, Task* task) {
+DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId,
+                                              Task* task) {
   // TODO:  Actually lookup the address somehow.
   const std::string& port = std::to_string(8000 + workerId);
   std::string workerAddr = "localhost:" + port;
@@ -108,12 +111,13 @@ DbosStatus SparkScheduler::assignTaskToWorker(DbosId taskId, DbosId workerId, Ta
   // stub_->AsyncSubmitTask() performs the RPC call, returning an instance to
   // store in "call". Because we are using the asynchronous API, we need to
   // hold on to the "call" instance in order to get updates on the ongoing RPC.
-  call->response_reader = stub->AsyncSubmitTask(&call->context, st_request, &cq_);
+  call->response_reader =
+      stub->AsyncSubmitTask(&call->context, st_request, &cq_);
   // Request that, upon completion of the RPC, "reply" be updated with the
   // server's response; "status" with the indication of whether the operation
   // was successful. Tag the request with the memory address of the call object.
   call->response_reader->Finish(&call->reply, &call->status, (void*)call);
-  
+
   return true;
 }
 
@@ -122,7 +126,7 @@ void SparkScheduler::finishRequests() {
   bool ok = false;
   // TODO:  Don't hardcode.
   voltdb::Client client =
-    VoltdbSchedulerUtil::createVoltdbClient("testuser", "testpassword");
+      VoltdbSchedulerUtil::createVoltdbClient("testuser", "testpassword");
   client.createConnection("localhost");
   // Block until the next result is available in the completion queue "cq".
   while (cq_.Next(&got_tag, &ok)) {
@@ -136,7 +140,8 @@ void SparkScheduler::finishRequests() {
   client.close();
 }
 
-DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, DbosId workerId) {
+DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId,
+                                      DbosId workerId) {
   // Notify the client that the task is complete.
   taskCompletionMutex.lock();
   taskCompletionSet.insert(taskId);
@@ -150,7 +155,8 @@ DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, Dbos
 
   voltdb::Procedure procedure("FinishWorkerTask", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(workerId).addInt32(taskId).addInt32(workerId % workerPartitions_);
+  params->addInt32(workerId).addInt32(taskId).addInt32(workerId %
+                                                       workerPartitions_);
   voltdb::InvocationResponse r = client.invoke(procedure);
   if (r.failure()) {
     std::cout << "finishTask procedure failed. " << r.toString();
@@ -161,7 +167,7 @@ DbosStatus SparkScheduler::finishTask(voltdb::Client client, DbosId taskId, Dbos
 
 void SparkScheduler::processTaskQueue() {
   std::unique_lock<std::mutex> lock(taskProcessMutex);
-  while(runTaskQueueThread) {
+  while (runTaskQueueThread) {
     taskProcessCV.wait(lock);
     while (!taskQueue.empty()) {
       TaskData* taskData = taskQueue.front();
@@ -179,9 +185,9 @@ DbosStatus SparkScheduler::setup() {
   DbosStatus ret;
   int numReplicas = std::min(numWorkers_, 3);
   for (int i = 0; i < numWorkers_; ++i) {
-      std::vector<int> t {i};
-      ret = insertWorker(i, workerCapacity_, t);
-      if (!ret) { return false; }
+    std::vector<int> t{i};
+    ret = insertWorker(i, workerCapacity_, t);
+    if (!ret) { return false; }
   }
   return true;
 }
@@ -189,7 +195,7 @@ DbosStatus SparkScheduler::setup() {
 DbosStatus SparkScheduler::teardown() {
   // Clean up data from previous run.
   truncateWorkerTable();
-  for (VoltdbWorkerUtil* worker: SparkScheduler::workers_) {
+  for (VoltdbWorkerUtil* worker : SparkScheduler::workers_) {
     worker->teardown();
   }
   return true;
