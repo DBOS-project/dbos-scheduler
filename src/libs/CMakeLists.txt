@@ -1,2 +1,3 @@
 add_subdirectory(lib_scheduler)
 add_subdirectory(lib_worker)
+add_subdirectory(lib_util)

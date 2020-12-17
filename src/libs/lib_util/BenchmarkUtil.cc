@@ -1,12 +1,13 @@
+#include "BenchmarkUtil.h"
+
 #include <stdio.h>
 #include <string.h>
+
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include "BenchmarkUtil.h"
 
 bool BenchmarkUtil::processResults(double* latencies,
                                    const std::vector<uint32_t>& indices,

@@ -23,11 +23,13 @@ add_executable(SyntheticWorker SyntheticWorker.cc)
 
 # Link to libs.
 target_link_libraries(SyntheticWorker
-                      lib_worker)
+                      lib_worker
+                      lib_util)
 
 target_link_libraries(SyntheticScheduler
                       lib_scheduler
                       lib_worker
+                      lib_util
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -38,6 +40,7 @@ target_link_libraries(SyntheticScheduler
 target_link_libraries(LoadGenerator
                       lib_scheduler
                       lib_worker
+                      lib_util
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
@@ -48,6 +51,7 @@ target_link_libraries(LoadGenerator
 target_link_libraries(AsyncSyntheticScheduler
                       lib_scheduler
                       lib_worker
+                      lib_util
                       dbos-scheduler-protos
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
