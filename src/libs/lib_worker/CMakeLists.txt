@@ -11,7 +11,7 @@ set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
-set(lib_worker_SOURCES WorkerManager.cc MockPollWorker.cc MockHTTPWorker.cc MockGRPCWorker.cc)
+set(lib_worker_SOURCES Executor.cc WorkerManager.cc MockExecutor.cc MockPollWorker.cc MockHTTPWorker.cc MockGRPCWorker.cc)
 add_library(lib_worker STATIC ${lib_worker_SOURCES})
 
 # For worker simulation

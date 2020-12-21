@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 
+#include "MockExecutor.h"
 #include "WorkerManager.h"
 #include "httpserver.h"
 #include "voltdb-client-cpp/include/Client.h"
@@ -19,7 +20,9 @@ public:
                  std::string dbAddr)
       : client_(voltdbClient),
         WorkerManager(workerId, dbAddr),
-        pkey_(pkey){};
+        pkey_(pkey) {
+	  executor_ = new MockExecutor();
+	};
 
   // Dispatch tasks that are assigned to this worker.
   // Potentially run in a dedicated dispatch thread.
@@ -39,11 +42,13 @@ public:
   DbosStatus endServing();
 
   // Destructor
-  ~MockHTTPWorker() { /* placeholder for now. */
+  ~MockHTTPWorker() {
+    delete executor_;
   }
 
 private:
   voltdb::Client* client_;
+  MockExecutor* executor_;
   int pkey_;
   std::vector<std::thread*>
       threads_;  // including dispatch and executor threads
