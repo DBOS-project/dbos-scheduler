@@ -78,8 +78,7 @@ static WorkerManager* constructWorker(voltdb::Client* voltdbClient,
  */
 static void WorkerThread(const int workerId, const std::string& serverAddr) {
   // Create a local VoltDB client.
-  voltdb::Client voltdbClient =
-      WorkerManager::createVoltdbClient(serverAddr);
+  voltdb::Client voltdbClient = WorkerManager::createVoltdbClient(serverAddr);
 
   WorkerManager* worker =
       constructWorker(&voltdbClient, workerId, serverAddr, workerType);

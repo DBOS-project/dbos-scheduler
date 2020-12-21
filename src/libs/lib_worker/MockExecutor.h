@@ -5,11 +5,12 @@
 
 class MockExecutor : public Executor {
 public:
-  MockExecutor() : Executor() {};
+  MockExecutor() : Executor(){};
 
   DbosStatus executeTask();
 
-  ~MockExecutor() {/* placeholder for now. */
+  ~MockExecutor(){
+      /* placeholder for now. */
   };
 
 private:
