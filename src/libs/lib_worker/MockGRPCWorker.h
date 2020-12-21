@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 
+#include "MockExecutor.h"
 #include "WorkerManager.h"
 #include "voltdb-client-cpp/include/Client.h"
 
@@ -53,6 +54,7 @@ private:
   int workerPartitions_;
   int capacity_;
   std::vector<int> workerData_;
+  MockExecutor* executor_;
   std::vector<std::thread*>
       threads_;  // including dispatch and executor threads
   bool stopDispatch_ = false;

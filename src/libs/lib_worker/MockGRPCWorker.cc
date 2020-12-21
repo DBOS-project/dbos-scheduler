@@ -14,6 +14,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
+#include "MockExecutor.h"
 #include "MockGRPCWorker.h"
 
 namespace dbos_scheduler {
@@ -43,9 +44,10 @@ private:
 Status FrontendServiceImpl::SubmitTask(ServerContext* context,
                                        const SubmitTaskRequest* request,
                                        SubmitTaskResponse* reply) {
-  // std::cout << "Recieved a task: " << request->requirement() << ", "
+  // std::cout << "Received a task: " << request->requirement() << ", "
   //           << request->exectime() << "μs." << std::endl;
-
+  // TODO: Call executor_->executeTask here.
+  // executor_->executeTask();
   usleep(request->exectime());
   reply->set_status(DbosStatusEnum::SUCCESS);
   return Status::OK;
@@ -78,6 +80,9 @@ void MockGRPCWorker::RunServer(const std::string& port) {
 }
 
 DbosStatus MockGRPCWorker::startServing() {
+  // Create an executor.
+  executor_ = new MockExecutor();
+
   // Add the Worker to the database.
   std::vector<voltdb::Parameter> parameterTypes(5);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);

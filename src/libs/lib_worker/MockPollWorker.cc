@@ -12,6 +12,7 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
+#include "MockExecutor.h"
 #include "MockPollWorker.h"
 
 DbosStatus MockPollWorker::startServing() {
@@ -101,6 +102,8 @@ void MockPollWorker::dispatch() {
 
 void MockPollWorker::execute(int execId) {
   std::cout << "Executor " << execId << " for worker " << workerId_ << "\n";
+  MockExecutor executor = MockExecutor();
+
   // Create a local VoltDB client.
   voltdb::Client voltdbClient = WorkerManager::createVoltdbClient(dbAddr_);
 
@@ -131,6 +134,9 @@ void MockPollWorker::execute(int execId) {
       //          << " process taskId " << taskId << std::endl;
 
       // TODO: add parameter to mock execution time.
+      // Maybe move this whole function to the Executor class.
+      executor.executeTask();
+
       // std::this_thread::sleep_for(std::chrono::microseconds(100));
       // Update task as completed from DB, and put back one capacity.
       params->addInt32(pkey_).addInt32(workerId_).addInt32(taskId).addInt32(
