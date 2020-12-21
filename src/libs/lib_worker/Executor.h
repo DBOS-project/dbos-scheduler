@@ -7,7 +7,7 @@ typedef bool DbosStatus;
 class Executor {
 public:
   // Task state.
-  Executor() {};
+  Executor(){};
 
   // TODO: Use Task as an argument here.
   virtual DbosStatus executeTask() = 0;

@@ -18,11 +18,9 @@ class MockHTTPWorker : public WorkerManager {
 public:
   MockHTTPWorker(voltdb::Client* voltdbClient, int workerId, int pkey,
                  std::string dbAddr)
-      : client_(voltdbClient),
-        WorkerManager(workerId, dbAddr),
-        pkey_(pkey) {
-	  executor_ = new MockExecutor();
-	};
+      : client_(voltdbClient), WorkerManager(workerId, dbAddr), pkey_(pkey) {
+    executor_ = new MockExecutor();
+  };
 
   // Dispatch tasks that are assigned to this worker.
   // Potentially run in a dedicated dispatch thread.
@@ -42,9 +40,7 @@ public:
   DbosStatus endServing();
 
   // Destructor
-  ~MockHTTPWorker() {
-    delete executor_;
-  }
+  ~MockHTTPWorker() { delete executor_; }
 
 private:
   voltdb::Client* client_;

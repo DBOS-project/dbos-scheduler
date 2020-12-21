@@ -1,5 +1,3 @@
 #include "MockExecutor.h"
 
-DbosStatus MockExecutor::executeTask() {
-  return true;
-}
+DbosStatus MockExecutor::executeTask() { return true; }
