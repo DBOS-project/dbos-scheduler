@@ -11,7 +11,7 @@
 #include "BenchmarkUtil.h"
 #include "MockHTTPWorker.h"
 #include "MockPollWorker.h"
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 // Number of workers
@@ -54,11 +54,11 @@ static std::vector<double> finishThroughput;
 /*
  * Return a constructed worker instance based on type.
  */
-static VoltdbWorkerUtil* constructWorker(voltdb::Client* voltdbClient,
-                                         const DbosId workerId,
-                                         const std::string& serverAddr,
-                                         const std::string& type) {
-  VoltdbWorkerUtil* worker = nullptr;
+static WorkerManager* constructWorker(voltdb::Client* voltdbClient,
+                                      const DbosId workerId,
+                                      const std::string& serverAddr,
+                                      const std::string& type) {
+  WorkerManager* worker = nullptr;
   if (type == kMockPoll) {
     int pkey = workerId % partitions;
     worker =
@@ -79,12 +79,12 @@ static VoltdbWorkerUtil* constructWorker(voltdb::Client* voltdbClient,
 static void WorkerThread(const int workerId, const std::string& serverAddr) {
   // Create a local VoltDB client.
   voltdb::Client voltdbClient =
-      VoltdbWorkerUtil::createVoltdbClient(serverAddr);
+      WorkerManager::createVoltdbClient(serverAddr);
 
-  VoltdbWorkerUtil* worker =
+  WorkerManager* worker =
       constructWorker(&voltdbClient, workerId, serverAddr, workerType);
   assert(worker != nullptr);
-  worker->setup();
+  worker->startServing();
 
   {
     // Wait for main thread finish signal.
@@ -94,7 +94,7 @@ static void WorkerThread(const int workerId, const std::string& serverAddr) {
   }
 
   // Clean up
-  worker->teardown();
+  worker->endServing();
   delete worker;
   return;
 }
@@ -105,8 +105,8 @@ static void WorkerThread(const int workerId, const std::string& serverAddr) {
 static bool runBenchmark(const std::string& serverAddr,
                          const std::string& outputFile) {
   mainFinished = false;
-  VoltdbWorkerUtil::totalTasks_.store(0);
-  VoltdbWorkerUtil::totalFinishedTasks_.store(0);
+  WorkerManager::totalTasks_.store(0);
+  WorkerManager::totalFinishedTasks_.store(0);
   std::vector<std::thread*> workerThreads;  // Parallel workers.
 
   // Start worker threads.
@@ -117,14 +117,14 @@ static bool runBenchmark(const std::string& serverAddr,
   uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
   uint64_t lastTime = currTime;
   uint64_t endTime = currTime + (totalExecTimeMsec * 1000);
-  uint64_t lastTasks = VoltdbWorkerUtil::totalTasks_.load();
-  uint64_t lastFinished = VoltdbWorkerUtil::totalFinishedTasks_.load();
+  uint64_t lastTasks = WorkerManager::totalTasks_.load();
+  uint64_t lastFinished = WorkerManager::totalFinishedTasks_.load();
   do {
     std::this_thread::sleep_for(std::chrono::milliseconds(measureIntervalMsec));
     std::cerr << "runBenchmark recording performance...\n";
     // TODO: implement performance benchmarking.
-    uint64_t currTasks = VoltdbWorkerUtil::totalTasks_.load();
-    uint64_t currFinished = VoltdbWorkerUtil::totalFinishedTasks_.load();
+    uint64_t currTasks = WorkerManager::totalTasks_.load();
+    uint64_t currFinished = WorkerManager::totalFinishedTasks_.load();
     currTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Compute throughput

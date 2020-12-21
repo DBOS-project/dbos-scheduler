@@ -14,7 +14,7 @@
 
 #include "MockPollWorker.h"
 
-DbosStatus MockPollWorker::setup() {
+DbosStatus MockPollWorker::startServing() {
   std::cout << "Setup worker " << workerId_ << std::endl;
 
   // Start executors first, waiting for tasks.
@@ -27,7 +27,7 @@ DbosStatus MockPollWorker::setup() {
   return true;
 }
 
-DbosStatus MockPollWorker::teardown() {
+DbosStatus MockPollWorker::endServing() {
   // Clean up data and threads.
   std::cout << "Stop worker " << workerId_ << std::endl;
   stopDispatch_ = true;
@@ -59,7 +59,7 @@ DbosStatus MockPollWorker::teardown() {
 void MockPollWorker::dispatch() {
   std::cout << "A dispatcher for worker " << workerId_ << "\n";
   // Create a local VoltDB client.
-  voltdb::Client voltdbClient = VoltdbWorkerUtil::createVoltdbClient(dbAddr_);
+  voltdb::Client voltdbClient = WorkerManager::createVoltdbClient(dbAddr_);
 
   std::vector<voltdb::Parameter> parameterTypes(3);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -90,7 +90,7 @@ void MockPollWorker::dispatch() {
         taskQueue_.push(taskId);
       }
       cv_.notify_one();
-      VoltdbWorkerUtil::totalTasks_.fetch_add(1);
+      WorkerManager::totalTasks_.fetch_add(1);
       // std::cout << "dispatch taskId " << taskId << "\n";
     }
     // Busy polling or sleep?
@@ -102,7 +102,7 @@ void MockPollWorker::dispatch() {
 void MockPollWorker::execute(int execId) {
   std::cout << "Executor " << execId << " for worker " << workerId_ << "\n";
   // Create a local VoltDB client.
-  voltdb::Client voltdbClient = VoltdbWorkerUtil::createVoltdbClient(dbAddr_);
+  voltdb::Client voltdbClient = WorkerManager::createVoltdbClient(dbAddr_);
 
   std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -143,7 +143,7 @@ void MockPollWorker::execute(int execId) {
         abort();  // TODO: better error handling.
       }
 
-      VoltdbWorkerUtil::totalFinishedTasks_.fetch_add(1);
+      WorkerManager::totalFinishedTasks_.fetch_add(1);
       // Re-acquire the lock.
       lock.lock();
     }

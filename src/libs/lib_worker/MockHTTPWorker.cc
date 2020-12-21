@@ -21,7 +21,7 @@
 
 thread_local MockHTTPWorker* worker;
 
-DbosStatus MockHTTPWorker::setup() {
+DbosStatus MockHTTPWorker::startServing() {
   std::cout << "Setup worker " << workerId_ << std::endl;
 
   // Add the Worker to the database.
@@ -48,7 +48,7 @@ DbosStatus MockHTTPWorker::setup() {
   return true;
 }
 
-DbosStatus MockHTTPWorker::teardown() {
+DbosStatus MockHTTPWorker::endServing() {
   // Clean up data and threads.
   std::cout << "Stop worker " << workerId_ << std::endl;
   stopDispatch_ = true;
@@ -68,7 +68,7 @@ void MockHTTPWorker::handle_request(struct http_request_s* request) {
   http_respond(request, response);
 
   // TODO Do some work or sleep here...
-  VoltdbWorkerUtil::totalTasks_.fetch_add(1);
+  WorkerManager::totalTasks_.fetch_add(1);
 
   // Signal completion to the database.
   std::vector<voltdb::Parameter> parameterTypes(4);

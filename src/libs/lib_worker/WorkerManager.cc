@@ -15,20 +15,20 @@
 #include "voltdb-client-cpp/include/TableIterator.h"
 #include "voltdb-client-cpp/include/WireType.h"
 
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 
 // Synthetic username, passwd.
 static const std::string kTestUser = "testuser";
 static const std::string kTestPwd = "testpassword";
 
-std::atomic<uint64_t> VoltdbWorkerUtil::totalTasks_;
-std::atomic<uint64_t> VoltdbWorkerUtil::totalFinishedTasks_;
+std::atomic<uint64_t> WorkerManager::totalTasks_;
+std::atomic<uint64_t> WorkerManager::totalFinishedTasks_;
 
-VoltdbWorkerUtil::~VoltdbWorkerUtil() {
+WorkerManager::~WorkerManager() {
   // placeholder.
 }
 
-voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
+voltdb::Client WorkerManager::createVoltdbClient(std::string dbAddr) {
   // Create a VoltDB client, connect to the DB.
   // SHA-256 can be used as of VoltDB5.2 by specifying voltdb::HASH_SHA256
   voltdb::ClientConfig config(kTestUser, kTestPwd, voltdb::HASH_SHA1);
@@ -62,5 +62,5 @@ voltdb::Client VoltdbWorkerUtil::createVoltdbClient(std::string dbAddr) {
   return client;
 }
 
-VoltdbWorkerUtil::VoltdbWorkerUtil(DbosId workerId, std::string dbAddr)
+WorkerManager::WorkerManager(DbosId workerId, std::string dbAddr)
     : workerId_(workerId), dbAddr_(dbAddr), stop_(false) {}

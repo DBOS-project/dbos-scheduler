@@ -9,7 +9,7 @@
 #include "voltdb-client-cpp/include/Client.h"
 
 #include "MockGRPCWorker.h"
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 
 class SchedulerServer {
 public:

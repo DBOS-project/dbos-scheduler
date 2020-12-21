@@ -9,14 +9,14 @@
 #include <thread>
 #include <vector>
 
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 #include "voltdb-client-cpp/include/Client.h"
 
-class MockPollWorker : public VoltdbWorkerUtil {
+class MockPollWorker : public WorkerManager {
 public:
   MockPollWorker(int workerId, int pkey, std::string dbAddr, int numExecutors,
                  int topk)
-      : VoltdbWorkerUtil(workerId, dbAddr),
+      : WorkerManager(workerId, dbAddr),
         pkey_(pkey),
         numExecutors_(numExecutors),
         topk_(topk){};
@@ -32,10 +32,10 @@ public:
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
-  DbosStatus setup();
+  DbosStatus startServing();
 
   // Stop the worker (all executor and dispatch threads) and free up resources.
-  DbosStatus teardown();
+  DbosStatus endServing();
 
   // Destructor
   ~MockPollWorker() { /* placeholder for now. */

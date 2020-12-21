@@ -24,14 +24,14 @@ void SparkScheduler::truncateWorkerTable() {
   }
 }
 
-std::vector<VoltdbWorkerUtil*> SparkScheduler::workers_;
+std::vector<WorkerManager*> SparkScheduler::workers_;
 
 DbosStatus SparkScheduler::insertWorker(DbosId workerID, int32_t capacity,
                                         std::vector<int32_t> workerData) {
-  VoltdbWorkerUtil* worker = new MockGRPCWorker(
+  WorkerManager* worker = new MockGRPCWorker(
       client_, workerID, workerPartitions_, capacity, workerData);
   SparkScheduler::workers_.push_back(worker);
-  return worker->setup();
+  return worker->startServing();
 }
 
 DbosId SparkScheduler::selectWorker(DbosId targetData) {
@@ -195,8 +195,8 @@ DbosStatus SparkScheduler::setup() {
 DbosStatus SparkScheduler::teardown() {
   // Clean up data from previous run.
   truncateWorkerTable();
-  for (VoltdbWorkerUtil* worker : SparkScheduler::workers_) {
-    worker->teardown();
+  for (WorkerManager* worker : SparkScheduler::workers_) {
+    worker->endServing();
   }
   return true;
 }
