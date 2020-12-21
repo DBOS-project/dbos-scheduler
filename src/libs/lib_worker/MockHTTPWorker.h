@@ -9,16 +9,16 @@
 #include <thread>
 #include <vector>
 
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 #include "httpserver.h"
 #include "voltdb-client-cpp/include/Client.h"
 
-class MockHTTPWorker : public VoltdbWorkerUtil {
+class MockHTTPWorker : public WorkerManager {
 public:
   MockHTTPWorker(voltdb::Client* voltdbClient, int workerId, int pkey,
                  std::string dbAddr)
       : client_(voltdbClient),
-        VoltdbWorkerUtil(workerId, dbAddr),
+        WorkerManager(workerId, dbAddr),
         pkey_(pkey){};
 
   // Dispatch tasks that are assigned to this worker.
@@ -33,10 +33,10 @@ public:
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
-  DbosStatus setup();
+  DbosStatus startServing();
 
   // Stop the worker (all executor and dispatch threads) and free up resources.
-  DbosStatus teardown();
+  DbosStatus endServing();
 
   // Destructor
   ~MockHTTPWorker() { /* placeholder for now. */

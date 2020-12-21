@@ -77,7 +77,7 @@ void MockGRPCWorker::RunServer(const std::string& port) {
   workerServer_->Wait();
 }
 
-DbosStatus MockGRPCWorker::setup() {
+DbosStatus MockGRPCWorker::startServing() {
   // Add the Worker to the database.
   std::vector<voltdb::Parameter> parameterTypes(5);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -109,7 +109,7 @@ DbosStatus MockGRPCWorker::setup() {
   return true;
 }
 
-DbosStatus MockGRPCWorker::teardown() {
+DbosStatus MockGRPCWorker::endServing() {
   // Clean up data and threads.
   workerServer_->Shutdown();
   workerThread_->join();

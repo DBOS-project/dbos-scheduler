@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 #include "voltdb-client-cpp/include/Client.h"
 
 #include <grpcpp/grpcpp.h>
@@ -24,23 +24,23 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-class MockGRPCWorker : public VoltdbWorkerUtil {
+class MockGRPCWorker : public WorkerManager {
 public:
   MockGRPCWorker(voltdb::Client* voltdbClient, int workerId,
                  int workerPartitions, int capacity,
                  std::vector<int> workerData)
       : client_(voltdbClient),
-        VoltdbWorkerUtil(workerId, "example"),
+        WorkerManager(workerId, "example"),
         workerData_(workerData),
         capacity_(capacity),
         workerPartitions_(workerPartitions){};
 
   // Setup the worker.
   // E.g., setup dispatch thread, and multiple executor threads.
-  DbosStatus setup();
+  DbosStatus startServing();
 
   // Stop the worker (all executor and dispatch threads) and free up resources.
-  DbosStatus teardown();
+  DbosStatus endServing();
 
   void RunServer(const std::string& port);
 

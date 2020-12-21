@@ -10,7 +10,7 @@
 #include "voltdb-client-cpp/include/Client.h"
 
 #include "MockGRPCWorker.h"
-#include "VoltdbWorkerUtil.h"
+#include "WorkerManager.h"
 
 using grpc::CompletionQueue;
 using grpc::ClientAsyncResponseReader;
@@ -108,7 +108,7 @@ private:
   std::thread* processTaskQueueThread_ = NULL;
   bool runTaskQueueThread = true;
 
-  static std::vector<VoltdbWorkerUtil*> workers_;
+  static std::vector<WorkerManager*> workers_;
 
   void finishRequests();
   void processTaskQueue();
