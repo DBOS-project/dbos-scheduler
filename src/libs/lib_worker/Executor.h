@@ -1,8 +1,7 @@
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
-// Used for status: true = succeeded, false = failed.
-typedef bool DbosStatus;
+#include "DbosDefs.h"
 
 class Executor {
 public:
