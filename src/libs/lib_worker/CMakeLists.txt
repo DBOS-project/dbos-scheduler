@@ -25,6 +25,7 @@ target_link_libraries(lib_worker
                       ${_VOLTDB_LIBS_PATH}/libssl.a
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
                       pthread Boost::system Boost::thread dl
+                      lib_util
 )
 
 set_target_properties(lib_worker

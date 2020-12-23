@@ -6,14 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "DbosDefs.h"
 #include "voltdb-client-cpp/include/Client.h"
-
-// Used for task_id, worker_id in DBOS.
-// TODO: decide whether to use INT or STRING.
-typedef int32_t DbosId;
-
-// Used for status: true = succeeded, false = failed.
-typedef bool DbosStatus;
 
 // Note: Because voltDB client is not thread safe, use one VoltDB client
 // instance per thread.

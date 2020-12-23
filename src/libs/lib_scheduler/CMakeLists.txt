@@ -23,6 +23,7 @@ target_link_libraries(lib_scheduler
                       ${_VOLTDB_LIBS_PATH}/libcrypto.a
                       pthread Boost::system Boost::thread dl
                       lib_worker
+                      lib_util
 )
 
 set_target_properties(lib_scheduler
