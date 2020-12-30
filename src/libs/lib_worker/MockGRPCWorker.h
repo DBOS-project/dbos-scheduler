@@ -54,7 +54,7 @@ private:
   int workerPartitions_;
   int capacity_;
   std::vector<int> workerData_;
-  MockExecutor* executor_;
+  std::unique_ptr<MockExecutor> executor_;
   std::vector<std::thread*>
       threads_;  // including dispatch and executor threads
   bool stopDispatch_ = false;
