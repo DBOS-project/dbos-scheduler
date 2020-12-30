@@ -81,7 +81,8 @@ void MockGRPCWorker::RunServer(const std::string& port) {
 
 DbosStatus MockGRPCWorker::startServing() {
   // Create an executor.
-  executor_ = new MockExecutor();
+  // If we move to C++14, can use make_unique.
+  executor_ = std::unique_ptr<MockExecutor>(new MockExecutor());
 
   // Add the Worker to the database.
   std::vector<voltdb::Parameter> parameterTypes(5);
