@@ -17,6 +17,7 @@
 #include "PartitionedFIFOTaskScheduler.h"
 #include "PartitionedScanTask.h"
 #include "PushFIFOScheduler.h"
+#include "RandomGenerator.h"
 #include "SinglePartitionedFIFOTaskScheduler.h"
 #include "SparkScheduler.h"
 #include "VoltdbSchedulerUtil.h"
@@ -51,8 +52,18 @@ static int measureIntervalMsec = 2000;  // 2sec in ms.
 // Total benchmarking time.
 static int totalExecTimeMsec = 10000;  // 10sec in ms.
 
-// Wait interval between requests.
-static int arrivalDelay = 0;
+// Requests per second, must be greater than 0.
+static double reqPerSec = 100;
+static double reqPerSecThread = 100;  // Request rate per thread.
+
+// Types of random distributions.
+static const std::string kNoDist = "none";
+static const std::string kFixed = "fixed";
+static const std::string kPoisson = "poisson";
+static const std::string kUniform = "uniform";
+static const std::unordered_set<std::string> kDists = {kNoDist, kFixed,
+                                                       kPoisson, kUniform};
+static std::string reqDist = kNoDist;  // by default, send as fast as possible.
 
 static bool mainFinished = false;  // Control whether to stop the experiment.
 
@@ -197,37 +208,82 @@ static void SchedulerThread(const int schedulerId,
   boost::shared_ptr<SchedulerCallback> callback(
       new SchedulerCallback(maxOutstanding));
   callback->outCnt_ = 0;
-  do {
-    // Make async scheduling decisions here.
-    auto status = scheduler->asyncSchedule(callback);
-    assert(status);
-    callback->outCnt_++;
-    std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
-    if (callback->outCnt_ >= maxOutstanding) {
-      // Run the event loop once; return immediately if no responses. It will
-      // process callbacks until the event loop finished or callback returns
-      // true.
-      // TODO: either find a better heuristic, or run callbacks on a separate
-      // thread.
-      voltdbClient.runOnce();
-      continue;
-    }
+  // Inter-arrival latency generator.
+  Generator* iaGen = nullptr;
+  if (reqDist == kFixed) {
+    iaGen = new Fixed(reqPerSecThread);
+  } else if (reqDist == kPoisson) {
+    iaGen = new Poisson(reqPerSecThread);
+  } else if (reqDist == kUniform) {
+    iaGen = new Uniform(reqPerSecThread);
+  } else if (reqDist == kNoDist) {
+    std::cerr << "sending as fast as possible.\n";
+  } else {
+    std::cerr << "Unsupported distribution: " << reqDist << "\n";
+    exit(-1);
+  }
 
-    if (callback->outCnt_ > maxOutstanding / 2) {
-      // Heuristic to process responses in time.
-      // TODO: either find a better heuristic, or run callbacks on a separate
-      // thread.
-      voltdbClient.runOnce();
-      continue;
-    }
+  // If No distribution, send out as fast as possible, and allow batching.
+  if (reqDist == kNoDist) {
+    do {
+      // Make async scheduling decisions here.
+      auto status = scheduler->asyncSchedule(callback);
+      assert(status);
+      callback->outCnt_++;
+      if (callback->outCnt_ >= maxOutstanding) {
+        // Run the event loop once; return immediately if no responses. It will
+        // process callbacks until the event loop finished or callback returns
+        // true.
+        // TODO: either find a better heuristic, or run callbacks on a separate
+        // thread.
+        voltdbClient.runOnce();
+        continue;
+      }
 
-  } while (!mainFinished);
+      if (callback->outCnt_ > maxOutstanding / 2) {
+        // Heuristic to process responses in time.
+        // TODO: either find a better heuristic, or run callbacks on a separate
+        // thread.
+        voltdbClient.runOnce();
+        continue;
+      }
+
+    } while (!mainFinished);
+
+  } else {
+    // Otherwise, enter the control loop, execute the query without batching.
+    uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
+    uint64_t nextTime = currTime + (uint64_t)(iaGen->generate() * 1000 * 1000);
+    do {
+      if (nextTime <= currTime) {
+        // Make async scheduling decisions here.
+        auto status = scheduler->asyncSchedule(callback);
+        assert(status);
+        callback->outCnt_++;
+        // Run the event loop once; return immediately if no responses.
+        voltdbClient.runOnce();
+
+        // Update nextTime.
+        nextTime = nextTime + (uint64_t)(iaGen->generate() * 1000 * 1000);
+      } else {
+        // Avoid busy loop. We also don't want to directly sleep interval time
+        // because that may cause high latency or cannot finish the experiment
+        // in time.
+        uint64_t delay = (nextTime - currTime);
+        delay = delay > 5 ? 5 : delay;
+        std::this_thread::sleep_for(std::chrono::microseconds(delay));
+      }
+      currTime = BenchmarkUtil::getCurrTimeUsec();
+
+    } while (!mainFinished);
+  }
 
   // Give outstanding requests time to finish.
   while (!voltdbClient.drain()) {}
 
   // Clean up
   delete scheduler;
+  if (iaGen != nullptr) { delete iaGen; }
   return;
 }
 
@@ -337,7 +393,11 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
-  std::cerr << "\t-d <arrival delay>: default " << arrivalDelay << "\n";
+  std::cerr << "\t-R <request rate>: default " << reqPerSec << "\n";
+  std::cerr << "\t-D <request distribution>: default " << reqDist
+            << " (options: ";
+  for (auto&& it : kDists) { std::cerr << it << " "; }
+  std::cerr << ")\n";
   // Max outstanding requests: if reaches this threshold, runs the event loop
   // once to process potential responses.
   std::cerr << "\t-m <max outstanding requests>: default " << maxOutstanding
@@ -360,7 +420,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hxXo:s:i:t:N:W:C:P:A:T:p:d:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxXo:s:i:t:N:W:C:P:A:T:p:R:D:m:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -395,8 +455,11 @@ int main(int argc, char** argv) {
       case 'p':
         probMultiTx = atof(optarg);
         break;
-      case 'd':
-        arrivalDelay = atoi(optarg);
+      case 'R':
+        reqPerSec = atof(optarg);
+        break;
+      case 'D':
+        reqDist = optarg;
         break;
       case 'x':
         cleanDB = true;
@@ -432,7 +495,20 @@ int main(int argc, char** argv) {
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";
   std::cerr << "Total execution time: " << totalExecTimeMsec << " msec\n";
-  std::cerr << "Arrival delay: " << arrivalDelay << " msec\n";
+  auto distIt = kDists.find(reqDist);
+  if (distIt == kDists.end()) {
+    std::cerr << "Unsupported distribution type: " << reqDist << "\n";
+    Usage(argv);
+  }
+  if (reqDist != kNoDist) {
+    std::cerr << "Request per sec: " << reqPerSec;
+    std::cerr << "; Distribution: " << reqDist << "\n";
+
+    // Calculate per scheduler thread request rate.
+    reqPerSecThread = reqPerSec / numSchedulers;
+  } else {
+    std::cerr << "No distribution type, send as fast as possible.\n";
+  }
   std::cerr << "Maximum outstanding requests: " << maxOutstanding << "\n";
 
   // 1) Initialize database state.
