@@ -16,6 +16,7 @@
 #include "PartitionedFIFOTaskScheduler.h"
 #include "PartitionedScanTask.h"
 #include "PushFIFOScheduler.h"
+#include "RandomGenerator.h"
 #include "SinglePartitionedFIFOTaskScheduler.h"
 #include "SparkScheduler.h"
 #include "VoltdbSchedulerUtil.h"
@@ -46,8 +47,18 @@ static int measureIntervalMsec = 2000;  // 2sec in ms.
 // Total benchmarking time.
 static int totalExecTimeMsec = 10000;  // 10sec in ms.
 
-// Wait interval between requests.
-static int arrivalDelay = 0;
+// Requests per second, must be greater than 0.
+static double reqPerSec = 100;
+static double reqPerSecThread = 100;  // Request rate per thread.
+
+// Types of random distributions.
+static const std::string kNoDist = "none";
+static const std::string kFixed = "fixed";
+static const std::string kPoisson = "poisson";
+static const std::string kUniform = "uniform";
+static const std::unordered_set<std::string> kDists = {kNoDist, kFixed,
+                                                       kPoisson, kUniform};
+static std::string reqDist = kNoDist;  // by default, send as fast as possible.
 
 static bool mainFinished = false;  // Control whether to stop the experiment.
 
@@ -130,7 +141,44 @@ static void SchedulerThread(const int schedulerId,
       constructScheduler(&voltdbClient, serverAddr, scheduleAlgo);
   assert(scheduler != nullptr);
   std::cout << "Scheduler: " << schedulerId << " started\n";
+
+  // Inter-arrival latency generator.
+  Generator* iaGen = nullptr;
+  if (reqDist == kFixed) {
+    iaGen = new Fixed(reqPerSecThread);
+  } else if (reqDist == kPoisson) {
+    iaGen = new Poisson(reqPerSecThread);
+  } else if (reqDist == kUniform) {
+    iaGen = new Uniform(reqPerSecThread);
+  } else if (reqDist == kNoDist) {
+    std::cerr << "sending as fast as possible.\n";
+  } else {
+    std::cerr << "Unsupported distribution: " << reqDist << "\n";
+    exit(-1);
+  }
+
+  // If No distribution, send out as fast as possible.
+  // Otherwise, send request based on the given request rate and distribution.
+  uint64_t currTime = BenchmarkUtil::getCurrTimeUsec();
+  uint64_t nextTime = currTime;
+  if (iaGen != nullptr) {
+    nextTime = currTime + (uint64_t)(iaGen->generate() * 1000 * 1000);
+  }
+
   do {
+    // Not its turn to send the request.
+    if ((iaGen != nullptr) && (nextTime > currTime)) {
+      // Avoid busy loop. We also don't want to directly sleep interval time
+      // because that may cause high latency or cannot finish the experiment
+      // in time.
+      uint64_t delay = (nextTime - currTime);
+      delay = delay > 5 ? 5 : delay;
+      std::this_thread::sleep_for(std::chrono::microseconds(delay));
+      currTime = BenchmarkUtil::getCurrTimeUsec();
+      continue;
+    }
+
+    // Otherwise, send the request and record latency.
     auto aryIndex = schedLatsArrayIndex.fetch_add(1);
     if (aryIndex >= kMaxEntries) {
       std::cerr << "Array schedLatencies out of bounds: " << aryIndex
@@ -152,13 +200,22 @@ static void SchedulerThread(const int schedulerId,
     // Record latency.
     double latency = (double)(endTime - startTime);
     schedLatencies[aryIndex] = latency;
-    std::this_thread::sleep_for(std::chrono::milliseconds(arrivalDelay));
+
+    // Update nextTime.
+    if (iaGen != nullptr) {
+      nextTime = nextTime + (uint64_t)(iaGen->generate() * 1000 * 1000);
+    }
+
+    // Update currTime.
+    currTime = endTime;
+
   } while (!mainFinished);
 
   sleep(1);  // Give outstanding requests time to finish.
 
   // Clean up
   delete scheduler;
+  if (iaGen != nullptr) { delete iaGen; }
   return;
 }
 
@@ -267,7 +324,11 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-C <worker capacity>: default " << workerCapacity << "\n";
   std::cerr << "\t-T <number of tasks>: default " << numTasks << "\n";
   std::cerr << "\t-P <partitions>: default " << partitions << "\n";
-  std::cerr << "\t-d <arrival delay>: default " << arrivalDelay << "\n";
+  std::cerr << "\t-R <request rate>: default " << reqPerSec << "\n";
+  std::cerr << "\t-D <request distribution>: default " << reqDist
+            << " (options: ";
+  for (auto&& it : kDists) { std::cerr << it << " "; }
+  std::cerr << ")\n";
   std::cerr
       << "\t-p <probability of multi-partition transaction> (0-1.0): default "
       << probMultiTx << "\n";
@@ -286,7 +347,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:d:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:W:C:P:A:T:p:R:D:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -321,8 +382,12 @@ int main(int argc, char** argv) {
       case 'p':
         probMultiTx = atof(optarg);
         break;
-      case 'd':
-        arrivalDelay = atoi(optarg);
+      case 'R':
+        reqPerSec = atof(optarg);
+        break;
+      case 'D':
+        reqDist = optarg;
+        break;
       case 'x':
         cleanDB = true;
         break;
@@ -351,7 +416,21 @@ int main(int argc, char** argv) {
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";
   std::cerr << "Total execution time: " << totalExecTimeMsec << " msec\n";
-  std::cerr << "Arrival delay: " << arrivalDelay << " msec\n";
+
+  auto distIt = kDists.find(reqDist);
+  if (distIt == kDists.end()) {
+    std::cerr << "Unsupported distribution type: " << reqDist << "\n";
+    Usage(argv);
+  }
+  if (reqDist != kNoDist) {
+    std::cerr << "Request per sec: " << reqPerSec;
+    std::cerr << "; Distribution: " << reqDist << "\n";
+
+    // Calculate per scheduler thread request rate.
+    reqPerSecThread = reqPerSec / numSchedulers;
+  } else {
+    std::cerr << "No distribution type, send as fast as possible.\n";
+  }
 
   // 1) Initialize database state.
   bool res = setup(serverAddr);
