@@ -20,8 +20,17 @@ add_executable(TestPartitionedFIFOScheduler TestPartitionedFIFOScheduler.cc)
 add_executable(TestSparkScheduler TestSparkScheduler.cc)
 add_executable(TestPartitionedScanTask TestPartitionedScanTask.cc)
 add_executable(SyntheticWorker SyntheticWorker.cc)
+add_executable(TCPBenchClient TCPBenchClient.cc)
+add_executable(TCPBenchServer TCPBenchServer.cc)
 
 # Link to libs.
+target_link_libraries(TCPBenchClient
+                      lib_util
+                      pthread)
+
+target_link_libraries(TCPBenchServer
+                      pthread)
+
 target_link_libraries(SyntheticWorker
                       lib_worker
                       lib_util)
@@ -98,7 +107,7 @@ target_link_libraries(TestSparkScheduler
 )
 
 # Generate output to lib/ or bin/
-set_target_properties(SyntheticScheduler LoadGenerator AsyncSyntheticScheduler CommunicationBench TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker
+set_target_properties(SyntheticScheduler LoadGenerator AsyncSyntheticScheduler CommunicationBench TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker TCPBenchClient TCPBenchServer
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
