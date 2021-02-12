@@ -1,0 +1,18 @@
+// For IPC benchmark
+
+syntax = "proto3";
+
+package ipcbench;
+
+service IpcBench {
+  // Ping-pong string text between client and server.
+  rpc PingPong(StringMsg) returns (StringMsg) {}
+}
+
+message StringMsg {
+  string msg = 1;
+}
+
+message AckMsg {
+  bool ack = 1;
+}
