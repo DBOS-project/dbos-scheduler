@@ -52,7 +52,10 @@ DROP PROCEDURE SelectDataShardPartition IF EXISTS;
 CREATE PROCEDURE FROM CLASS dbos.procedures.SelectDataShardPartition;
 
 DROP PROCEDURE SendMessage IF EXISTS;
-CREATE PROCEDURE PARTITION ON TABLE Message COLUMN PKey FROM CLASS dbos.procedures.SendMessage;
+CREATE PROCEDURE PARTITION ON TABLE Message COLUMN ReceiverID FROM CLASS dbos.procedures.SendMessage;
+
+DROP PROCEDURE ReceiveMessage IF EXISTS;
+CREATE PROCEDURE PARTITION ON TABLE Message COLUMN ReceiverID FROM CLASS dbos.procedures.ReceiveMessage;
 
 DROP PROCEDURE BroadcastMessage IF EXISTS;
 CREATE PROCEDURE FROM CLASS dbos.procedures.BroadcastMessage;
