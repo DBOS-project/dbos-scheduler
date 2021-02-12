@@ -12,6 +12,7 @@
 #include "voltdb-client-cpp/include/ClientConfig.h"
 #include "voltdb-client-cpp/include/Parameter.hpp"
 #include "voltdb-client-cpp/include/ParameterSet.hpp"
+#include "voltdb-client-cpp/include/ProcedureCallback.hpp"
 #include "voltdb-client-cpp/include/Row.hpp"
 #include "voltdb-client-cpp/include/Table.h"
 #include "voltdb-client-cpp/include/TableIterator.h"
@@ -19,6 +20,9 @@
 
 // Number of senders.
 static int numSenders = 1;
+
+// Number of receivers.
+static int numReceivers = 1;
 
 // Message size.
 static int msg_size = 2048;
@@ -52,14 +56,73 @@ static const std::string kTestPwd = "testpassword";
 // If true, truncate tables after execution.
 static bool cleanDB = false;
 
+// If true, run broadcasting benchmark.
+static bool broadcast = false;
+
 // Barrier used for thread synchronization.
 pthread_barrier_t barrier;
+
+/*
+ * A callback that counts the number of times that it is invoked and returns true
+ * when the counter reaches zero to instruct the client library to break out of the event loop.
+ */
+class BroadcastCallback : public voltdb::ProcedureCallback {
+  public:
+    BroadcastCallback(int count) : m_count(count), o_count(count) {}
+
+    bool callback(voltdb::InvocationResponse response) throw (voltdb::Exception) {
+      m_count--;
+
+      //Print the error response if there was a problem
+      if (response.failure()) {
+        std::cout << response.toString();
+      }
+
+      //If the callback has been invoked count times, return true to break event loop
+      if (m_count == 0) {
+	m_count = o_count;
+        return true;
+      } else {
+        return false;
+      }
+    }
+  private:
+    int m_count;
+    int o_count;
+};
+
+/*
+ * Broadcast message using VoltDB.
+ *
+ */
+void dbos_bcast(voltdb::Client* client, boost::shared_ptr<voltdb::ProcedureCallback> callback,
+                const int receiver_id, const int sender_id, const std::string &data) {
+  std::vector<voltdb::Parameter> parameterTypes(4);
+  parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[2] = voltdb::Parameter(voltdb::WIRE_TYPE_BIGINT);
+  parameterTypes[3] = voltdb::Parameter(voltdb::WIRE_TYPE_STRING);
+  voltdb::Procedure procedure("SendMessage", parameterTypes);
+
+  for (int i = 0; i < numReceivers; ++i) {
+    voltdb::ParameterSet* params = procedure.params();
+    params->addInt32(receiver_id + i).addInt32(sender_id);
+    params->addInt64(BenchmarkUtil::getCurrTimeUsec()).addString(data);
+    client->invoke(procedure, callback);
+  }
+
+  /*
+   * Run the client event loop to poll the network and invoke callbacks.
+   * The event loop will break on an error or when a callback returns true
+   */
+  client->run();
+}
 
 /*
  * Poll VoltDB for RX messages.
  *
  */
-bool dbos_recv(voltdb::Client* client, const int receiverID) {
+int dbos_recv(voltdb::Client* client, const int receiverID) {
   std::vector<voltdb::Parameter> parameterTypes(1);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
 
@@ -71,12 +134,9 @@ bool dbos_recv(voltdb::Client* client, const int receiverID) {
     std::cerr << "ReceiveMessage procedure failed. " << r.toString();
     exit(-1);
   }
+
   voltdb::Table results = r.results()[0];
-  voltdb::TableIterator resIter = results.iterator();
-  if (resIter.hasNext()) {
-    return true;
-  }
-  return false;
+  return results.rowCount();
 }
 
 /*
@@ -143,6 +203,56 @@ static void SenderThread(const int threadId,
 }
 
 /*
+ * Broadcaster thread.
+ *
+ */
+static void BroadcasterThread(const int threadId,
+                              const std::string& serverAddr) {
+  // Create a local VoltDB client.
+  voltdb::ClientConfig config(kTestUser, kTestPwd, voltdb::HASH_SHA1);
+  voltdb::Client client = voltdb::Client::create(config);
+  srand(time(NULL));
+  client.createConnection(serverAddr);
+
+  // Create the message.
+  std::string data(msg_size, '0');
+
+  // Initialize callback.
+  boost::shared_ptr<BroadcastCallback> callback(new BroadcastCallback(numReceivers));
+
+  // Assume that receivers have receiverId = threadId + 100.
+  dbos_bcast(&client, callback, threadId + 100, threadId, data);
+  int recvd = 0;
+  while (recvd < numReceivers) {
+    recvd += dbos_recv(&client, threadId);
+  }
+
+  // Wait until all senders and receivers have connected.
+  pthread_barrier_wait(&barrier);
+
+  do {
+    recvd = 0;
+    uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
+    dbos_bcast(&client, callback, threadId + 100, threadId, data);
+    while (recvd < numReceivers) {
+      recvd += dbos_recv(&client, threadId);
+    }
+    uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
+
+    // Record the latency.
+    auto aryIndex = msgLatsArrayIndex.fetch_add(1);
+    if (aryIndex >= kMaxEntries) {
+      std::cerr << "Array msgLatencies out of bounds: " << aryIndex
+                << std::endl;
+      exit(1);
+    }
+    msgLatencies[aryIndex] = double(endTime - startTime);
+  }  while (!mainFinished);
+
+  return;
+}
+
+/*
  * Actually run the benchmark.
  */
 static bool runBenchmark(const std::string& serverAddr,
@@ -162,10 +272,17 @@ static bool runBenchmark(const std::string& serverAddr,
   // Initialize barrier.
   pthread_barrier_init(&barrier, NULL, numSenders);
 
-  // Start sender threads.
-  for (int i = 0; i < numSenders; ++i) {
-    senderThreads.push_back(
-        new std::thread(&SenderThread, i, serverAddr));
+  if(broadcast) {
+    for (int i = 0; i < numSenders; ++i) {
+      senderThreads.push_back(
+          new std::thread(&BroadcasterThread, i, serverAddr));
+    }
+  } else {
+    // Start sender threads.
+    for (int i = 0; i < numSenders; ++i) {
+      senderThreads.push_back(
+          new std::thread(&SenderThread, i, serverAddr));
+    }
   }
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -216,6 +333,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "Usage: " << argv[0] << "[options]\n";
   std::cerr << "\t-h: show this message\n";
   std::cerr << "\t-x: truncate DB tables after execution.\n";
+  std::cerr << "\t-b: run broadcasting benchmark.\n";
   std::cerr << "\t-o <output log file path>: default "
             << "synthetic_scheduler_results.csv\n";
   //TODO: support list of servers.
@@ -226,6 +344,8 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-N <number of parallel senders (threads)>: default "
             << numSenders << "\n";
+  std::cerr << "\t-R <number of parallel receivers (threads) used in "
+            << "broadcasting>: default " << numReceivers << "\n";
   std::cerr << "\t-m <message size>: default " << msg_size << std::endl;
   std::cerr << std::endl;
   exit(1);
@@ -237,7 +357,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hxo:s:i:t:N:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "hxbo:s:i:t:N:R:m:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -251,6 +371,9 @@ int main(int argc, char** argv) {
       case 't':
         totalExecTimeMsec = atoi(optarg);
         break;
+      case 'R':
+        numReceivers = atoi(optarg);
+        break;
       case 'N':
         numSenders = atoi(optarg);
         break;
@@ -259,6 +382,9 @@ int main(int argc, char** argv) {
         break;
       case 'x':
         cleanDB = true;
+        break;
+      case 'b':
+        broadcast = true;
         break;
       case 'h':
       default:
@@ -273,6 +399,9 @@ int main(int argc, char** argv) {
   std::cerr << "VoltDB server address: " << serverAddr << std::endl;
   std::cerr << "Measurement interval: " << measureIntervalMsec << " msec\n";
   std::cerr << "Total execution time: " << totalExecTimeMsec << " msec\n";
+  if (broadcast) {
+    std::cerr << "Broadcasting to " << numReceivers << " receivers\n";
+  }
 
   // 1) Run experiments and parse results.
   bool res;
