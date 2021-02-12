@@ -6,11 +6,11 @@ public class SendMessage extends VoltProcedure {
     final long SUCCESS = 0;
 
     public final SQLStmt sendMessage = new SQLStmt (
-        "INSERT INTO Message VALUES(?);"
+        "INSERT INTO Message VALUES(?,?,?,?,?);"
     );
 
-    public long run(int pkey) throws VoltAbortException {
-        voltQueueSQL(sendMessage, pkey);
+    public long run(int receiverID, int senderID, long messageID, String data) throws VoltAbortException {
+        voltQueueSQL(sendMessage, receiverID, senderID, messageID, data, 0);
         voltExecuteSQL();
         return SUCCESS;
     }
