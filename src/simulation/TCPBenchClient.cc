@@ -1,4 +1,4 @@
-// This is a basic ping-pong TCP client.
+// Client for basic TCP/IP benchmarks.
 
 #include <getopt.h>
 #include <pthread.h>
@@ -139,8 +139,8 @@ static void BroadcasterThread(const int serverPort, const std::string& serverAdd
       int event_count = epoll_wait(epoll_fd, events, numReceivers, 600000);
       for(int i = 0; i < event_count; i++) {
 	int total_read = 0;
-        while (total_read < msg_size) {
-          int recvd = read(events[i].data.fd, buffer + total_read, msg_size - total_read);
+	while (total_read < msg_size) {
+	  int recvd = read(events[i].data.fd, buffer + total_read, msg_size - total_read);
           if (recvd < 0) {
             std::cerr << "Receive failed" << std::endl;
             exit(-1);
