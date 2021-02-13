@@ -1,4 +1,4 @@
-// This is a basic DBOS ping-pong benchmark.
+// Client for basic DBOS IPC benchmarks.
 
 #include <getopt.h>
 #include <atomic>

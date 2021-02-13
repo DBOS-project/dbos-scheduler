@@ -5,7 +5,7 @@ import org.voltdb.*;
 public class ReceiveMessage extends VoltProcedure {
 
     public final SQLStmt receiveMessage = new SQLStmt (
-      "SELECT SenderID, MessageID, Data FROM Message WHERE ReceiverID=? AND Received=0;"
+      "SELECT SenderID, MessageID, Data FROM Message WHERE ReceiverID=?;"
     );
 
     public final SQLStmt ackMessage = new SQLStmt (
