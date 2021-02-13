@@ -7,10 +7,14 @@ package ipcbench;
 service IpcBench {
   // Ping-pong string text between client and server.
   rpc PingPong(StringMsg) returns (StringMsg) {}
+  
+  // For the broadcast test.
+  rpc Broadcast(StringMsg) returns (AckMsg) {}
 }
 
 message StringMsg {
-  string msg = 1;
+  int32 senderId = 1;
+  string msg = 2;
 }
 
 message AckMsg {
