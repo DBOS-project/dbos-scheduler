@@ -28,13 +28,23 @@ add_executable(DBCommBenchServer DBCommBenchServer.cc)
 # Link to libs.
 target_link_libraries(DBCommBenchClient
                       lib_util
-                      lib_scheduler
-                      pthread)
+                      ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
+                      ${_VOLTDB_LIBS_PATH}/libevent.a
+                      ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
+                      ${_VOLTDB_LIBS_PATH}/libevent_pthreads.a
+                      ${_VOLTDB_LIBS_PATH}/libssl.a
+                      ${_VOLTDB_LIBS_PATH}/libcrypto.a
+                      pthread Boost::system Boost::thread dl)
 
 target_link_libraries(DBCommBenchServer
                       lib_util
-                      lib_scheduler
-                      pthread)
+                      ${_VOLTDB_LIBS_PATH}/libvoltdbcpp.a
+                      ${_VOLTDB_LIBS_PATH}/libevent.a
+                      ${_VOLTDB_LIBS_PATH}/libevent_openssl.a
+                      ${_VOLTDB_LIBS_PATH}/libevent_pthreads.a
+                      ${_VOLTDB_LIBS_PATH}/libssl.a
+                      ${_VOLTDB_LIBS_PATH}/libcrypto.a
+                      pthread Boost::system Boost::thread dl)
 
 target_link_libraries(TCPBenchClient
                       lib_util

@@ -8,7 +8,7 @@ set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.53 COMPONENTS system thread)
 message(STATUS "Using Boost ${Boost_VERSION}")
 
-set(lib_scheduler_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc BenchmarkUtil.cc SparkScheduler.cc SchedulerServer.cpp PartitionedScanTask.cc PushFIFOScheduler.cc)
+set(lib_scheduler_SOURCES PartitionedFIFOScheduler.cc PartitionedFIFOTaskScheduler.cc SinglePartitionedFIFOTaskScheduler.cc VoltdbSchedulerUtil.cc SparkScheduler.cc SchedulerServer.cpp PartitionedScanTask.cc PushFIFOScheduler.cc)
 add_library(lib_scheduler STATIC ${lib_scheduler_SOURCES})
 
 # For scheduler simulation
