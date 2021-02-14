@@ -16,6 +16,9 @@
 // Number of receivers.
 static int numReceivers = 1;
 
+// Number of outstanding messages.
+static int numMessages = 1;
+
 // Base receiver port.
 static int basePort = 8080;
 
@@ -71,15 +74,28 @@ static void ReceiverThread(const int serverPort) {
   pthread_barrier_wait(&barrier);
 
   while (true) {
-    int total_read = 0;
-    while (total_read < msg_size) {
-      int recvd = read(recv_fd, buffer + total_read, msg_size - total_read);
-      total_read += recvd;
+    for (int i = 0; i < numMessages; ++i) {
+      int bytes_read = 0;
+      while (bytes_read < msg_size) {
+        int recvd = read(recv_fd, buffer + bytes_read, msg_size - bytes_read);
+        if (recvd < 0) {
+          std::cerr << "Receive failed" << std::endl;
+          exit(-1);
+        }
+        bytes_read += recvd;
+      }
     }
-    int total_sent = 0;
-    while (total_sent < msg_size) {
-      int sent = write(recv_fd, buffer + total_sent, msg_size - total_sent);
-      total_sent += sent;
+
+    for (int i = 0; i < numMessages; ++i) {
+      int bytes_sent = 0;
+      while (bytes_sent < msg_size) {
+        int sent = write(recv_fd, buffer + bytes_sent, msg_size - bytes_sent);
+        if (sent < 0) {
+          std::cerr << "Send failed" << std::endl;
+          exit(-1);
+        }
+        bytes_sent += sent;
+      }
     }
   }
 
@@ -94,6 +110,8 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-p <port number>: default " << basePort << std::endl;
   std::cerr << "\t-N <number of parallel receivers (threads)>: default "
             << numReceivers << "\n";
+  std::cerr << "\t-M <number of parallel messages>: default "
+            << numMessages << "\n";
   // Print all options here.
 
   std::cerr << std::endl;
@@ -103,7 +121,7 @@ static void Usage(char** argv, const std::string& msg = "") {
 int main(int argc, char** argv) {
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hm:p:N:")) != -1) {
+  while ((opt = getopt(argc, argv, "hm:p:N:M:")) != -1) {
     switch (opt) {
       case 'm':
         msg_size = atoi(optarg);
@@ -114,6 +132,9 @@ int main(int argc, char** argv) {
       case 'N':
         numReceivers = atoi(optarg);
         break;
+      case 'M':
+        numMessages = atoi(optarg);
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -122,6 +143,7 @@ int main(int argc, char** argv) {
   }
 
   std::cerr << "Parallel receiver threads: " << numReceivers << std::endl;
+  std::cerr << "Parallel outstanding messages: " << numMessages << std::endl;
   std::cerr << "Message size: " << msg_size << " bytes" << std::endl;
   std::cerr << "Base port: " << basePort << std::endl;
 
