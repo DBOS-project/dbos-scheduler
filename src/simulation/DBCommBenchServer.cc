@@ -60,7 +60,7 @@ int dbos_recv(voltdb::Client* client, const int receiverID) {
  *
  */
 void dbos_send(voltdb::Client* client, const int receiver_id,
-               const int sender_id, const std::string &data) {
+               const int sender_id, const std::string& data) {
   std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -80,10 +80,9 @@ void dbos_send(voltdb::Client* client, const int receiver_id,
 
 /*
  * Sender thread.
- * 
+ *
  */
-static void ReceiverThread(const int threadId,
-                         const std::string& serverAddr) {
+static void ReceiverThread(const int threadId, const std::string& serverAddr) {
   // Id of the client.
   int clientId = -1;
 
@@ -96,19 +95,15 @@ static void ReceiverThread(const int threadId,
   // Create the message.
   std::string data(msg_size, '0');
 
-  while (clientId < 0) {
-    clientId = dbos_recv(&client, threadId);
-  }
+  while (clientId < 0) { clientId = dbos_recv(&client, threadId); }
   dbos_send(&client, clientId, threadId, data);
 
   // Wait until all senders and receivers have connected.
   pthread_barrier_wait(&barrier);
 
-  while(1) {
+  while (1) {
     clientId = -1;
-    while (clientId < 0) {
-      clientId = dbos_recv(&client, threadId);
-    }
+    while (clientId < 0) { clientId = dbos_recv(&client, threadId); }
     dbos_send(&client, clientId, threadId, data);
   }
 
@@ -119,7 +114,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   if (!msg.empty()) { std::cerr << "ERROR: " << msg << std::endl; }
   std::cerr << "Usage: " << argv[0] << "[options]\n";
   std::cerr << "\t-h: show this message\n";
-  //TODO: support list of servers.
+  // TODO: support list of servers.
   std::cerr << "\t-s <DB server>: default 'localhost'\n";
   std::cerr << "\t-N <number of parallel receivers (threads)>: default "
             << numReceivers << "\n";
@@ -168,7 +163,7 @@ int main(int argc, char** argv) {
         new std::thread(&ReceiverThread, i + 100, serverAddr));
   }
 
-  // We should never reach this point. 
+  // We should never reach this point.
   for (int i = 0; i < numReceivers; ++i) {
     receiverThreads[i]->join();
     delete receiverThreads[i];

@@ -1,10 +1,10 @@
 // This file contains server/receiver code for gRPC IPC benchmarks.
 
 #include <getopt.h>
+#include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
-#include <iostream>
 
 #include <grpcpp/grpcpp.h>
 
@@ -33,7 +33,7 @@ public:
 private:
   Status PingPong(ServerContext* context, const StringMsg* request,
                   StringMsg* reply) override;
- 
+
   Status Broadcast(ServerContext* context, const StringMsg* request,
                    AckMsg* reply) override;
 
@@ -41,8 +41,9 @@ private:
 
 // Receive a Ping-pong msg from the client.
 Status IpcBenchImpl::PingPong(ServerContext* context, const StringMsg* request,
-                  StringMsg* reply) {
-  //std::cout << "Received ping-pong from sender: " << request->senderid() << ", msg: "
+                              StringMsg* reply) {
+  // std::cout << "Received ping-pong from sender: " << request->senderid() <<
+  // ", msg: "
   //          << request->msg() << std::endl;
   reply->set_senderid(request->senderid());
   reply->set_msg(request->msg());
@@ -51,9 +52,9 @@ Status IpcBenchImpl::PingPong(ServerContext* context, const StringMsg* request,
 
 // Receive a broadcast msg from the client.
 Status IpcBenchImpl::Broadcast(ServerContext* context, const StringMsg* request,
-                  AckMsg* reply) {
-  std::cout << "Received broadcast from sender: " << request->senderid() << ", msg: "
-            << request->msg() << std::endl;
+                               AckMsg* reply) {
+  std::cout << "Received broadcast from sender: " << request->senderid()
+            << ", msg: " << request->msg() << std::endl;
   reply->set_ack(true);
   return Status::OK;
 }
@@ -124,9 +125,7 @@ int main(int argc, char** argv) {
   }
 
   // Sleep forever.
-  while(1) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  }
+  while (1) { std::this_thread::sleep_for(std::chrono::milliseconds(1000)); }
 
   return 0;
 }

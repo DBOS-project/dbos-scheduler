@@ -1,14 +1,14 @@
 // This file contains client/loadgen code for gRPC IPC benchmarks.
 #include <getopt.h>
+#include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
-#include <iostream>
 
 #include <grpcpp/grpcpp.h>
 
-#include "ipc_bench.grpc.pb.h"
 #include "BenchmarkUtil.h"
+#include "ipc_bench.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -82,17 +82,18 @@ struct AsyncBroadcastCall {
   Status status;
 };
 
-static std::unique_ptr<ipcbench::IpcBench::Stub> addrToStub(const std::string& addr) {
+static std::unique_ptr<ipcbench::IpcBench::Stub> addrToStub(
+    const std::string& addr) {
   std::shared_ptr<Channel> channel =
-          grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+      grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
   std::unique_ptr<ipcbench::IpcBench::Stub> stub =
-    ipcbench::IpcBench::NewStub(channel);
+      ipcbench::IpcBench::NewStub(channel);
   return stub;
 }
 
-
 // Broadcaster thread.
-static void BroadcasterThread(const int serverPort, const std::string& serverAddr) {
+static void BroadcasterThread(const int serverPort,
+                              const std::string& serverAddr) {
   // Broadcast benchmark, with gRPC async client.
   // Send parallel messages to different N receivers.
   // Then wait responses of all N messages.
@@ -104,7 +105,8 @@ static void BroadcasterThread(const int serverPort, const std::string& serverAdd
   for (int i = 0; i < numReceivers; ++i) {
     // TODO: this may be an issue if we have multiple senders. Think of a
     // better way to connect to the receiver.
-    stubs.push_back(addrToStub(serverAddr + ":" + std::to_string(serverPort + i)));
+    stubs.push_back(
+        addrToStub(serverAddr + ":" + std::to_string(serverPort + i)));
   }
   // Create a completion queue
   CompletionQueue cq;
@@ -127,7 +129,7 @@ static void BroadcasterThread(const int serverPort, const std::string& serverAdd
       // Initiate the RPC and create a handle for it. Bind the RPC to a
       // CompletionQueue cq.
       std::unique_ptr<ClientAsyncResponseReader<ipcbench::StringMsg>> reader(
-        stubs[i]->AsyncPingPong(&call->context, rpcRequest, &cq));
+          stubs[i]->AsyncPingPong(&call->context, rpcRequest, &cq));
 
       // Aask for the reply and final status, with a unique tag, which is the
       // call object address.
@@ -137,8 +139,8 @@ static void BroadcasterThread(const int serverPort, const std::string& serverAdd
     // Receive all responses, drain completion queue.
     void* gotTag;
     bool rpcOk = false;
-    int recvMsg = 0; // received responses.
-    while((recvMsg < numReceivers) && cq.Next(&gotTag, &rpcOk)) {
+    int recvMsg = 0;  // received responses.
+    while ((recvMsg < numReceivers) && cq.Next(&gotTag, &rpcOk)) {
       // The tag is the memory location of the call object.
       AsyncPingPongCall* call = static_cast<AsyncPingPongCall*>(gotTag);
       assert(rpcOk);
@@ -149,7 +151,7 @@ static void BroadcasterThread(const int serverPort, const std::string& serverAdd
       recvMsg++;
     }
     assert(recvMsg == numReceivers);
-    
+
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Record the latency.
@@ -166,7 +168,6 @@ static void BroadcasterThread(const int serverPort, const std::string& serverAdd
   cq.Shutdown();
 
   return;
-
 }
 
 // Ping-pong sender thread.
@@ -179,7 +180,7 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
 
   // Create stub and connect to the gRPC server.
   std::unique_ptr<ipcbench::IpcBench::Stub> stub =
-    addrToStub(serverAddr + ":" + std::to_string(serverPort));
+      addrToStub(serverAddr + ":" + std::to_string(serverPort));
 
   // Create a completion queue
   CompletionQueue cq;
@@ -202,7 +203,7 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
       // Initiate the RPC and create a handle for it. Bind the RPC to a
       // CompletionQueue cq.
       std::unique_ptr<ClientAsyncResponseReader<ipcbench::StringMsg>> reader(
-        stub->AsyncPingPong(&call->context, rpcRequest, &cq));
+          stub->AsyncPingPong(&call->context, rpcRequest, &cq));
 
       // Aask for the reply and final status, with a unique tag, which is the
       // call object address.
@@ -212,8 +213,8 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
     // Receive all responses, drain completion queue.
     void* gotTag;
     bool rpcOk = false;
-    int recvMsg = 0; // received responses.
-    while((recvMsg < numMessages) && cq.Next(&gotTag, &rpcOk)) {
+    int recvMsg = 0;  // received responses.
+    while ((recvMsg < numMessages) && cq.Next(&gotTag, &rpcOk)) {
       // The tag is the memory location of the call object.
       AsyncPingPongCall* call = static_cast<AsyncPingPongCall*>(gotTag);
       assert(rpcOk);
@@ -224,7 +225,7 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
       recvMsg++;
     }
     assert(recvMsg == numMessages);
-    
+
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
 
     // Record the latency.
@@ -266,14 +267,14 @@ static bool runBenchmark(const std::string& serverAddr,
   if (broadcast) {
     benchName = benchName + "-broadcast";
     for (int i = 0; i < numSenders; ++i) {
-      senderThreads.push_back(new std::thread(&BroadcasterThread, basePort + i,
-                                              serverAddr));
+      senderThreads.push_back(
+          new std::thread(&BroadcasterThread, basePort + i, serverAddr));
     }
   } else {
     benchName = benchName + "-pingpong";
     for (int i = 0; i < numSenders; ++i) {
-      senderThreads.push_back(new std::thread(&SenderThread, basePort + i,
-                                              serverAddr));
+      senderThreads.push_back(
+          new std::thread(&SenderThread, basePort + i, serverAddr));
     }
   }
 
@@ -326,8 +327,9 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-M <number of parallel ping-pong messages>: default "
             << numMessages << "\n";
   std::cerr << "\t-m <message size>: default " << msg_size << std::endl;
-  std::cerr << "\t-R <number of receivers> used only when broadcasting: default "
-            << numReceivers << "\n";
+  std::cerr
+      << "\t-R <number of receivers> used only when broadcasting: default "
+      << numReceivers << "\n";
 
   std::cerr << std::endl;
   exit(1);
