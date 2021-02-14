@@ -42,9 +42,9 @@ private:
 // Receive a Ping-pong msg from the client.
 Status IpcBenchImpl::PingPong(ServerContext* context, const StringMsg* request,
                   StringMsg* reply) {
-  std::cout << "Received ping-pong from sender: " << request->senderid() << ", msg: "
-            << request->msg() << std::endl;
-  reply->set_senderid(request->senderid() * 100);
+  //std::cout << "Received ping-pong from sender: " << request->senderid() << ", msg: "
+  //          << request->msg() << std::endl;
+  reply->set_senderid(request->senderid());
   reply->set_msg(request->msg());
   return Status::OK;
 }
