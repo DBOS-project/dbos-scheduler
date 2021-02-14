@@ -72,11 +72,15 @@ struct AsyncPingPongCall {
   Status status;
 };
 
-// Broadcaster thread.
-static void BroadcasterThread(const int serverPort, const std::string& serverAddr) {
-  // Implement broadcast here, with gRPC async client.
-  // Send parallel messages to different receivers.
-}
+// Container for the async Broadcast call.
+struct AsyncBroadcastCall {
+  ipcbench::AckMsg reply;
+  // Context for the client. It could be used to convey extra information to
+  // the server and/or tweak certain RPC behaviors.
+  ClientContext context;
+  // Storage for the status of the RPC upon completion
+  Status status;
+};
 
 static std::unique_ptr<ipcbench::IpcBench::Stub> addrToStub(const std::string& addr) {
   std::shared_ptr<Channel> channel =
@@ -86,10 +90,90 @@ static std::unique_ptr<ipcbench::IpcBench::Stub> addrToStub(const std::string& a
   return stub;
 }
 
+
+// Broadcaster thread.
+static void BroadcasterThread(const int serverPort, const std::string& serverAddr) {
+  // Broadcast benchmark, with gRPC async client.
+  // Send parallel messages to different N receivers.
+  // Then wait responses of all N messages.
+
+  std::string msgbuff(msg_size, 'a');
+
+  // Create N stubs and connect to each gRPC server.
+  std::vector<std::unique_ptr<ipcbench::IpcBench::Stub>> stubs;
+  for (int i = 0; i < numReceivers; ++i) {
+    // TODO: this may be an issue if we have multiple senders. Think of a
+    // better way to connect to the receiver.
+    stubs.push_back(addrToStub(serverAddr + ":" + std::to_string(serverPort + i)));
+  }
+  // Create a completion queue
+  CompletionQueue cq;
+
+  // Wait until all senders are connected.
+  pthread_barrier_wait(&barrier);
+
+  // Run a broadcast loop.
+  do {
+    uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
+    for (int i = 0; i < numReceivers; ++i) {
+      // Send gRPC async request
+      ipcbench::StringMsg rpcRequest;
+      rpcRequest.set_senderid(i + 1);
+      rpcRequest.set_msg(msgbuff);
+
+      // Store RPC call data.
+      AsyncPingPongCall* call = new AsyncPingPongCall;
+
+      // Initiate the RPC and create a handle for it. Bind the RPC to a
+      // CompletionQueue cq.
+      std::unique_ptr<ClientAsyncResponseReader<ipcbench::StringMsg>> reader(
+        stubs[i]->AsyncPingPong(&call->context, rpcRequest, &cq));
+
+      // Aask for the reply and final status, with a unique tag, which is the
+      // call object address.
+      reader->Finish(&call->reply, &call->status, (void*)call);
+    }
+
+    // Receive all responses, drain completion queue.
+    void* gotTag;
+    bool rpcOk = false;
+    int recvMsg = 0; // received responses.
+    while((recvMsg < numReceivers) && cq.Next(&gotTag, &rpcOk)) {
+      // The tag is the memory location of the call object.
+      AsyncPingPongCall* call = static_cast<AsyncPingPongCall*>(gotTag);
+      assert(rpcOk);
+      assert(call->status.ok());
+      // Make sure we received the correct length msg.
+      assert(call->reply.msg().size() == msg_size);
+      delete call;
+      recvMsg++;
+    }
+    assert(recvMsg == numReceivers);
+    
+    uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
+
+    // Record the latency.
+    auto aryIndex = msgLatsArrayIndex.fetch_add(1);
+    if (aryIndex >= kMaxEntries) {
+      std::cerr << "Array msgLatencies out of bounds: " << aryIndex
+                << std::endl;
+      exit(1);
+    }
+    msgLatencies[aryIndex] = double(endTime - startTime);
+  } while (!mainFinished);
+
+  // Clean up
+  cq.Shutdown();
+
+  return;
+
+}
+
 // Ping-pong sender thread.
 static void SenderThread(const int serverPort, const std::string& serverAddr) {
   // Ping-pong benchmark, with gRPC async client.
   // Send M outstanding message to a single receiver.
+  // Then wait responses of all M messages.
 
   std::string msgbuff(msg_size, 'a');
 
