@@ -24,6 +24,9 @@ static int numSenders = 1;
 // Number of broadcast receivers.
 static int numReceivers = 1;
 
+// Number of parallel ping-pong messages.
+static int numMessages = 1;
+
 // Base receiver port.
 static int basePort = 8080;
 
@@ -198,24 +201,29 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
   // Run a ping-pong loop.
   do {
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
-    int total_sent = 0;
-    while (total_sent < msg_size) {
-      int sent = write(sock, buffer + total_sent, msg_size - total_sent);
-      if (sent < 0) {
-        std::cerr << "Send failed" << std::endl;
-        exit(-1);
+    int msgs_sent = 0;
+    for (int i = 0; i < numMessages; ++i) {
+      int bytes_sent = 0;
+      while (bytes_sent < msg_size) {
+        int sent = write(sock, buffer + bytes_sent, msg_size - bytes_sent);
+        if (sent < 0) {
+          std::cerr << "Send failed" << std::endl;
+          exit(-1);
+        }
+        bytes_sent += sent;
       }
-      total_sent += sent;
     }
 
-    int total_read = 0;
-    while (total_read < msg_size) {
-      int recvd = read(sock, buffer + total_read, msg_size - total_read);
-      if (recvd < 0) {
-        std::cerr << "Receive failed" << std::endl;
-        exit(-1);
+    for (int i = 0; i < numMessages; ++i) {
+      int bytes_read = 0;
+      while (bytes_read < msg_size) {
+        int recvd = read(sock, buffer + bytes_read, msg_size - bytes_read);
+        if (recvd < 0) {
+          std::cerr << "Receive failed" << std::endl;
+          exit(-1);
+        }
+        bytes_read += recvd;
       }
-      total_read += recvd;
     }
     uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
 
@@ -311,6 +319,8 @@ static void Usage(char** argv, const std::string& msg = "") {
             << " msec\n";
   std::cerr << "\t-N <number of parallel senders (threads)>: default "
             << numSenders << "\n";
+  std::cerr << "\t-M <number of parallel ping-pong messages>: default "
+            << numMessages << "\n";
   std::cerr << "\t-m <message size>: default " << msg_size << std::endl;
   std::cerr
       << "\t-R <number of receivers> used only when broadcasting: default "
@@ -327,7 +337,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hbo:s:p:i:t:N:m:R:")) != -1) {
+  while ((opt = getopt(argc, argv, "hbo:s:p:i:t:N:M:m:R:")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -347,6 +357,9 @@ int main(int argc, char** argv) {
       case 'N':
         numSenders = atoi(optarg);
         break;
+      case 'M':
+        numMessages = atoi(optarg);
+        break;
       case 'm':
         msg_size = atoi(optarg);
         break;
@@ -364,6 +377,7 @@ int main(int argc, char** argv) {
   }
 
   std::cerr << "Parallel sender threads: " << numSenders << std::endl;
+  std::cerr << "Parallel outstanding messages: " << numMessages << std::endl;
   std::cerr << "Message size: " << msg_size << " bytes" << std::endl;
   std::cerr << "Output log file: " << outputFile << std::endl;
   std::cerr << "Server address: " << serverAddr << std::endl;
