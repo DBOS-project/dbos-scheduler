@@ -1,17 +1,19 @@
 // This is a basic TCP ping-pong server.
 
-#include <arpa/inet.h>
 #include <getopt.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #include <atomic>
 #include <boost/shared_ptr.hpp>
-#include <cstring>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <thread>
 #include <unordered_set>
 #include <vector>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netinet/tcp.h>
+
 
 // Number of receivers.
 static int numReceivers = 1;
@@ -49,11 +51,17 @@ static void ReceiverThread(const int serverPort) {
     std::cerr << "setsockopt error" << std::endl;
     exit(-1);
   }
+
+  if (setsockopt(server_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt))) {
+    std::cerr << "setsockopt error" << std::endl;
+    exit(-1);
+  }
+
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = INADDR_ANY;
   addr.sin_port = htons(serverPort);
 
-  if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+  if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
     std::cerr << "bind error" << std::endl;
     exit(-1);
   }
@@ -63,8 +71,8 @@ static void ReceiverThread(const int serverPort) {
     exit(-1);
   }
 
-  int recv_fd =
-      accept(server_fd, (struct sockaddr*)&addr, (socklen_t*)&addrlen);
+  int recv_fd = accept(server_fd, (struct sockaddr *)&addr,
+                       (socklen_t*)&addrlen);
   if (recv_fd < 0) {
     std::cerr << "accept error" << std::endl;
     exit(-1);
@@ -158,7 +166,9 @@ int main(int argc, char** argv) {
   }
 
   // Sleep forever.
-  while (1) { std::this_thread::sleep_for(std::chrono::milliseconds(1000)); }
+  while(1) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
 
   return 0;
 }

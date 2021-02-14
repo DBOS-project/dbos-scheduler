@@ -1,20 +1,21 @@
 // Client for basic TCP/IP benchmarks.
 
-#include <arpa/inet.h>
 #include <getopt.h>
-#include <netdb.h>
 #include <pthread.h>
-#include <sys/epoll.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #include <atomic>
 #include <boost/shared_ptr.hpp>
-#include <cstring>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <thread>
 #include <unordered_set>
 #include <vector>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/epoll.h>
+#include <netinet/tcp.h>
 
 #include "BenchmarkUtil.h"
 
@@ -61,6 +62,7 @@ static std::vector<uint64_t> timeStampsUsec;
 // Barrier used for thread synchronization.
 pthread_barrier_t barrier;
 
+
 /*
  * Setup connections.
  */
@@ -68,7 +70,7 @@ int setup_connections(std::vector<int>& socks, const int serverPort,
                       const std::string& serverAddr) {
   // Create epoll fd.
   int epoll_fd = epoll_create1(0);
-  if (epoll_fd == -1) {
+  if(epoll_fd == -1) {
     std::cerr << "Failed to create epoll file descriptor\n";
     exit(-1);
   }
@@ -89,7 +91,7 @@ int setup_connections(std::vector<int>& socks, const int serverPort,
       exit(-1);
     }
 
-    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
       std::cerr << "Connection failed" << std::endl;
       exit(-1);
     }
@@ -110,8 +112,8 @@ int setup_connections(std::vector<int>& socks, const int serverPort,
   return epoll_fd;
 }
 
-static void BroadcasterThread(const int serverPort,
-                              const std::string& serverAddr) {
+
+static void BroadcasterThread(const int serverPort, const std::string& serverAddr) {
   std::vector<int> socks;
   struct epoll_event event, events[numReceivers];
 
@@ -139,18 +141,17 @@ static void BroadcasterThread(const int serverPort,
     int replied = 0;
     while (replied < numReceivers) {
       int event_count = epoll_wait(epoll_fd, events, numReceivers, 600000);
-      for (int i = 0; i < event_count; i++) {
-        int total_read = 0;
-        while (total_read < msg_size) {
-          int recvd = read(events[i].data.fd, buffer + total_read,
-                           msg_size - total_read);
+      for(int i = 0; i < event_count; i++) {
+	int total_read = 0;
+	while (total_read < msg_size) {
+	  int recvd = read(events[i].data.fd, buffer + total_read, msg_size - total_read);
           if (recvd < 0) {
             std::cerr << "Receive failed" << std::endl;
             exit(-1);
           }
           total_read += recvd;
-        }
-        ++replied;
+	}
+	++replied;
       }
     }
 
@@ -177,9 +178,15 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
   struct sockaddr_in serv_addr;
   char buffer[msg_size] = {0};
 
+  int opt = 1;
   // Connect to the server.
   if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     std::cerr << "Socket creation error" << std::endl;
+    exit(-1);
+  }
+
+  if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt))) {
+    std::cerr << "setsockopt error" << std::endl;
     exit(-1);
   }
 
@@ -190,7 +197,7 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
     exit(-1);
   }
 
-  if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+  if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
     std::cerr << "Connection failed" << std::endl;
     exit(-1);
   }
@@ -201,7 +208,6 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
   // Run a ping-pong loop.
   do {
     uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
-    int msgs_sent = 0;
     for (int i = 0; i < numMessages; ++i) {
       int bytes_sent = 0;
       while (bytes_sent < msg_size) {
@@ -263,13 +269,13 @@ static bool runBenchmark(const std::string& serverAddr,
   // Start sender threads.
   if (broadcast) {
     for (int i = 0; i < numSenders; ++i) {
-      senderThreads.push_back(
-          new std::thread(&BroadcasterThread, basePort + i, serverAddr));
+      senderThreads.push_back(new std::thread(&BroadcasterThread, basePort + i,
+                                              serverAddr));
     }
   } else {
     for (int i = 0; i < numSenders; ++i) {
-      senderThreads.push_back(
-          new std::thread(&SenderThread, basePort + i, serverAddr));
+      senderThreads.push_back(new std::thread(&SenderThread, basePort + i,
+                                              serverAddr));
     }
   }
 
@@ -322,9 +328,8 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr << "\t-M <number of parallel ping-pong messages>: default "
             << numMessages << "\n";
   std::cerr << "\t-m <message size>: default " << msg_size << std::endl;
-  std::cerr
-      << "\t-R <number of receivers> used only when broadcasting: default "
-      << numReceivers << "\n";
+  std::cerr << "\t-R <number of receivers> used only when broadcasting: default "
+            << numReceivers << "\n";
   // Print all options here.
 
   std::cerr << std::endl;
@@ -364,8 +369,8 @@ int main(int argc, char** argv) {
         msg_size = atoi(optarg);
         break;
       case 'b':
-        broadcast = true;
-        break;
+	broadcast = true;
+	break;
       case 'R':
         numReceivers = atoi(optarg);
         break;
