@@ -61,40 +61,44 @@ int dbos_recv(voltdb::Client* client, int* sender_id, const int receiverID) {
 }
 
 /*
- * A callback that counts the number of times that it is invoked and returns true
- * when the counter reaches zero to instruct the client library to break out of the event loop.
+ * A callback that counts the number of times that it is invoked and returns
+ * true
+ * when the counter reaches zero to instruct the client library to break out of
+ * the event loop.
  */
 class SendCallback : public voltdb::ProcedureCallback {
-  public:
-    SendCallback(int count) : m_count(count), o_count(count) {}
+public:
+  SendCallback(int count) : m_count(count), o_count(count) {}
 
-    bool callback(voltdb::InvocationResponse response) throw (voltdb::Exception) {
-      m_count--;
+  bool callback(voltdb::InvocationResponse response) throw(voltdb::Exception) {
+    m_count--;
 
-      //Print the error response if there was a problem
-      if (response.failure()) {
-        std::cout << response.toString();
-      }
+    // Print the error response if there was a problem
+    if (response.failure()) { std::cout << response.toString(); }
 
-      //If the callback has been invoked count times, return true to break event loop
-      if (m_count == 0) {
-        m_count = o_count;
-        return true;
-      } else {
-        return false;
-      }
+    // If the callback has been invoked count times, return true to break event
+    // loop
+    if (m_count == 0) {
+      m_count = o_count;
+      return true;
+    } else {
+      return false;
     }
-  private:
-    int m_count;
-    int o_count;
+  }
+
+private:
+  int m_count;
+  int o_count;
 };
 
 /*
  * Send messages using VoltDB.
  *
  */
-void dbos_send(voltdb::Client* client, boost::shared_ptr<voltdb::ProcedureCallback> callback,
-               const int receiver_id, const int sender_id, const std::string &data) {
+void dbos_send(voltdb::Client* client,
+               boost::shared_ptr<voltdb::ProcedureCallback> callback,
+               const int receiver_id, const int sender_id,
+               const std::string& data) {
   std::vector<voltdb::Parameter> parameterTypes(4);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
@@ -118,10 +122,9 @@ void dbos_send(voltdb::Client* client, boost::shared_ptr<voltdb::ProcedureCallba
 
 /*
  * Sender thread.
- * 
+ *
  */
-static void ReceiverThread(const int threadId,
-                         const std::string& serverAddr) {
+static void ReceiverThread(const int threadId, const std::string& serverAddr) {
   // Id of the client.
   int clientId = -1;
 
@@ -146,7 +149,7 @@ static void ReceiverThread(const int threadId,
   // Wait until all senders and receivers have connected.
   pthread_barrier_wait(&barrier);
 
-  while(1) {
+  while (1) {
     recvd = 0;
     while (recvd < numMessages) {
       recvd += dbos_recv(&client, &clientId, threadId);
@@ -161,7 +164,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   if (!msg.empty()) { std::cerr << "ERROR: " << msg << std::endl; }
   std::cerr << "Usage: " << argv[0] << "[options]\n";
   std::cerr << "\t-h: show this message\n";
-  //TODO: support list of servers.
+  // TODO: support list of servers.
   std::cerr << "\t-s <DB server>: default 'localhost'\n";
   std::cerr << "\t-N <number of parallel receivers (threads)>: default "
             << numReceivers << "\n";
@@ -215,7 +218,7 @@ int main(int argc, char** argv) {
         new std::thread(&ReceiverThread, i + 100, serverAddr));
   }
 
-  // We should never reach this point. 
+  // We should never reach this point.
   for (int i = 0; i < numReceivers; ++i) {
     receiverThreads[i]->join();
     delete receiverThreads[i];
