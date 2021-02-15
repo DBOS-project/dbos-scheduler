@@ -18,7 +18,7 @@ fi
 
 # For ping-ping-pong-pong
 LOGFILE="grpc_pingpong.log"
-declare -a msgsizes=(1024 8192)
+declare -a msgsizes=(64 1024 8192)
 
 # Outstanding messages.
 declare -a outmsgs=(1 5 10 20 50 100)
@@ -42,7 +42,8 @@ done
 
 # For broadcast.
 LOGFILE="grpc_broadcast.log"
-declare -a msgsizes=(1024 8192)
+#declare -a msgsizes=(64 1024 8192)
+declare -a msgsizes=(64)
 
 # Number of receivers
 declare -a numrecvs=(1 5 10 20 40)
