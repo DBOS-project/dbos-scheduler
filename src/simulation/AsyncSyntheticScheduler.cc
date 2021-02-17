@@ -14,6 +14,7 @@
 
 #include "BenchmarkUtil.h"
 #include "PartitionedFIFOScheduler.h"
+#include "PartitionedLocalFIFOScheduler.h"
 #include "PartitionedFIFOTaskScheduler.h"
 #include "PartitionedScanTask.h"
 #include "PushFIFOScheduler.h"
@@ -83,6 +84,7 @@ static const std::string kTestPwd = "testpassword";
 // Type of scheduler algorithm
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
+static const std::string kFifoLocalAlgo = "fifo-local";
 static const std::string kFifoTaskAlgo = "fifo-task";
 static const std::string kSinglePartitionedFifoTaskAlgo =
     "single-partitioned-fifo-task";
@@ -169,6 +171,9 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   VoltdbSchedulerUtil* scheduler = nullptr;
   if (algo == kFifoAlgo) {
     scheduler = new PartitionedFIFOScheduler(
+        voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
+  } else if (algo == kFifoLocalAlgo) {
+    scheduler = new PartitionedLocalFIFOScheduler(
         voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
   } else if (algo == kFifoTaskAlgo) {
     scheduler = new PartitionedFIFOTaskScheduler(
