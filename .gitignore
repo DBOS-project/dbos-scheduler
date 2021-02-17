@@ -1,3 +1,4 @@
+**/*.log
 scripts/temp/**
 **/build*/
 *.swp

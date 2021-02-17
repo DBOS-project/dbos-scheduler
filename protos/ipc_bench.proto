@@ -6,10 +6,15 @@ package ipcbench;
 
 service IpcBench {
   // Ping-pong string text between client and server.
-  rpc PingPong(StringMsg) returns (StringMsg) {}
+  rpc PingPong(StringMsg) returns (StringMsg);
   
   // For the broadcast test.
-  rpc Broadcast(StringMsg) returns (AckMsg) {}
+  rpc Broadcast(StringMsg) returns (AckMsg);
+
+  // For ping^n-pong^n test. Send multiple outstanding ping-pong requests.
+  // The server would reply until receiving a batch of input.
+  // The senderId field will be used to store a "numMessages" value.
+  rpc StreamPingPong(stream StringMsg) returns (stream StringMsg);
 }
 
 message StringMsg {
