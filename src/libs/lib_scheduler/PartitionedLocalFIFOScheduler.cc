@@ -53,7 +53,7 @@ DbosId PartitionedLocalFIFOScheduler::selectWorker() {
   int offset = rand() % activePartitions;
   for (int count = 0; count < activePartitions; count++) {
     int partitionNum = (count + offset) % activePartitions;
-    voltdb::Procedure procedure("SelectWorker", parameterTypes);
+    voltdb::Procedure procedure("SelectOrderedWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
     params->addInt32(partitionNum);
     voltdb::InvocationResponse r = client_->invoke(procedure);
@@ -126,7 +126,7 @@ DbosStatus PartitionedLocalFIFOScheduler::asyncSchedule(
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   int activePartitions = std::min(workerPartitions_, numWorkers_);
   int partitionNum = rand() % activePartitions;
-  voltdb::Procedure procedure("SelectWorker", parameterTypes);
+  voltdb::Procedure procedure("SelectOrderedWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
   params->addInt32(partitionNum);
   client_->invoke(procedure, callback);
