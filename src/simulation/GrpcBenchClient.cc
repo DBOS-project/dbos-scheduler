@@ -18,6 +18,7 @@ using grpc::Channel;
 using grpc::CompletionQueue;
 using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
+using grpc::ClientReaderWriter;
 
 // Number of senders.
 static int numSenders = 1;
@@ -50,6 +51,9 @@ static int totalExecTimeMsec = 10000;  // 10sec in ms.
 
 // Broadcast flag.
 static bool broadcast = false;
+
+// Streaming flag.
+static bool streamRpc = false;
 
 static bool mainFinished = false;  // Control whether to stop the experiment.
 
@@ -244,6 +248,81 @@ static void SenderThread(const int serverPort, const std::string& serverAddr) {
   return;
 }
 
+// Streaming Ping-pong sender thread.
+static void StreamSenderThread(const int serverPort,
+                               const std::string& serverAddr) {
+  // Stream (bi-direction) ping-pong benchmark, with gRPC sync client.
+  // Send M outstanding message to a single receiver.
+  // Then wait responses of all M messages.
+
+  std::string msgbuff(msg_size, 'a');
+
+  // Create stub and connect to the gRPC server.
+  std::unique_ptr<ipcbench::IpcBench::Stub> stub =
+      addrToStub(serverAddr + ":" + std::to_string(serverPort));
+
+  // Create a request
+  ipcbench::StringMsg rpcRequest;
+  rpcRequest.set_senderid(numMessages);
+  rpcRequest.set_msg(msgbuff);
+
+  // Store reply
+  ipcbench::StringMsg reply;
+  // Context for the client. It could be used to convey extra information to
+  // the server and/or tweak certain RPC behaviors.
+  ClientContext context;
+  // Storage for the status of the RPC upon completion
+  Status status;
+
+  // Wait until all senders are connected.
+  pthread_barrier_wait(&barrier);
+
+  // Create a stream.
+  std::shared_ptr<ClientReaderWriter<ipcbench::StringMsg, ipcbench::StringMsg>>
+      stream(stub->StreamPingPong(&context));
+
+  // Run a streaming ping-pong loop.
+  do {
+    uint64_t startTime = BenchmarkUtil::getCurrTimeUsec();
+
+    for (int i = 0; i < numMessages; ++i) {
+      // Send gRPC stream request
+      stream->Write(rpcRequest);
+    }
+
+    // Receive a batch of responses.
+    int recvMsg = 0;  // received responses.
+    while ((recvMsg < numMessages) && stream->Read(&reply)) { recvMsg++; }
+    assert(recvMsg == numMessages);
+
+    uint64_t endTime = BenchmarkUtil::getCurrTimeUsec();
+
+    // Make sure we received the correct length msg.
+    assert(reply.msg().size() == msg_size);
+
+    // Record the latency.
+    auto aryIndex = msgLatsArrayIndex.fetch_add(1);
+    if (aryIndex >= kMaxEntries) {
+      std::cerr << "Array msgLatencies out of bounds: " << aryIndex
+                << std::endl;
+      exit(1);
+    }
+    msgLatencies[aryIndex] = double(endTime - startTime);
+  } while (!mainFinished);
+
+  // Clean up
+
+  // Finish writing to the stream.
+  stream->WritesDone();
+  status = stream->Finish();
+  if (!status.ok()) {
+    std::cout << "Stream PingPong failed." << std::endl;
+    exit(1);
+  }
+
+  return;
+}
+
 // Actually run the benchmark, main thread loop.
 static bool runBenchmark(const std::string& serverAddr,
                          const std::string& outputFile) {
@@ -269,6 +348,12 @@ static bool runBenchmark(const std::string& serverAddr,
     for (int i = 0; i < numSenders; ++i) {
       senderThreads.push_back(
           new std::thread(&BroadcasterThread, basePort + i, serverAddr));
+    }
+  } else if (streamRpc) {
+    benchName = benchName + "stream-pingpong";
+    for (int i = 0; i < numSenders; ++i) {
+      senderThreads.push_back(
+          new std::thread(&StreamSenderThread, basePort + i, serverAddr));
     }
   } else {
     benchName = benchName + "-pingpong";
@@ -330,6 +415,7 @@ static void Usage(char** argv, const std::string& msg = "") {
   std::cerr
       << "\t-R <number of receivers> used only when broadcasting: default "
       << numReceivers << "\n";
+  std::cerr << "\t-S: run streaming ping-pong benchmark\n";
 
   std::cerr << std::endl;
   exit(1);
@@ -341,7 +427,7 @@ int main(int argc, char** argv) {
 
   // Parse input arguments and prepare for the experiment.
   int opt;
-  while ((opt = getopt(argc, argv, "hbo:s:p:i:t:N:M:m:R:")) != -1) {
+  while ((opt = getopt(argc, argv, "hbo:s:p:i:t:N:M:m:R:S")) != -1) {
     switch (opt) {
       case 'o':
         outputFile = optarg;
@@ -373,6 +459,9 @@ int main(int argc, char** argv) {
       case 'R':
         numReceivers = atoi(optarg);
         break;
+      case 'S':
+        streamRpc = true;
+        break;
       case 'h':
       default:
         Usage(argv);
@@ -391,6 +480,8 @@ int main(int argc, char** argv) {
   if (broadcast) {
     std::cerr << "Broadcasting to " << numReceivers << " receivers\n";
   }
+
+  if (streamRpc) { std::cerr << "Using streaming RPC\n"; }
 
   // Run experiments and parse results.
   bool res = runBenchmark(serverAddr, outputFile);

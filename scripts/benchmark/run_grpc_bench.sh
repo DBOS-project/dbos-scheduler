@@ -17,7 +17,7 @@ fi
 
 
 # For ping-ping-pong-pong
-LOGFILE="grpc_pingpong.log"
+LOGFILE="grpc_pingpong_stream.log"
 declare -a msgsizes=(64 1024 8192)
 
 # Outstanding messages.
@@ -31,7 +31,8 @@ for numrecv in "${numrecvs[@]}"; do
   for msgsize in "${msgsizes[@]}"; do
     echo "================= Running msgsize ${msgsize} =================" | tee -a ${LOGFILE}
     for outmsg in "${outmsgs[@]}"; do
-      ${SCRIPT_DIR}/../../build/bin/GrpcBenchClient -N ${numrecv} -s ${SERVER} -m ${msgsize} -M ${outmsg} 2>&1 | tee -a ${LOGFILE}
+      # Run streaming.
+      ${SCRIPT_DIR}/../../build/bin/GrpcBenchClient -N ${numrecv} -s ${SERVER} -m ${msgsize} -M ${outmsg} -S 2>&1 | tee -a ${LOGFILE}
 
       # Cool down a bit.
       sleep 5

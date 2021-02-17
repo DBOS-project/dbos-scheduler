@@ -13,7 +13,9 @@
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
+using grpc::ServerReaderWriter;
 using grpc::Status;
+using grpc::StatusCode;
 using grpc::Channel;
 
 // Number of receivers.
@@ -37,6 +39,10 @@ private:
   Status Broadcast(ServerContext* context, const StringMsg* request,
                    AckMsg* reply) override;
 
+  Status StreamPingPong(
+      ServerContext* context,
+      ServerReaderWriter<StringMsg, StringMsg>* stream) override;
+
 };  // class IpcBenchImpl
 
 // Receive a Ping-pong msg from the client.
@@ -56,6 +62,42 @@ Status IpcBenchImpl::Broadcast(ServerContext* context, const StringMsg* request,
   std::cout << "Received broadcast from sender: " << request->senderid()
             << ", msg: " << request->msg() << std::endl;
   reply->set_ack(true);
+  return Status::OK;
+}
+
+// Receive a stream of ping-pong msg from the client, where senderid represents
+// how many messages it would expect.  The server will return a batch of
+// responses after receiving M messages.
+Status IpcBenchImpl::StreamPingPong(
+    ServerContext* context, ServerReaderWriter<StringMsg, StringMsg>* stream) {
+  StringMsg request;
+  StringMsg reply;
+  int numMessages = -1;
+  int recvdCnt = 0;
+
+  while (stream->Read(&request)) {
+    // First, read a batch of messages.
+    if (numMessages < 0) {
+      numMessages = request.senderid();
+      // Setup a response.
+      reply.set_senderid(numMessages);
+      reply.set_msg(request.msg());
+    } else {
+      assert(numMessages == request.senderid());
+    }
+    recvdCnt++;
+
+    // Second, write a batch of responses.
+    if ((recvdCnt % numMessages) == 0) {
+      for (int i = 0; i < numMessages; ++i) {
+        if (!stream->Write(reply)) {
+          return Status(StatusCode::INTERNAL, "Server couldn't respond.");
+        }
+      }
+    }
+  }
+
+  // Finish the call
   return Status::OK;
 }
 
