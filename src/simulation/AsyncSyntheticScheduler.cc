@@ -85,15 +85,9 @@ static const std::string kTestPwd = "testpassword";
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoLocalAlgo = "fifo-local";
-static const std::string kFifoTaskAlgo = "fifo-task";
-static const std::string kSinglePartitionedFifoTaskAlgo =
-    "single-partitioned-fifo-task";
-static const std::string kSparkAlgo = "spark";
-static const std::string kScanTaskAlgo = "scan-task";
-static const std::string kPushFifoAlgo = "push-fifo";
 
 // TODO: currently only FIFO supports async. Will add more.
-static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo};
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo, kFifoLocalAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // Max outstanding requests per thread.
@@ -175,23 +169,6 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   } else if (algo == kFifoLocalAlgo) {
     scheduler = new PartitionedLocalFIFOScheduler(
         voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
-  } else if (algo == kFifoTaskAlgo) {
-    scheduler = new PartitionedFIFOTaskScheduler(
-        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
-        numWorkers, probMultiTx);
-  } else if (algo == kSinglePartitionedFifoTaskAlgo) {
-    scheduler = new SinglePartitionedFIFOTaskScheduler(
-        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
-        numWorkers, probMultiTx);
-  } else if (algo == kSparkAlgo) {
-    scheduler = new SparkScheduler(voltdbClient, serverAddr, partitions,
-                                   workerCapacity, numWorkers);
-  } else if (algo == kScanTaskAlgo) {
-    scheduler = new PartitionedScanTask(voltdbClient, serverAddr, partitions,
-                                        numTasks, numWorkers, probMultiTx);
-  } else if (algo == kPushFifoAlgo) {
-    scheduler = new PushFIFOScheduler(voltdbClient, serverAddr, partitions,
-                                      numTasks, probMultiTx);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }

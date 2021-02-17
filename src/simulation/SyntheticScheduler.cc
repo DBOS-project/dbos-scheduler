@@ -87,7 +87,7 @@ static const std::string kSparkAlgo = "spark";
 static const std::string kScanTaskAlgo = "scan-task";
 static const std::string kPushFifoAlgo = "push-fifo";
 static const std::unordered_set<std::string> kAlgorithms = {
-    kFifoAlgo,  kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo,
+    kFifoAlgo,  kFifoLocalAlgo,  kFifoTaskAlgo, kSinglePartitionedFifoTaskAlgo,
     kSparkAlgo, kScanTaskAlgo, kPushFifoAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 

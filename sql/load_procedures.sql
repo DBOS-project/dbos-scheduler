@@ -15,6 +15,9 @@ CREATE PROCEDURE FROM CLASS dbos.procedures.SelectTaskWorker;
 DROP PROCEDURE SelectWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectWorker;
 
+DROP PROCEDURE SelectOrderedWorker IF EXISTS;
+CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectOrderedWorker;
+
 DROP PROCEDURE SelectPartitionedTaskWorker IF EXISTS;
 CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.SelectPartitionedTaskWorker;
 
