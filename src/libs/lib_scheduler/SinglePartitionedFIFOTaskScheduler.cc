@@ -140,3 +140,20 @@ DbosStatus SinglePartitionedFIFOTaskScheduler::schedule(Task* task) {
   assert(status == true);
   return true;
 }
+
+DbosStatus SinglePartitionedFIFOTaskScheduler::asyncSchedule(
+    boost::shared_ptr<voltdb::ProcedureCallback> callback) {
+    int taskID = taskindex.fetch_add(1);
+    std::vector<voltdb::Parameter> parameterTypes(2);
+    parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+    parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+    int activePartitions = std::min(partitions_, numWorkers_);
+    int partitionNum = rand() % activePartitions;
+    voltdb::Procedure procedure("SelectSinglePartitionedTaskWorker", parameterTypes);
+    voltdb::ParameterSet* params = procedure.params();
+    params->addInt32(partitionNum).addInt32(taskID);
+    client_->invoke(procedure, callback);
+    // TODO: what if it cannot find a worker? The callback can retry?
+
+  return true;
+}

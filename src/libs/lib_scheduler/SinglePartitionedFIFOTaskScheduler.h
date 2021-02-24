@@ -46,6 +46,10 @@ public:
   // Perform a scheduling act.
   DbosStatus schedule(Task* task);
 
+  // Async scheduling.
+  DbosStatus asyncSchedule(
+      boost::shared_ptr<voltdb::ProcedureCallback> callback);
+
   // Destructor
   ~SinglePartitionedFIFOTaskScheduler() { /* placeholder for now. */
   }
