@@ -85,9 +85,11 @@ static const std::string kTestPwd = "testpassword";
 // TODO: add more types here.
 static const std::string kFifoAlgo = "fifo";
 static const std::string kFifoLocalAlgo = "fifo-local";
+static const std::string kSinglePartitionedFifoTaskAlgo =
+    "single-partitioned-fifo-task";
 
 // TODO: currently only FIFO supports async. Will add more.
-static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo, kFifoLocalAlgo};
+static const std::unordered_set<std::string> kAlgorithms = {kFifoAlgo, kFifoLocalAlgo, kSinglePartitionedFifoTaskAlgo};
 static std::string scheduleAlgo = kFifoAlgo;
 
 // Max outstanding requests per thread.
@@ -169,6 +171,10 @@ static VoltdbSchedulerUtil* constructScheduler(voltdb::Client* voltdbClient,
   } else if (algo == kFifoLocalAlgo) {
     scheduler = new PartitionedLocalFIFOScheduler(
         voltdbClient, serverAddr, partitions, workerCapacity, numWorkers);
+  } else if (algo == kSinglePartitionedFifoTaskAlgo) {
+    scheduler = new SinglePartitionedFIFOTaskScheduler(
+        voltdbClient, serverAddr, partitions, numTasks, workerCapacity,
+        numWorkers, 0.0);
   } else {
     std::cerr << "Unsupported scheduler algorithm: " << algo << "\n";
   }
