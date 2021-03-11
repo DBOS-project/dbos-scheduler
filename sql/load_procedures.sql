@@ -1,5 +1,11 @@
 load classes build/DBOSProcedures.jar;
 
+DROP PROCEDURE NestedSelectWorkerA IF EXISTS;
+CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.NestedSelectWorkerA;
+
+DROP PROCEDURE NestedSelectWorkerB IF EXISTS;
+CREATE PROCEDURE PARTITION ON TABLE Worker COLUMN PKey FROM CLASS dbos.procedures.NestedSelectWorkerB;
+
 DROP PROCEDURE InsertTask IF EXISTS;
 CREATE PROCEDURE FROM CLASS dbos.procedures.InsertTask;
 
