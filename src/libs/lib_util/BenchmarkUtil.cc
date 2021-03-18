@@ -13,7 +13,8 @@ bool BenchmarkUtil::processResults(double* latencies,
                                    const std::vector<uint32_t>& indices,
                                    const std::vector<uint64_t>& timeStampsUsec,
                                    const std::string& outputFile,
-                                   const std::string& expName) {
+                                   const std::string& expName,
+                                   const bool outputCpuUsage) {
   std::ofstream logFile(outputFile);
   if (!logFile.is_open()) {
     std::cerr << "Could not open file: " << outputFile << std::endl;
@@ -60,6 +61,22 @@ bool BenchmarkUtil::processResults(double* latencies,
 
   std::cerr << "Stored results to: " << outputFile << std::endl;
   logFile.close();
+
+
+  // Convert cpu usage txt log to csv file for ease of data manipulation.
+  if (outputCpuUsage) {
+    const std::string cpuUsageTxtLog = "cpu_usage.txt";
+    const std::string cpuUsageCsvResults = "cpu_usage_results.csv";
+    std::string firstColumn = "echo -n \"RUN_NUM \" > " + cpuUsageCsvResults;
+    std::string columnNames = "cat " + cpuUsageTxtLog + " | grep -m 1 PID >> " + cpuUsageCsvResults;
+    std::string prependRunNumbers = "cat " + cpuUsageTxtLog + " | awk \'/PID/{flag=1;i++;next}/top -/{flag=0} flag{print i\" \"$0}\' >> " + cpuUsageCsvResults;
+    std::string spacesToCommas = "cat " + cpuUsageCsvResults + " | sed -n '{s/^ *//;s/ *$//;s/  */,/gp;};' | tee " + cpuUsageCsvResults;
+    std::system(firstColumn.c_str());  // Add column for run number
+    std::system(columnNames.c_str());  // Get rest of column names from top output
+    std::system(prependRunNumbers.c_str());  // Get relevant data and prepend run number to them
+    std::system(spacesToCommas.c_str());  // Convert spaces to commas for csv format
+    std::cerr << "Stored cpu usage results to: " << cpuUsageCsvResults << std::endl;
+  }
   return true;
 }
 

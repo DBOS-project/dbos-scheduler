@@ -100,8 +100,9 @@ static bool cleanDB = false;
 static bool noSetupDB = false;
 
 // If true, output avg cpu usage for each benchmark
-static bool output_cpu_usage = false;
-static const std::string cpu_usage_log = "cpu_usage.txt";
+static bool outputCpuUsage = false;
+static const std::string cpuUsageTxtLog = "cpu_usage.txt";
+static const std::string cpuUsageCsvResults = "cpu_usage.csv";
 
 // Callback for async client.
 // Note: VoltDB C++ client is single threaded; thus the callback is executed on
@@ -297,17 +298,18 @@ static bool runBenchmark(const std::string& serverAddr,
   }
 
   std::string cmd;
-  if (output_cpu_usage) {
-    std::string log_header_cmd = "echo | date > " + cpu_usage_log;
+  if (outputCpuUsage) {  // Output CPU usage stats from `top` to a .txt file
+    std::string log_header_cmd = "echo | date > " + cpuUsageTxtLog;
     std::system(log_header_cmd.c_str());
+    // Discard first top output and only save the second one
     cmd = "top -b -n 2 -d " + std::to_string((float) measureIntervalMsec / 1000.0) + 
-              " | awk '/top - /{i++}i>=2'" + ">> "+ cpu_usage_log + " &";
+              " | awk '/top - /{i++}i>=2'" + ">> "+ cpuUsageTxtLog + " &";
   }
 
   currTime = BenchmarkUtil::getCurrTimeUsec();
   uint64_t endTime = currTime + (totalExecTimeMsec * 1000);
   do {
-    if (output_cpu_usage) std::system(cmd.c_str());
+    if (outputCpuUsage) std::system(cmd.c_str());
     std::this_thread::sleep_for(std::chrono::milliseconds(measureIntervalMsec));
     std::cerr << "runBenchmark recording performance...\n";
     currTime = BenchmarkUtil::getCurrTimeUsec();
@@ -324,7 +326,7 @@ static bool runBenchmark(const std::string& serverAddr,
   // Processing the results.
   std::cerr << "Post processing results...\n";
   bool res = BenchmarkUtil::processResults(
-      schedLatencies, schedIndices, timeStampsUsec, outputFile, scheduleAlgo);
+      schedLatencies, schedIndices, timeStampsUsec, outputFile, scheduleAlgo, outputCpuUsage);
   if (!res) {
     std::cerr << "[Warning]: failed to write results to " << outputFile << "\n";
   }
@@ -413,7 +415,6 @@ static void Usage(char** argv, const std::string& msg = "") {
 int main(int argc, char** argv) {
   std::string serverAddr("localhost");
   std::string outputFile("synthetic_scheduler_results.csv");
-  std::string cpuUsageOutputFile("cpu_usage.txt");
 
   // Parse input arguments and prepare for the experiment.
   int opt;
@@ -468,7 +469,7 @@ int main(int argc, char** argv) {
         maxOutstanding = atoi(optarg);
         break;
       case 'c':
-        output_cpu_usage = true;
+        outputCpuUsage = true;
         break;
       case 'h':
       default:

@@ -36,7 +36,8 @@ public:
                              const std::vector<uint32_t>& indices,
                              const std::vector<uint64_t>& timeStampsUsec,
                              const std::string& outputFile,
-                             const std::string& expName);
+                             const std::string& expName,
+                             const bool outputCpuUsage = false);
 
   // Print the stats with a header.
   static void printStats(const Statistics& stats, const std::string& header,
