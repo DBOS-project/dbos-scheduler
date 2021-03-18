@@ -14,6 +14,8 @@
 
 #include "PartitionedLocalFIFOScheduler.h"
 
+static std::atomic<uint32_t> taskindex;
+
 void PartitionedLocalFIFOScheduler::truncateWorkerTable() {
   std::vector<voltdb::Parameter> parameterTypes(0);
   voltdb::Procedure procedure("TruncateWorkerTable", parameterTypes);
@@ -21,6 +23,16 @@ void PartitionedLocalFIFOScheduler::truncateWorkerTable() {
   voltdb::InvocationResponse r = client_->invoke(procedure);
   if (r.failure()) {
     std::cout << "TruncateWorkerTable procedure failed. " << r.toString();
+  }
+}
+
+void PartitionedLocalFIFOScheduler::truncateTaskTable() {
+  std::vector<voltdb::Parameter> parameterTypes(0);
+  voltdb::Procedure procedure("TruncateTaskTable", parameterTypes);
+  voltdb::ParameterSet* params = procedure.params();
+  voltdb::InvocationResponse r = client_->invoke(procedure);
+  if (r.failure()) {
+    std::cout << "TruncateTaskTable procedure failed. " << r.toString();
   }
 }
 
@@ -46,16 +58,17 @@ DbosStatus PartitionedLocalFIFOScheduler::insertWorker(DbosId workerID,
   return true;
 }
 
-DbosId PartitionedLocalFIFOScheduler::selectWorker() {
-  std::vector<voltdb::Parameter> parameterTypes(1);
+DbosId PartitionedLocalFIFOScheduler::selectWorker(DbosId taskID) {
+  std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
   int activePartitions = std::min(workerPartitions_, numWorkers_);
   int offset = rand() % activePartitions;
   for (int count = 0; count < activePartitions; count++) {
     int partitionNum = (count + offset) % activePartitions;
     voltdb::Procedure procedure("SelectOrderedWorker", parameterTypes);
     voltdb::ParameterSet* params = procedure.params();
-    params->addInt32(partitionNum);
+    params->addInt32(partitionNum).addInt32(taskID);
     voltdb::InvocationResponse r = client_->invoke(procedure);
     if (r.failure()) {
       std::cout << "SelectWorker procedure failed. " << r.toString()
@@ -100,6 +113,7 @@ DbosStatus PartitionedLocalFIFOScheduler::finishTask(DbosId taskId,
 DbosStatus PartitionedLocalFIFOScheduler::setup() {
   // Clean up data from previous run.
   truncateWorkerTable();
+  truncateTaskTable();
   DbosStatus ret;
   for (int i = 0; i < numWorkers_; ++i) {
     ret = insertWorker(i, workerCapacity_);
@@ -111,24 +125,28 @@ DbosStatus PartitionedLocalFIFOScheduler::setup() {
 DbosStatus PartitionedLocalFIFOScheduler::teardown() {
   // Clean up data from previous run.
   truncateWorkerTable();
+  truncateTaskTable();
   return true;
 }
 
 DbosStatus PartitionedLocalFIFOScheduler::schedule(Task* task) {
-  DbosId workerId = selectWorker();
+  int taskId = taskindex.fetch_add(1);
+  DbosId workerId = selectWorker(taskId);
   assert(workerId >= 0);
   return true;
 }
 
 DbosStatus PartitionedLocalFIFOScheduler::asyncSchedule(
     boost::shared_ptr<voltdb::ProcedureCallback> callback) {
-  std::vector<voltdb::Parameter> parameterTypes(1);
+  std::vector<voltdb::Parameter> parameterTypes(2);
   parameterTypes[0] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  parameterTypes[1] = voltdb::Parameter(voltdb::WIRE_TYPE_INTEGER);
+  int taskID = taskindex.fetch_add(1);
   int activePartitions = std::min(workerPartitions_, numWorkers_);
   int partitionNum = rand() % activePartitions;
   voltdb::Procedure procedure("SelectOrderedWorker", parameterTypes);
   voltdb::ParameterSet* params = procedure.params();
-  params->addInt32(partitionNum);
+  params->addInt32(partitionNum).addInt32(taskID);
   client_->invoke(procedure, callback);
   // TODO: what if it cannot find a worker? The callback can retry?
 

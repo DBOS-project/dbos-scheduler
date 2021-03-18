@@ -12,7 +12,11 @@ public class SelectOrderedWorker extends VoltProcedure {
         "UPDATE Worker SET Capacity=? WHERE PKey=? AND WorkerID=?;"
     );
 
-    public long run(int pkey) throws VoltAbortException {
+    public final SQLStmt insertTask = new SQLStmt (
+        "INSERT INTO Task VALUES (?, ?, ?, ?);"
+    );
+
+    public long run(int pkey, long taskID) throws VoltAbortException {
         voltQueueSQL(selectWorker, pkey);
         VoltTable[] results = voltExecuteSQL();
         VoltTable r = results[0];
@@ -21,6 +25,7 @@ public class SelectOrderedWorker extends VoltProcedure {
         }
         long workerID = r.fetchRow(0).getLong(0);
         long capacity = r.fetchRow(0).getLong(1);
+        voltQueueSQL(insertTask, taskID, workerID, 1, pkey);
         voltQueueSQL(updateCapacity, capacity - 1, pkey, workerID);
         voltExecuteSQL();
         return workerID;
