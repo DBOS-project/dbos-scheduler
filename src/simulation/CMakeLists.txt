@@ -26,6 +26,7 @@ add_executable(DBCommBenchClient DBCommBenchClient.cc)
 add_executable(DBCommBenchServer DBCommBenchServer.cc)
 add_executable(GrpcBenchServer GrpcBenchServer.cc)
 add_executable(GrpcBenchClient GrpcBenchClient.cc)
+add_executable(ContentionBench ContentionBench.cc)
 
 # Link to libs.
 target_link_libraries(GrpcBenchServer
@@ -147,8 +148,18 @@ target_link_libraries(TestSparkScheduler
                       pthread
 )
 
+target_link_libraries(ContentionBench
+                      lib_scheduler
+                      lib_worker
+                      dbos-scheduler-protos
+                      ${_REFLECTION}
+                      ${_GRPC_GRPCPP}
+                      ${_PROTOBUF_LIBPROTOBUF}
+                      pthread
+)
+
 # Generate output to lib/ or bin/
-set_target_properties(SyntheticScheduler LoadGenerator AsyncSyntheticScheduler CommunicationBench TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker TCPBenchClient TCPBenchServer DBCommBenchClient DBCommBenchServer GrpcBenchServer GrpcBenchClient
+set_target_properties(SyntheticScheduler LoadGenerator AsyncSyntheticScheduler CommunicationBench TestPartitionedFIFOScheduler TestSparkScheduler TestPartitionedScanTask SyntheticWorker TCPBenchClient TCPBenchServer DBCommBenchClient DBCommBenchServer GrpcBenchServer GrpcBenchClient ContentionBench
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

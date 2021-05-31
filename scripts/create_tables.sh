@@ -16,3 +16,4 @@ ${VOLTDB_BIN}/sqlcmd < sql/create_task_stream.sql
 ${VOLTDB_BIN}/sqlcmd < sql/create_data_table.sql
 ${VOLTDB_BIN}/sqlcmd < sql/create_message_table.sql
 ${VOLTDB_BIN}/sqlcmd < sql/create_broadcast_table.sql
+${VOLTDB_BIN}/sqlcmd < sql/create_dummy_table.sql
